@@ -1,0 +1,57 @@
+Problem definition:
+
+Pizzeria RoboPizza in Manhattan wants to have AGV's to deliver pizzas to their customers.
+They are contacting the firm iDelivery to rent AGV's for the delivery tasks.
+iDelivery will be responsible for charging the robots whilst RoboPizza will obviously be responsible to create the pizzas.
+The customers can order pizzas through their web app and can say when they want to have their pizzas.
+This is a hard limit which cannot be missed.
+
+environment: (Big) american city //where the streets can only support one AGV in each street.
+
+AGVs with their capabilities:
+The AGVs can carry multiple pizza's at once up to 5.
+They can only talk with other AGV's that are in a certain area close to the current AGV.
+
+characteristics of tasks:
+Task is picking up one or more pizzas and delivering it to the customer.
+If the task exists out of more than 5 pizza's the task will have to be split.
+
+scale: (Big) american city
+communication constraints:
+They can only talk with other AGV's that are in a certain area close to the current AGV.
+
+dynamism: Charging station can change location,
+          streets can become one way because of sudden road works,
+          (optional: people can cancel their order).
+
+potential AGV crashes: Running out of battery, going into one way streets
+objective function for efficiency:
+
+We want to minimize the waiting time for customers
+
+Random generation of requests. This is an important aspect in this task.
+We will create random users who will ask for a random amount of pizza's. (Gaussian distribution)
+The most important aspect here is the time window. As time window we will use the distance between the pizzaria multiplied with a constant factor.
+To this number we will add some randomness.
+Each timestep there is a small probability for a request
+
+Battery charging:
+iDelivery is responsible for this. This happens on one location.
+There is a maximum capacity of 30% of the AGVS. (Depends on the amount of our AGVS)
+
+Algorithms:
+- BDI
+- delegate mas
+
+
+# research
+
+## research objectives
+
+## research questions
+
+## hypotheses
+
+## plan
+1. First create environment
+2. 
