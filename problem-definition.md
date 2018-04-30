@@ -34,6 +34,7 @@ Efficiency of the multi-agent system will be measured by the waiting time for cu
 
 #### Random generation of requests
 Tasks will be created at every time step with a low probability. The amount of pizzas for the tasks will be determined randomly using a Gaussian distribution. The time window for the delivery will be determined by the distance from the customer to RoboPizza multiplied by a constant factor and added to a random number.
+The location of the request could be generated uniformly in the whole city, or located near a certain area.
 
 #### Battery charging
 Charging happens on one location. Only a limited amount of AGVs can charge at the charging station at the same time. (Maximum capacity of 30% of the AGVs?)
