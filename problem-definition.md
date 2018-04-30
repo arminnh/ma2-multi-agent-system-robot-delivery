@@ -2,7 +2,7 @@
 
 ## Problem definition
 
-Pizzeria RoboPizza wants to use AGVs to deliver pizzas to their customers. They contacted iDelivery to rent the AGVs for the delivery tasks. iDelivery is responsible for the charging of the robots whilst RoboPizza is responsible for handling incoming pizza delivery requests.
+Pizzeria chain RoboPizza wants to use AGVs to deliver pizzas to their customers. They contacted iDelivery to rent the AGVs for the delivery tasks. iDelivery is responsible for the charging of the robots whilst RoboPizza is responsible for handling incoming pizza delivery requests.
 
 #### Environment
 American style city
@@ -22,9 +22,8 @@ Large city
 AGVs can only communicate with other entities that lie within a certain area around them.
 
 #### Dynamism
-Charging station can change location.  
+Amount of pickup locations can increase/decrease.
 Streets can become one way streets or can become closed off because of sudden road works.  
-Optional: tasks can be cancelled.
 
 #### Potential AGV crashes
 Running out of battery, going into one way streets, ???
@@ -44,15 +43,3 @@ Charging happens on one location. Only a limited amount of AGVs can charge at th
 - delegate mas
 
 Need to review this in more detail.
-
-## Research plan
-
-#### Objectives
-
-#### Questions
-
-#### Hypotheses
-
-#### Plan
-1. First create environment
-2.
