@@ -4,8 +4,8 @@
         \item $n_{robots}$ = amount of delivery robots
         \item $p_{request}$ = probability for a new request
         \item $\mu_{pizza}, \sigma_{pizza}$ = Gaussian distribution parameters for amount of pizzas
-        \item $p_{pizzeria\_closes}$ = probability for a pickup location to close
         \item $p_{pizzeria\_opens}$  = probability for a pickup location to open
+        \item $p_{pizzeria\_closes}$ = probability for a pickup location to close
         \item $p_{road\_works\_start}$ = probability for road works to start
         \item $p_{road\_works\_finish}$ = probability for existing road works to finish
     \end{itemize}
@@ -13,24 +13,23 @@
 
 \begin{frame}{Dependent variables}
     \begin{itemize}
-        \item $t_{wait}$ = cumulative waiting time for customers
+        \item $t_{wait}$ = total waiting time for customers
         \item $t_{robots\_driving}$ = time robots spent driving
-        \item $t_{idle\_time}$ = time where robots are idle
-        \item $n_{deliveries}$ = amount of finished deliveries
+        \item $t_{robots\_idle}$ = time robots were idle
+        \item $n_{requests}$ = amount of requests in the system
+        \item $n_{pizzerias}$ = amount of open pizzerias
         \item $n_{road\_works}$ = amount of road works
-        \item $n_{requests}$ = cumulative amount of requests in the system
-        \item $n_{robots\_charging}$ = workload of the charging station
+        \item $n_{robots\_charging}$ = amount of robots that are charging
+        \item $n_{deliveries}$ = amount of finished deliveries
         \item $avg_{pizzas}$ = average amount of pizzas carried by robots
-        \item $avg_{pizzeria}$ = average amount of pizzeria open
-        \item $avg_{requests}$ = average amount of requests in the system
     \end{itemize}
 \end{frame}
 
 \begin{frame}{Other variables}
     \begin{itemize}
-        \item speed = moving speed of the robots
-        \item baking time = how fast can a pizzeria cook a pizza
-        \item battery size = the capacity of a battery 
-        \item charging time = the amount of time it takes to recharge a battery
+        \item $v_{robots}$ = moving speed of the robots
+        \item $t_{pizza}$ = the baking time of a pizza
+        \item $t_{robot\_charge}$ = time it takes to recharge a battery
+        \item $battery\_size$ = the capacity of a robot's battery
     \end{itemize}
 \end{frame}
