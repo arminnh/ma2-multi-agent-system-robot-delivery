@@ -1,0 +1,57 @@
+\section{Problem definition}
+
+\begin{frame}{Problem definition - Setting}
+    \begin{itemize}
+        \item Pizzeria chain RoboPizza
+        \item Pizza delivery using robots (AGVs)
+        \item RoboPizza receives pizza delivery requests (tasks), robots deliver the pizzas
+        \item Manhattan style city blocks
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Problem definition - Robots}
+    \begin{itemize}
+        \item Can move from and to any location in the city
+        \item Have maps and can compute paths between locations
+        \item Can carry up to 5 pizzas at once
+        \item Can only communicate with entities that are close to them
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Problem definition - Tasks}
+    \begin{itemize}
+        \item Consist of pickup up (multiple) pizzas and deliver them to a location before a certain timepoint.
+        \item If there are more than 5 pizzas in a task, it will have to be split up.
+        \item Will be created every time step with low probability.
+            \begin{itemize}
+                \item Delivery time window based on distance from pizzeria + randomness.
+                \item Amount of pizzas from Gaussian distribution.
+                \item Delivery location uniformly random in city.
+            \end{itemize}
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Problem definition - World}
+    Dynamism
+    \begin{itemize}
+        \item Streets can become closed off due to road works
+        \item Amount of pizerrias
+    \end{itemize}
+
+    Potential AGV crashes
+    \begin{itemize}
+        \item Running out of battery
+        \item ?
+    \end{itemize}
+
+    Efficiency measure
+    \begin{itemize}
+        \item Total waiting time for task
+    \end{itemize}
+
+    Charging
+    \begin{itemize}
+        \item Happens on one location.
+        \item Charging station can only serve a limited amount of robots.
+    \end{itemize}
+\end{frame}
