@@ -1,26 +1,34 @@
-import com.github.rinde.rinsim.core.model.pdp.Depot;
-import com.github.rinde.rinsim.core.model.pdp.PDPModel;
 import com.github.rinde.rinsim.core.model.road.RoadModel;
+import com.github.rinde.rinsim.core.model.road.RoadUser;
 import com.github.rinde.rinsim.geom.Point;
+import com.google.common.base.Optional;
 
 /**
  * Implementation of a Charging Station
  */
-public class ChargingStation extends Depot {
+public class ChargingStation implements RoadUser {
 
-    private Point location;
+    /**
+     * For isRegistered implementation, see PDPObjectImpl
+     */
 
-    ChargingStation(Point position, double capacity) {
-        super(position);
-        setCapacity(capacity);
-        this.location = position;
-    }
+    private int capacity;
+    private Point position;
+    private Optional<RoadModel> roadModel;
 
-    public Point getLocation() {
-        return this.location;
+    ChargingStation(Point position, int capacity) {
+        this.position = position;
+        this.capacity = capacity;
     }
 
     @Override
-    public void initRoadPDP(RoadModel pRoadModel, PDPModel pPdpModel) {}
+    public void initRoadUser(RoadModel model) {
+        this.roadModel = Optional.of(model);
 
+        model.addObjectAt(this, position);
+    }
+
+    public Point getPosition() {
+        return this.position;
+    }
 }
