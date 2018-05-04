@@ -18,6 +18,7 @@ public class PizzaDeliverySimulator {
     private static final int NUM_AGVS = 10;
     private static final int MAX_CAPACITY = 5;
     private static final int VEHICLE_LENGTH = 1;
+    private static int robot_id = 1;
 
     private static final double NEW_PARCEL = .02;
 
@@ -73,7 +74,8 @@ public class PizzaDeliverySimulator {
 
         for(int i = 0; i < NUM_AGVS; i++) {
             // Robots start at the pizzeria
-            sim.register(new Robot(pizzeria.getLocation(), MAX_CAPACITY));
+            sim.register(new Robot(pizzeria.getLocation(), MAX_CAPACITY, robot_id));
+            robot_id += 1;
         }
 
         sim.start();

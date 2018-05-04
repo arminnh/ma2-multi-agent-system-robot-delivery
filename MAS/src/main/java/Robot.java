@@ -25,28 +25,19 @@ class Robot extends Vehicle implements MovingRoadUser, TickListener, RandomUser,
     private RandomGenerator rnd;
     private CommDevice comm;
     private static final double VEHICLE_SPEED_KMH = 50d;
+    private int id;
     private String name;
     private Optional<Parcel> curr;
 
-
-    Robot(Point startPosition, int capacity) {
+    Robot(Point startPosition, int capacity, int id) {
         super(VehicleDTO.builder()
                 .capacity(capacity)
                 .startPosition(startPosition)
                 .speed(VEHICLE_SPEED_KMH)
                 .build());
 
-        Random r2 = new Random(); // just create one and keep it around
-        String alphabet = "abcdefghijklmnopqrstuvwxyz";
-
-        final int N = 10;
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < N; i++) {
-            sb.append(alphabet.charAt(r2.nextInt(alphabet.length())));
-        }
-        name = sb.toString();
+        this.id = id;
         curr = Optional.absent();
-
     }
 
     @Override
