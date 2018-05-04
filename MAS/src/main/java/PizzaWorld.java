@@ -2,12 +2,14 @@ import com.github.rinde.rinsim.core.Simulator;
 import com.github.rinde.rinsim.core.model.road.RoadModel;
 import com.github.rinde.rinsim.core.model.road.RoadModelBuilders;
 import com.github.rinde.rinsim.geom.*;
+import com.github.rinde.rinsim.geom.Point;
 import com.github.rinde.rinsim.ui.View;
 import com.github.rinde.rinsim.ui.renderers.*;
 import com.google.common.collect.ImmutableTable;
 import com.google.common.collect.Table;
 
 import javax.measure.unit.SI;
+import java.awt.*;
 import java.util.*;
 
 import static com.google.common.collect.Lists.newArrayList;
@@ -46,10 +48,12 @@ public class PizzaWorld {
                         .withMargin(VEHICLE_LENGTH))
                 .with(RoadUserRenderer.builder()
                         //https://www.shutterstock.com/image-vector/line-pixel-style-classic-robot-rectangle-488817829
-                        .withImageAssociation(Pizzeria.class, "store.png")
+                        .withImageAssociation(Robot.class, "/robot.png")
+                        //https://www.shutterstock.com/image-vector/pizza-delivery-service-icon-set-pixel-1039221658
+                        .withImageAssociation(Pizzeria.class, "/store.png")
+                        // https://www.shutterstock.com/search/source+station
+                        .withImageAssociation(ChargingStation.class, "/station.png")
                 );
-
-
 
         viewBuilder = viewBuilder.withTitleAppendix("PizzaWorld").withAutoPlay();
 
@@ -69,11 +73,11 @@ public class PizzaWorld {
         );
 
         sim.register(pizzeria);
-        //sim.register(chargingStation);
+        sim.register(chargingStation);
 
         for(int i = 0; i < NUM_AGVS; i++) {
             // Robots start at the pizzeria
-            //sim.register(new PizzaRobot(pizzeria.getLocation(), MAX_CAPACITY));
+            sim.register(new PizzaRobot(pizzeria.getLocation(), MAX_CAPACITY));
         }
 
         sim.start();
