@@ -9,15 +9,11 @@ import com.google.common.collect.ImmutableTable;
 import com.google.common.collect.Table;
 
 import javax.measure.unit.SI;
-import java.awt.*;
 import java.util.*;
 
 import static com.google.common.collect.Lists.newArrayList;
 
-/**
- * Created by thierryderuyttere on 30/04/18.
- */
-public class PizzaWorld {
+public class PizzaDeliverySimulator {
 
     private static final int NUM_AGVS = 10;
     private static final int MAX_CAPACITY = 5;
@@ -26,7 +22,7 @@ public class PizzaWorld {
     private static final double NEW_PARCEL = .02;
 
 
-    private PizzaWorld() {}
+    private PizzaDeliverySimulator() {}
 
     /**
      * @param args - No args.
@@ -50,12 +46,12 @@ public class PizzaWorld {
                         //https://www.shutterstock.com/image-vector/line-pixel-style-classic-robot-rectangle-488817829
                         .withImageAssociation(Robot.class, "/robot.png")
                         //https://www.shutterstock.com/image-vector/pizza-delivery-service-icon-set-pixel-1039221658
-                        .withImageAssociation(Pizzeria.class, "/store.png")
+                        .withImageAssociation(Pizzeria.class, "/pizzeria.png")
                         // https://www.shutterstock.com/search/source+station
-                        .withImageAssociation(ChargingStation.class, "/station.png")
+                        .withImageAssociation(ChargingStation.class, "/charging_station.png")
                 );
 
-        viewBuilder = viewBuilder.withTitleAppendix("PizzaWorld").withAutoPlay();
+        viewBuilder = viewBuilder.withTitleAppendix("Pizza delivery multi agent system simulator").withAutoPlay();
 
         final Simulator sim = Simulator.builder()
                 .addModel(RoadModelBuilders.dynamicGraph(GraphCreator.createGraph(10))
@@ -77,7 +73,7 @@ public class PizzaWorld {
 
         for(int i = 0; i < NUM_AGVS; i++) {
             // Robots start at the pizzeria
-            sim.register(new PizzaRobot(pizzeria.getLocation(), MAX_CAPACITY));
+            sim.register(new Robot(pizzeria.getLocation(), MAX_CAPACITY));
         }
 
         sim.start();

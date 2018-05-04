@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-class PizzaPacket extends Parcel implements CommUser, TickListener, RoadUser {
+class DeliveryTask extends Parcel implements CommUser, TickListener, RoadUser {
 
     private Optional<CommDevice> comm;
     private final double range;
@@ -24,7 +24,7 @@ class PizzaPacket extends Parcel implements CommUser, TickListener, RoadUser {
     private RoadModel roadModel;
     private PDPModel pdpModel;
 
-    PizzaPacket(ParcelDTO dto) {
+    DeliveryTask(ParcelDTO dto) {
         super(dto);
         range = MIN_RANGE;
     }

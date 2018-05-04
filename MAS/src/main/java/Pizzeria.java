@@ -4,8 +4,7 @@ import com.github.rinde.rinsim.core.model.road.RoadModel;
 import com.github.rinde.rinsim.geom.Point;
 
 /**
- * Created by thierryderuyttere on 4/05/18.
- * Implementation of the Pizzeria in our PizzaWorld
+ * Implementation of a Pizzeria.
  */
 public class Pizzeria extends Depot {
 

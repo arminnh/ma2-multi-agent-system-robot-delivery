@@ -17,7 +17,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-class PizzaRobot extends Vehicle implements MovingRoadUser, TickListener, RandomUser, CommUser{
+/**
+ * Implementation of a very simple delivery robot.
+ */
+class Robot extends Vehicle implements MovingRoadUser, TickListener, RandomUser, CommUser{
 
     private RandomGenerator rnd;
     private CommDevice comm;
@@ -26,7 +29,7 @@ class PizzaRobot extends Vehicle implements MovingRoadUser, TickListener, Random
     private Optional<Parcel> curr;
 
 
-    PizzaRobot(Point startPosition, int capacity) {
+    Robot(Point startPosition, int capacity) {
         super(VehicleDTO.builder()
                 .capacity(capacity)
                 .startPosition(startPosition)

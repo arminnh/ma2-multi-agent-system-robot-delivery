@@ -4,8 +4,7 @@ import com.github.rinde.rinsim.core.model.road.RoadModel;
 import com.github.rinde.rinsim.geom.Point;
 
 /**
- * Created by thierryderuyttere on 4/05/18.
- * Implementation of the ChargingStation in our PizzaWorld
+ * Implementation of a Charging Station
  */
 public class ChargingStation extends Depot {
 
@@ -17,7 +16,7 @@ public class ChargingStation extends Depot {
         this.location = position;
     }
 
-    public Point getLocation(){
+    public Point getLocation() {
         return this.location;
     }
 
