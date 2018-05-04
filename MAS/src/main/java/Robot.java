@@ -18,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Implementation of a very simple delivery robot.
  */
-class Robot extends Vehicle implements MovingRoadUser, TickListener, RandomUser, CommUser {
+public class Robot extends Vehicle implements MovingRoadUser, TickListener, RandomUser, CommUser {
 
     private Battery battery;
     private int id;

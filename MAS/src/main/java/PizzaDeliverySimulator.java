@@ -1,8 +1,6 @@
 import com.github.rinde.rinsim.core.Simulator;
 import com.github.rinde.rinsim.core.model.comm.CommModel;
 import com.github.rinde.rinsim.core.model.pdp.DefaultPDPModel;
-import com.github.rinde.rinsim.core.model.pdp.Parcel;
-import com.github.rinde.rinsim.core.model.pdp.ParcelDTO;
 import com.github.rinde.rinsim.core.model.pdp.VehicleDTO;
 import com.github.rinde.rinsim.core.model.road.RoadModel;
 import com.github.rinde.rinsim.core.model.road.RoadModelBuilders;
@@ -19,7 +17,7 @@ public class PizzaDeliverySimulator {
 
     private static final long TICK_LENGTH = 1000L;
     private static final long RANDOM_SEED = 123L;
-    private static final int SIM_SPEEDUP = 4;
+    private static final int SIM_SPEEDUP = 2;
 
     private static final int NUM_ROBOTS = 10;
     private static final int ROBOT_CAPACITY = 5;
@@ -121,7 +119,7 @@ public class PizzaDeliverySimulator {
                     //     .serviceDuration(10)
                     //     .neededCapacity(1)
                     //     .buildDTO();
-                    
+
                     sim.register(new DeliveryTask(roadModel.getRandomPosition(rng), 1));
                 }
             }

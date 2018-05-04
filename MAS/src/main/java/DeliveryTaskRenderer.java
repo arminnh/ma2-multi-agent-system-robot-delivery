@@ -1,30 +1,4 @@
-/*
- * Copyright (C) 2011-2018 Rinde R.S. van Lon
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *         http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-
-import com.github.rinde.rinsim.core.model.pdp.Parcel;
-import org.eclipse.swt.SWT;
-import org.eclipse.swt.graphics.GC;
-
 import com.github.rinde.rinsim.core.model.pdp.PDPModel;
-import com.github.rinde.rinsim.core.model.pdp.PDPModel.VehicleState;
 import com.github.rinde.rinsim.core.model.road.RoadModel;
 import com.github.rinde.rinsim.core.model.road.RoadUser;
 import com.github.rinde.rinsim.geom.Point;
@@ -32,6 +6,11 @@ import com.github.rinde.rinsim.ui.renderers.CanvasRenderer.AbstractCanvasRendere
 import com.github.rinde.rinsim.ui.renderers.ViewPort;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Maps;
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.graphics.GC;
+
+import java.util.Map;
+import java.util.Map.Entry;
 
 
 public class DeliveryTaskRenderer extends AbstractCanvasRenderer {
@@ -39,7 +18,6 @@ public class DeliveryTaskRenderer extends AbstractCanvasRenderer {
     private static final int ROUND_RECT_ARC_HEIGHT = 5;
     private static final int X_OFFSET = -5;
     private static final int Y_OFFSET = -30;
-
 
     private final RoadModel roadModel;
     private final PDPModel pdpModel;
@@ -52,9 +30,8 @@ public class DeliveryTaskRenderer extends AbstractCanvasRenderer {
     @Override
     public void renderStatic(GC gc, ViewPort vp) {}
 
-    enum Pred implements Predicate<Entry<RoadUser, Point>> {
-        INSTANCE {
-
+    enum Filter implements Predicate<Entry<RoadUser, Point>> {
+        DELIVERY_TASKS {
             @Override
             public boolean apply(Entry<RoadUser, Point> input) {
                 return input.getKey() instanceof DeliveryTask;
@@ -65,20 +42,16 @@ public class DeliveryTaskRenderer extends AbstractCanvasRenderer {
 
     @Override
     public void renderDynamic(GC gc, ViewPort vp, long time) {
-        final Map<RoadUser, Point> map = Maps.filterEntries(roadModel.getObjectsAndPositions(), Pred.INSTANCE);
-
-        /*final List<Parcel> parcels = new LinkedList<>(pdpModel.getParcels(PDPModel.ParcelState.AVAILABLE,
-                PDPModel.ParcelState.PICKING_UP,
-                PDPModel.ParcelState.DELIVERING));*/
+        final Map<RoadUser, Point> map = Maps.filterEntries(roadModel.getObjectsAndPositions(), Filter.DELIVERY_TASKS);
 
         for (final Entry<RoadUser, Point> parcel: map.entrySet()){
             final DeliveryTask task = (DeliveryTask) parcel.getKey();
             final Point p = parcel.getValue();
-            final double capacity = task.getCapacity();
+            final double pizzaAmount = task.getPizzaAmount();
             final int x = vp.toCoordX(p.x) + X_OFFSET;
             final int y = vp.toCoordY(p.y) + Y_OFFSET;
 
-            final org.eclipse.swt.graphics.Point extent = gc.textExtent(Double.toString(capacity));
+            final org.eclipse.swt.graphics.Point extent = gc.textExtent(Double.toString(pizzaAmount));
 
             gc.setBackground(gc.getDevice().getSystemColor(SWT.COLOR_DARK_BLUE));
             gc.fillRoundRectangle(x - extent.x / 2, y - extent.y / 2,
@@ -86,7 +59,7 @@ public class DeliveryTaskRenderer extends AbstractCanvasRenderer {
                     ROUND_RECT_ARC_HEIGHT);
             gc.setForeground(gc.getDevice().getSystemColor(SWT.COLOR_WHITE));
 
-            gc.drawText(Double.toString(capacity), x - extent.x / 2 + 1, y - extent.y / 2 + 1,
+            gc.drawText(Double.toString(pizzaAmount), x - extent.x / 2 + 1, y - extent.y / 2 + 1,
                     true);
         }
 
