@@ -55,7 +55,12 @@ public class RobotRenderer extends AbstractCanvasRenderer {
             final int x = vp.toCoordX(p.x) + X_OFFSET;
             final int y = vp.toCoordY(p.y) + Y_OFFSET;
 
-            final org.eclipse.swt.graphics.Point extent = gc.textExtent(Integer.toString(currentBattery) + "%");
+            final org.eclipse.swt.graphics.Point extent = gc.textExtent(Integer.toString(100) + "%");
+            gc.setBackground(gc.getDevice().getSystemColor(SWT.COLOR_BLACK));
+
+            gc.fillRoundRectangle(x - extent.x / 2, y - extent.y / 2,
+                    extent.x + 2, extent.y + 2, ROUND_RECT_ARC_HEIGHT,
+                    ROUND_RECT_ARC_HEIGHT);
             if(currentBattery > 80){
                 gc.setBackground(gc.getDevice().getSystemColor(SWT.COLOR_GREEN));
 
@@ -63,15 +68,14 @@ public class RobotRenderer extends AbstractCanvasRenderer {
                 gc.setBackground(gc.getDevice().getSystemColor(SWT.COLOR_YELLOW));
             } else{
                 gc.setBackground(gc.getDevice().getSystemColor(SWT.COLOR_RED));
-
             }
 
-            gc.fillRoundRectangle(x - extent.x / 2, y - extent.y / 2,
-                    extent.x + 2, extent.y + 2, ROUND_RECT_ARC_HEIGHT,
+            gc.fillRoundRectangle(x - extent.x / 2   , y - extent.y / 2,
+                    Math.max((extent.x + 2)* robot.getCurrentBatteryCapacity()/100,0), extent.y + 2, ROUND_RECT_ARC_HEIGHT,
                     ROUND_RECT_ARC_HEIGHT);
             gc.setForeground(gc.getDevice().getSystemColor(SWT.COLOR_BLACK));
 
-            gc.drawText(Integer.toString(currentBattery) + "%", x - extent.x / 2 + 1, y - extent.y / 2 + 1,
+            gc.drawText(Integer.toString(Math.max(currentBattery,0)) + "%", x - extent.x / 2 + 1, y - extent.y / 2 + 1,
                     true);
         }
 
