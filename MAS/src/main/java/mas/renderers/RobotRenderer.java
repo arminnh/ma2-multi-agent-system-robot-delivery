@@ -60,7 +60,7 @@ public class RobotRenderer extends AbstractCanvasRenderer {
                 gc.setBackground(gc.getDevice().getSystemColor(SWT.COLOR_GREEN));
 
             } else if( currentBattery > 30){
-                gc.setBackground(gc.getDevice().getSystemColor(SWT.COLOR_DARK_YELLOW));
+                gc.setBackground(gc.getDevice().getSystemColor(SWT.COLOR_YELLOW));
             } else{
                 gc.setBackground(gc.getDevice().getSystemColor(SWT.COLOR_RED));
 
@@ -69,7 +69,7 @@ public class RobotRenderer extends AbstractCanvasRenderer {
             gc.fillRoundRectangle(x - extent.x / 2, y - extent.y / 2,
                     extent.x + 2, extent.y + 2, ROUND_RECT_ARC_HEIGHT,
                     ROUND_RECT_ARC_HEIGHT);
-            gc.setForeground(gc.getDevice().getSystemColor(SWT.COLOR_WHITE));
+            gc.setForeground(gc.getDevice().getSystemColor(SWT.COLOR_BLACK));
 
             gc.drawText(Integer.toString(currentBattery) + "%", x - extent.x / 2 + 1, y - extent.y / 2 + 1,
                     true);
