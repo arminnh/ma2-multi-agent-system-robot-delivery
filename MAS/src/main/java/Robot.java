@@ -15,41 +15,70 @@ import com.google.common.base.Optional;
 import org.apache.commons.math3.random.RandomGenerator;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
-
 /**
  * Implementation of a very simple delivery robot.
  */
-class Robot extends Vehicle implements MovingRoadUser, TickListener, RandomUser, CommUser{
+class Robot extends Vehicle implements MovingRoadUser, TickListener, RandomUser, CommUser {
 
-    private RandomGenerator rnd;
-    private CommDevice comm;
-    private static final double VEHICLE_SPEED_KMH = 50d;
+    private Battery battery;
     private int id;
     private Optional<Parcel> curr;
 
-    Robot(Point startPosition, int capacity, int id) {
-        super(VehicleDTO.builder()
-                .capacity(capacity)
-                .startPosition(startPosition)
-                .speed(VEHICLE_SPEED_KMH)
-                .build());
+    private Optional<RandomGenerator> rnd;
+    private Optional<CommDevice> comm;
+    private Optional<RoadModel> roadModel;
+    private Optional<PDPModel> pdpModel;
 
+
+    Robot(VehicleDTO vdto, Battery battery, int id) {
+        super(vdto);
+
+        this.battery = battery;
         this.id = id;
         curr = Optional.absent();
     }
 
     @Override
-    public void tickImpl(@NotNull TimeLapse time) {
-        final RoadModel rm = getRoadModel();
-        final PDPModel pm = getPDPModel();
+    public void initRoadPDP(RoadModel pRoadModel, PDPModel pPdpModel) {
+        this.roadModel = Optional.of(pRoadModel);
+        this.pdpModel = Optional.of(pPdpModel);
+    }
 
+
+    @Override
+    public Optional<Point> getPosition() {
+        if (roadModel.isPresent()) {
+            return Optional.of(roadModel.get().getPosition(this));
+        }
+        return Optional.absent();
+    }
+
+
+    @Override
+    public void setRandomGenerator(@NotNull RandomProvider provider) {
+        rnd = Optional.of(provider.newInstance());
+    }
+
+
+    @Override
+    public void setCommDevice(@NotNull CommDeviceBuilder builder) {
+        builder.setMaxRange(0.5);
+        comm = Optional.of(builder.build());
+    }
+
+
+    @Override
+    public void tickImpl(@NotNull TimeLapse time) {
         if (!time.hasTimeLeft()) {
             return;
         }
+
         if (!curr.isPresent()) {
             curr = Optional.fromNullable(RoadModels.findClosestObject(
-                    rm.getPosition(this), rm, Parcel.class));
+                roadModel.get().getPosition(this),
+                roadModel.get(),
+                Parcel.class
+            ));
         }
 
     }
@@ -57,21 +86,4 @@ class Robot extends Vehicle implements MovingRoadUser, TickListener, RandomUser,
 
     @Override
     public void afterTick(@NotNull TimeLapse timeLapse) { }
-
-
-    @Override
-    public Optional<Point> getPosition() {
-        return Optional.of(getRoadModel().getPosition(this));
-    }
-
-    @Override
-    public void setCommDevice(@NotNull CommDeviceBuilder builder) {
-        builder.setMaxRange(0.5);
-        comm = builder.build();
-    }
-
-    @Override
-    public void setRandomGenerator(@NotNull RandomProvider provider) {
-        rnd = provider.newInstance();
-    }
 }
