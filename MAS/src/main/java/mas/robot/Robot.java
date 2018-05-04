@@ -94,7 +94,7 @@ public class Robot extends Vehicle implements MovingRoadUser, TickListener, Rand
         }
 
         if(this.current_path.get().size() > 0){
-
+            this.battery.decrementCapacity();
             roadModel.get().followPath(this, this.current_path.get(), time);
         }
 
@@ -106,12 +106,7 @@ public class Robot extends Vehicle implements MovingRoadUser, TickListener, Rand
                 this.current_task.get().getDeliveryTask().deliverPizzas(this.current_task.get().getAmountPizzas());
 
                 // Unload pizza's
-                System.out.println("pre");
-                System.out.println(this.current_capacity);
-
                 this.current_capacity -= this.current_task.get().getAmountPizzas();
-                System.out.println("post");
-                System.out.println(this.current_capacity);
 
                 if(this.current_task.get().getDeliveryTask().receivedAllPizzas()){
                     // All pizza's have been delivered, now we have to delete the task.

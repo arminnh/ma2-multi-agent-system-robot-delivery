@@ -56,8 +56,16 @@ public class RobotRenderer extends AbstractCanvasRenderer {
             final int y = vp.toCoordY(p.y) + Y_OFFSET;
 
             final org.eclipse.swt.graphics.Point extent = gc.textExtent(Integer.toString(currentBattery) + "%");
+            if(currentBattery > 80){
+                gc.setBackground(gc.getDevice().getSystemColor(SWT.COLOR_GREEN));
 
-            gc.setBackground(gc.getDevice().getSystemColor(SWT.COLOR_DARK_BLUE));
+            } else if( currentBattery > 30){
+                gc.setBackground(gc.getDevice().getSystemColor(SWT.COLOR_DARK_YELLOW));
+            } else{
+                gc.setBackground(gc.getDevice().getSystemColor(SWT.COLOR_RED));
+
+            }
+
             gc.fillRoundRectangle(x - extent.x / 2, y - extent.y / 2,
                     extent.x + 2, extent.y + 2, ROUND_RECT_ARC_HEIGHT,
                     ROUND_RECT_ARC_HEIGHT);
