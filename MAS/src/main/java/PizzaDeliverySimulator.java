@@ -6,18 +6,11 @@ import com.github.rinde.rinsim.core.model.road.RoadModel;
 import com.github.rinde.rinsim.core.model.road.RoadModelBuilders;
 import com.github.rinde.rinsim.core.model.time.TickListener;
 import com.github.rinde.rinsim.core.model.time.TimeLapse;
-import com.github.rinde.rinsim.geom.*;
-import com.github.rinde.rinsim.geom.Point;
 import com.github.rinde.rinsim.ui.View;
 import com.github.rinde.rinsim.ui.renderers.*;
-import com.google.common.collect.ImmutableTable;
-import com.google.common.collect.Table;
 import org.apache.commons.math3.random.RandomGenerator;
 
 import javax.measure.unit.SI;
-import java.util.*;
-
-import static com.google.common.collect.Lists.newArrayList;
 
 public class PizzaDeliverySimulator {
 
@@ -45,7 +38,7 @@ public class PizzaDeliverySimulator {
      *          automatically starting and stopping itself such that it can be run
      *          from a unit test.
      */
-    public static void run(boolean testing) {
+    private static void run(boolean testing) {
         View.Builder viewBuilder = View.builder()
                 .with(GraphRoadModelRenderer.builder()
                         .withMargin(VEHICLE_LENGTH))
@@ -61,8 +54,10 @@ public class PizzaDeliverySimulator {
 
         viewBuilder = viewBuilder.withTitleAppendix("Pizza delivery multi agent system simulator").withAutoPlay();
 
+        CityGraphCreator graphCreator = new CityGraphCreator(VEHICLE_LENGTH);
+
         final Simulator sim = Simulator.builder()
-                .addModel(RoadModelBuilders.dynamicGraph(GraphCreator.createGraph(10))
+                .addModel(RoadModelBuilders.dynamicGraph(graphCreator.createGraph(10))
                                 .withDistanceUnit(SI.METER)
                                 .withModificationCheck(true))
                 .addModel(viewBuilder)
@@ -94,11 +89,11 @@ public class PizzaDeliverySimulator {
             public void tick(TimeLapse time) {
                 if (rng.nextDouble() < NEW_PARCEL) {
                     sim.register(new DeliveryTask(
-                            Parcel.builder(pizzeria.getLocation(),
-                                    roadModel.getRandomPosition(rng))
-                                    .serviceDuration(10)
-                                    .neededCapacity(1)
-                                    .buildDTO()));
+                        Parcel.builder(pizzeria.getLocation(), roadModel.getRandomPosition(rng))
+                            .serviceDuration(10)
+                            .neededCapacity(1)
+                            .buildDTO()
+                    ));
                 }
             }
 
@@ -107,38 +102,5 @@ public class PizzaDeliverySimulator {
         });
 
         sim.start();
-    }
-
-    static class GraphCreator {
-
-        GraphCreator() {}
-
-        static ImmutableTable<Integer, Integer, Point> createMatrix(int cols, int rows, Point offset) {
-            final ImmutableTable.Builder<Integer, Integer, Point> builder =
-                    ImmutableTable.builder();
-            for (int c = 0; c < cols; c++) {
-                for (int r = 0; r < rows; r++) {
-                    builder.put(r, c, new Point(
-                            offset.x + c * VEHICLE_LENGTH * 2,
-                            offset.y + r * VEHICLE_LENGTH * 2));
-                }
-            }
-            return builder.build();
-        }
-
-        static ListenableGraph<LengthData> createGraph(Integer size) {
-            final Graph<LengthData> g = new TableGraph<>();
-
-            final Table<Integer, Integer, Point> leftMatrix = createMatrix(size, size,
-                    new Point(0, 0));
-            for (final Map<Integer, Point> column : leftMatrix.columnMap().values()) {
-                Graphs.addBiPath(g, column.values());
-            }
-            for (final Map<Integer, Point> row : leftMatrix.rowMap().values()) {
-                Graphs.addBiPath(g, row.values());
-            }
-
-            return new ListenableGraph<>(g);
-        }
     }
 }
