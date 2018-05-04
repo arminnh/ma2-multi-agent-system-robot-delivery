@@ -58,7 +58,7 @@ public class PizzaDeliverySimulator {
                 .withImageAssociation(Robot.class, "/robot.png")
                 .withImageAssociation(Pizzeria.class, "/pizzeria.png")
                 .withImageAssociation(ChargingStation.class, "/charging_station.png")
-                //.withImageAssociation(DeliveryTask.class, "/graphics/flat/person-black-32.png")
+                .withImageAssociation(DeliveryTask.class, "/graphics/flat/person-black-32.png")
             )
             .with(DeliveryTaskRenderer.builder());
         /*
@@ -117,12 +117,12 @@ public class PizzaDeliverySimulator {
             public void tick(@NotNull TimeLapse time) {
                 if (rng.nextDouble() < PROB_NEW_PARCEL) {
 
-                    ParcelDTO pdto = Parcel.builder(roadModel.getRandomPosition(rng), roadModel.getRandomPosition(rng))
-                        .serviceDuration(10)
-                        .neededCapacity(1)
-                        .buildDTO();
-
-                    sim.register(new DeliveryTask(pdto));
+                    // ParcelDTO pdto = Parcel.builder(roadModel.getRandomPosition(rng), roadModel.getRandomPosition(rng))
+                    //     .serviceDuration(10)
+                    //     .neededCapacity(1)
+                    //     .buildDTO();
+                    
+                    sim.register(new DeliveryTask(roadModel.getRandomPosition(rng), 1));
                 }
             }
 
