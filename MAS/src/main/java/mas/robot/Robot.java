@@ -17,6 +17,10 @@ import com.google.common.base.Optional;
 import org.apache.commons.math3.random.RandomGenerator;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
+
 /**
  * Implementation of a very simple delivery robot.
  */
@@ -24,20 +28,24 @@ public class Robot extends Vehicle implements MovingRoadUser, TickListener, Rand
 
     private Battery battery;
     private int id;
-    private Optional<Parcel> curr;
+    private Optional<Parcel> current_task;
 
     private Optional<RandomGenerator> rnd;
     private Optional<CommDevice> comm;
     private Optional<RoadModel> roadModel;
     private Optional<PDPModel> pdpModel;
+    private Optional<Queue<Point>> current_path;
+    private Point pizzeriaPos;
 
 
-    public Robot(VehicleDTO vdto, Battery battery, int id) {
+
+    public Robot(VehicleDTO vdto, Battery battery, int id, Point pizzeriaPos) {
         super(vdto);
 
         this.battery = battery;
         this.id = id;
-        curr = Optional.absent();
+        current_task = Optional.absent();
+        this.pizzeriaPos = pizzeriaPos;
     }
 
     @Override
@@ -45,7 +53,6 @@ public class Robot extends Vehicle implements MovingRoadUser, TickListener, Rand
         this.roadModel = Optional.of(pRoadModel);
         this.pdpModel = Optional.of(pPdpModel);
     }
-
 
     @Override
     public Optional<Point> getPosition() {
@@ -55,12 +62,10 @@ public class Robot extends Vehicle implements MovingRoadUser, TickListener, Rand
         return Optional.absent();
     }
 
-
     @Override
     public void setRandomGenerator(@NotNull RandomProvider provider) {
         rnd = Optional.of(provider.newInstance());
     }
-
 
     @Override
     public void setCommDevice(@NotNull CommDeviceBuilder builder) {
@@ -68,20 +73,22 @@ public class Robot extends Vehicle implements MovingRoadUser, TickListener, Rand
         comm = Optional.of(builder.build());
     }
 
-
     @Override
     public void tickImpl(@NotNull TimeLapse time) {
         if (!time.hasTimeLeft()) {
             return;
         }
 
-        if (!curr.isPresent()) {
-            curr = Optional.fromNullable(RoadModels.findClosestObject(
-                roadModel.get().getPosition(this),
-                roadModel.get(),
-                Parcel.class
-            ));
+        // No parcel so move to pizzeria
+        if (!current_task.isPresent()) {
+            Queue<Point> path = new LinkedList<>(roadModel.get().getShortestPathTo(this, this.pizzeriaPos));
+            this.current_path = Optional.of(path);
         }
+
+        if(this.current_path.isPresent()){
+            roadModel.get().followPath(this, this.current_path.get(), time);
+        }
+        
 
     }
 

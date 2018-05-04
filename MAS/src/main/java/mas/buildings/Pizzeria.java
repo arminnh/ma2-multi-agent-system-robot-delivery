@@ -13,7 +13,6 @@ public class Pizzeria implements RoadUser {
     /**
      * For isRegistered implementation, see PDPObjectImpl
      */
-
     private Point position;
     private Optional<RoadModel> roadModel;
 

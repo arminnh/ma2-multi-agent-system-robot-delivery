@@ -29,7 +29,7 @@ public class PizzaDeliverySimulator {
     private static final long RANDOM_SEED = 123L;
     private static final int SIM_SPEEDUP = 2;
 
-    private static final int NUM_ROBOTS = 1;
+    private static final int NUM_ROBOTS = 10;
     private static final int ROBOT_CAPACITY = 5;
     private static final int BATTERY_CAPACITY = 100;
     private static final int VEHICLE_LENGTH = 1;
@@ -57,8 +57,8 @@ public class PizzaDeliverySimulator {
         // Configure the GUI with separate mas.renderers for the road, robots, customers, ...
         View.Builder viewBuilder = View.builder()
             .withTitleAppendix("Pizza delivery multi agent system simulator")
-            .withAutoPlay()
-            .withSpeedUp(SIM_SPEEDUP)
+            //.withAutoPlay()
+            //.withSpeedUp(SIM_SPEEDUP)
             .with(GraphRoadModelRenderer.builder()
                 .withMargin(VEHICLE_LENGTH)
             )
@@ -109,13 +109,13 @@ public class PizzaDeliverySimulator {
             VehicleDTO vdto = VehicleDTO.builder()
                 .capacity(ROBOT_CAPACITY)
                 .startPosition(roadModel.getRandomPosition(rng))//pizzeria.getPosition())
-                .speed(VEHICLE_SPEED_KMH)
+                .speed(1)
                 .build();
 
             Battery battery = new Battery(BATTERY_CAPACITY);
 
             // Robots start at the pizzeria
-            sim.register(new Robot(vdto, battery, ROBOT_ID));
+            sim.register(new Robot(vdto, battery, ROBOT_ID, pizzeria.getPosition()));
             ROBOT_ID += 1;
         }
 
