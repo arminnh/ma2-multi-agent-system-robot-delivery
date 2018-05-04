@@ -85,6 +85,10 @@ public class Robot extends Vehicle implements MovingRoadUser, TickListener, Rand
 
     }
 
+    public int getCurrentBatteryCapacity(){
+        return this.battery.getRemainingCapacity();
+    }
+
 
     @Override
     public void afterTick(@NotNull TimeLapse timeLapse) { }

@@ -14,6 +14,7 @@ import mas.buildings.CityGraphCreator;
 import mas.maps.ChargingStation;
 import mas.pizza.DeliveryTask;
 import mas.buildings.Pizzeria;
+import mas.renderers.RobotRenderer;
 import mas.robot.Battery;
 import mas.robot.Robot;
 import org.apache.commons.math3.random.RandomGenerator;
@@ -28,7 +29,7 @@ public class PizzaDeliverySimulator {
     private static final long RANDOM_SEED = 123L;
     private static final int SIM_SPEEDUP = 2;
 
-    private static final int NUM_ROBOTS = 10;
+    private static final int NUM_ROBOTS = 1;
     private static final int ROBOT_CAPACITY = 5;
     private static final int BATTERY_CAPACITY = 100;
     private static final int VEHICLE_LENGTH = 1;
@@ -67,7 +68,8 @@ public class PizzaDeliverySimulator {
                 .withImageAssociation(ChargingStation.class, "/charging_station.png")
                 .withImageAssociation(DeliveryTask.class, "/graphics/flat/person-black-32.png")
             )
-            .with(DeliveryTaskRenderer.builder());
+            .with(DeliveryTaskRenderer.builder())
+            .with(RobotRenderer.builder());
         /*
          * Image sources:
          * https://www.shutterstock.com/image-vector/line-pixel-style-classic-robot-rectangle-488817829
@@ -106,7 +108,7 @@ public class PizzaDeliverySimulator {
         for(int i = 0; i < NUM_ROBOTS; i++) {
             VehicleDTO vdto = VehicleDTO.builder()
                 .capacity(ROBOT_CAPACITY)
-                .startPosition(pizzeria.getPosition())
+                .startPosition(roadModel.getRandomPosition(rng))//pizzeria.getPosition())
                 .speed(VEHICLE_SPEED_KMH)
                 .build();
 
