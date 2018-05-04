@@ -13,9 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import com.github.rinde.rinsim.core.model.pdp.Parcel;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.GC;
 
@@ -63,7 +67,29 @@ public class DeliveryTaskRenderer extends AbstractCanvasRenderer {
     public void renderDynamic(GC gc, ViewPort vp, long time) {
         final Map<RoadUser, Point> map = Maps.filterEntries(roadModel.getObjectsAndPositions(), Pred.INSTANCE);
 
-        for (final Entry<RoadUser, Point> entry : map.entrySet()) {
+        final List<Parcel> parcels = new LinkedList<>(pdpModel.getParcels(PDPModel.ParcelState.AVAILABLE,
+                PDPModel.ParcelState.PICKING_UP,
+                PDPModel.ParcelState.DELIVERING));
+
+        for (final Parcel parcel: parcels){
+            final Point p = parcel.getDeliveryLocation();
+            final double capacity = parcel.getNeededCapacity();
+            final int x = vp.toCoordX(p.x) + X_OFFSET;
+            final int y = vp.toCoordY(p.y) + Y_OFFSET;
+
+            final org.eclipse.swt.graphics.Point extent = gc.textExtent(Double.toString(capacity));
+
+            gc.setBackground(gc.getDevice().getSystemColor(SWT.COLOR_DARK_BLUE));
+            gc.fillRoundRectangle(x - extent.x / 2, y - extent.y / 2,
+                    extent.x + 2, extent.y + 2, ROUND_RECT_ARC_HEIGHT,
+                    ROUND_RECT_ARC_HEIGHT);
+            gc.setForeground(gc.getDevice().getSystemColor(SWT.COLOR_WHITE));
+
+            gc.drawText(Double.toString(capacity), x - extent.x / 2 + 1, y - extent.y / 2 + 1,
+                    true);
+        }
+
+        /*for (final Entry<RoadUser, Point> entry : map.entrySet()) {
             final Robot t = (Robot) entry.getKey();
             final Point p = entry.getValue();
             final int x = vp.toCoordX(p.x) + X_OFFSET;
@@ -93,7 +119,7 @@ public class DeliveryTaskRenderer extends AbstractCanvasRenderer {
                 gc.drawText(text, x - extent.x / 2 + 1, y - extent.y / 2 + 1,
                         true);
             }
-        }
+        }*/
     }
 
     static DeliveryTaskRendererBuilder builder() {

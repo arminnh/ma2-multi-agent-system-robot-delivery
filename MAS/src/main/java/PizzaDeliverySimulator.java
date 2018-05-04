@@ -50,7 +50,8 @@ public class PizzaDeliverySimulator {
                         // https://www.shutterstock.com/search/source+station
                         .withImageAssociation(ChargingStation.class, "/charging_station.png")
                         //.withImageAssociation(DeliveryTask.class, "/graphics/flat/person-black-32.png")
-                );
+                )
+                .with(DeliveryTaskRenderer.builder());
 
         viewBuilder = viewBuilder.withTitleAppendix("Pizza delivery multi agent system simulator").withAutoPlay();
 
@@ -89,7 +90,7 @@ public class PizzaDeliverySimulator {
             public void tick(TimeLapse time) {
                 if (rng.nextDouble() < NEW_PARCEL) {
                     sim.register(new DeliveryTask(
-                        Parcel.builder(pizzeria.getLocation(), roadModel.getRandomPosition(rng))
+                        Parcel.builder(roadModel.getRandomPosition(rng), roadModel.getRandomPosition(rng))
                             .serviceDuration(10)
                             .neededCapacity(1)
                             .buildDTO()
