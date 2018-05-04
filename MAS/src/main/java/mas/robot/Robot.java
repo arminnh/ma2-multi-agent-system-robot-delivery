@@ -15,6 +15,7 @@ import com.github.rinde.rinsim.core.model.time.TickListener;
 import com.github.rinde.rinsim.core.model.time.TimeLapse;
 import com.github.rinde.rinsim.geom.Point;
 import com.google.common.base.Optional;
+import mas.maps.ChargingStation;
 import mas.pizza.DeliveryTask;
 import mas.pizza.PizzaParcel;
 import org.apache.commons.math3.random.RandomGenerator;
@@ -24,6 +25,7 @@ import javax.measure.unit.SI;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
+import java.util.Set;
 
 /**
  * Implementation of a very simple delivery robot.
@@ -78,6 +80,10 @@ public class Robot extends Vehicle implements MovingRoadUser, TickListener, Rand
         comm = Optional.of(builder.build());
     }
 
+    private Set<ChargingStation> getClosestChargeStation(){
+        return this.roadModel.get().getObjectsOfType(ChargingStation.class);
+    }
+
     @Override
     public void tickImpl(@NotNull TimeLapse time) {
         if (!time.hasTimeLeft()) {
@@ -86,14 +92,10 @@ public class Robot extends Vehicle implements MovingRoadUser, TickListener, Rand
 
         // No parcel so move to pizzeria
         if (!current_task.isPresent()) {
-            if(!this.current_path.isPresent()){
-                Queue<Point> path = new LinkedList<>(roadModel.get().getShortestPathTo(this, this.pizzeriaPos));
-                this.current_path = Optional.of(path);
-            }
+            toPizzeriaOrChargingStation();
         }else{
             // We have a parcel
-            Queue<Point> path = new LinkedList<>(roadModel.get().getShortestPathTo(this, this.current_task.get().getDeliveryLocation()));
-            this.current_path = Optional.of(path);
+            toCustomerOrChargingStation();
         }
 
         if(this.current_path.get().size() > 0){
@@ -127,8 +129,58 @@ public class Robot extends Vehicle implements MovingRoadUser, TickListener, Rand
                 // Remove current path
                 this.current_path = Optional.absent();
             }
+        }else{
+            if (roadModel.get().getPosition(this) == this.pizzeriaPos){
+                this.current_path = Optional.absent();
+            }
+        }
+    }
+
+    private void toCustomerOrChargingStation() {
+        if(!this.current_path.isPresent()) {
+            Queue<Point> path = new LinkedList<>(roadModel.get().getShortestPathTo(this, this.current_task.get().getDeliveryLocation()));
+            this.current_path = Optional.of(path);
+
+            rechargeIfNecessary(path);
         }
 
+    }
+
+    private void toPizzeriaOrChargingStation() {
+        // Logic to decide if we have to go to the pizzeria or recharge our battery in a charging station
+
+        if(!this.current_path.isPresent()){
+            Queue<Point> path = new LinkedList<>(roadModel.get().getShortestPathTo(this, this.pizzeriaPos));
+            this.current_path = Optional.of(path);
+
+            rechargeIfNecessary(path);
+        }
+    }
+
+    private void rechargeIfNecessary(Queue<Point> path) {
+        // If distance of our path is more than our battery can take, recharge!
+
+        if(new Double(Math.ceil(getDistanceOfPathInMeters(path))).intValue() > battery.getRemainingCapacity()){
+            Queue<Point> new_path = null;
+            // Find closest charging station
+            for(final ChargingStation station : getClosestChargeStation()){
+                Queue<Point> temp_path = new LinkedList<>(roadModel.get().getShortestPathTo(this, station.getPosition()));
+                if(new_path == null){
+                    new_path = temp_path;
+                }
+
+                if(getDistanceOfPathInMeters(new_path) > getDistanceOfPathInMeters(temp_path)){
+                    new_path = temp_path;
+                }
+            }
+
+            this.current_path = Optional.of(new_path);
+
+        }
+    }
+
+    private double getDistanceOfPathInMeters(Queue<Point> new_path) {
+        return roadModel.get().getDistanceOfPath(new_path).doubleValue(SI.METER);
     }
 
     public int getCurrentBatteryCapacity(){
