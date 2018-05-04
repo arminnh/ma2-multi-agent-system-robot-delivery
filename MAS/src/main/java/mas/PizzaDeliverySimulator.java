@@ -3,6 +3,7 @@ package mas;
 import com.github.rinde.rinsim.core.Simulator;
 import com.github.rinde.rinsim.core.model.comm.CommModel;
 import com.github.rinde.rinsim.core.model.pdp.DefaultPDPModel;
+import com.github.rinde.rinsim.core.model.pdp.PDPModel;
 import com.github.rinde.rinsim.core.model.pdp.VehicleDTO;
 import com.github.rinde.rinsim.core.model.road.RoadModel;
 import com.github.rinde.rinsim.core.model.road.RoadModelBuilders;
@@ -29,7 +30,7 @@ public class PizzaDeliverySimulator {
     private static final long RANDOM_SEED = 123L;
     private static final int SIM_SPEEDUP = 2;
 
-    private static final int NUM_ROBOTS = 10;
+    private static final int NUM_ROBOTS = 1;
     private static final int ROBOT_CAPACITY = 5;
     private static final int BATTERY_CAPACITY = 100;
     private static final int VEHICLE_LENGTH = 1;
@@ -82,7 +83,7 @@ public class PizzaDeliverySimulator {
             // set the length of a simulation 'tick'
             .setTickLength(TICK_LENGTH)
             // set the random seed we use in this 'experiment'
-            .setRandomSeed(RANDOM_SEED)
+            //.setRandomSeed(RANDOM_SEED)
             .addModel(RoadModelBuilders.dynamicGraph(CityGraphCreator.createGraph(10, VEHICLE_LENGTH))
                 .withDistanceUnit(SI.METER)
                 .withModificationCheck(true))
@@ -94,8 +95,9 @@ public class PizzaDeliverySimulator {
 
         final RandomGenerator rng = sim.getRandomGenerator();
         final RoadModel roadModel = sim.getModelProvider().getModel(RoadModel.class);
+        final PDPModel pdpModel = sim.getModelProvider().getModel(PDPModel.class);
 
-        final Pizzeria pizzeria = new Pizzeria(roadModel.getRandomPosition(rng));
+        final Pizzeria pizzeria = new Pizzeria(roadModel.getRandomPosition(rng), pdpModel, sim);
         sim.register(pizzeria);
 
         Double charging_station_capacity = NUM_ROBOTS * 0.3;

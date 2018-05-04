@@ -14,6 +14,9 @@ public class DeliveryTask implements RoadUser, CommUser {
 
     private Point position;
     private int pizzaAmount;
+    private int pizzasReady;
+    private int pizzasReceived;
+
 
     private Optional<RoadModel> roadModel;
     private Optional<CommDevice> comm;
@@ -22,6 +25,7 @@ public class DeliveryTask implements RoadUser, CommUser {
     public DeliveryTask(Point position, int pizzaAmount) {
         this.position = position;
         this.pizzaAmount = pizzaAmount;
+        this.pizzasReceived = 0;
     }
 
     @Override
@@ -41,6 +45,21 @@ public class DeliveryTask implements RoadUser, CommUser {
         return this.pizzaAmount;
     }
 
+    public int getPizzasReady() { return this.pizzasReady;}
+
+    public int getPizzasReceived() { return this.pizzasReceived;}
+
+    public int getPizzasLeft() { return this.pizzaAmount - this.pizzasReady;}
+
+    public boolean receivedAllPizzas() {return this.pizzasReceived == this.pizzaAmount;}
+
+    public void addReadyPizzas(int amount){
+        this.pizzasReady += amount;
+    }
+
+    public void deliverPizzas(int amount){
+        this.pizzasReceived += amount;
+    }
 
     @Override
     public void setCommDevice(@NotNull CommDeviceBuilder builder) {
