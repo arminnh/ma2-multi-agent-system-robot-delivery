@@ -49,7 +49,7 @@ public class PizzaDeliverySimulator {
                         .withImageAssociation(Pizzeria.class, "/pizzeria.png")
                         // https://www.shutterstock.com/search/source+station
                         .withImageAssociation(ChargingStation.class, "/charging_station.png")
-                        //.withImageAssociation(DeliveryTask.class, "/graphics/flat/person-black-32.png")
+                        .withImageAssociation(DeliveryTask.class, "/graphics/flat/person-black-32.png")
                 )
                 .with(DeliveryTaskRenderer.builder());
 
@@ -89,12 +89,7 @@ public class PizzaDeliverySimulator {
             @Override
             public void tick(TimeLapse time) {
                 if (rng.nextDouble() < NEW_PARCEL) {
-                    sim.register(new DeliveryTask(
-                        Parcel.builder(roadModel.getRandomPosition(rng), roadModel.getRandomPosition(rng))
-                            .serviceDuration(10)
-                            .neededCapacity(1)
-                            .buildDTO()
-                    ));
+                    sim.register(new DeliveryTask(roadModel.getRandomPosition(rng), 1));
                 }
             }
 

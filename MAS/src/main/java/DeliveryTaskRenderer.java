@@ -57,7 +57,7 @@ public class DeliveryTaskRenderer extends AbstractCanvasRenderer {
 
             @Override
             public boolean apply(Entry<RoadUser, Point> input) {
-                return input.getKey() instanceof Robot;
+                return input.getKey() instanceof DeliveryTask;
             }
 
         }
@@ -67,13 +67,14 @@ public class DeliveryTaskRenderer extends AbstractCanvasRenderer {
     public void renderDynamic(GC gc, ViewPort vp, long time) {
         final Map<RoadUser, Point> map = Maps.filterEntries(roadModel.getObjectsAndPositions(), Pred.INSTANCE);
 
-        final List<Parcel> parcels = new LinkedList<>(pdpModel.getParcels(PDPModel.ParcelState.AVAILABLE,
+        /*final List<Parcel> parcels = new LinkedList<>(pdpModel.getParcels(PDPModel.ParcelState.AVAILABLE,
                 PDPModel.ParcelState.PICKING_UP,
-                PDPModel.ParcelState.DELIVERING));
+                PDPModel.ParcelState.DELIVERING));*/
 
-        for (final Parcel parcel: parcels){
-            final Point p = parcel.getDeliveryLocation();
-            final double capacity = parcel.getNeededCapacity();
+        for (final Entry<RoadUser, Point> parcel: map.entrySet()){
+            final DeliveryTask task = (DeliveryTask) parcel.getKey();
+            final Point p = parcel.getValue();
+            final double capacity = task.getCapacity();
             final int x = vp.toCoordX(p.x) + X_OFFSET;
             final int y = vp.toCoordY(p.y) + Y_OFFSET;
 
