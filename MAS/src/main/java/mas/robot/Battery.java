@@ -1,8 +1,10 @@
+package mas.robot;
+
 public class Battery {
     private static int maxCapacity;
     private static int capacity;
 
-    Battery(int maxCapacity) {
+    public Battery(int maxCapacity) {
         Battery.maxCapacity = maxCapacity;
         capacity = maxCapacity;
     }

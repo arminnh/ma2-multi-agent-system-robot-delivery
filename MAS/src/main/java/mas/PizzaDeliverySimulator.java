@@ -1,3 +1,5 @@
+package mas;
+
 import com.github.rinde.rinsim.core.Simulator;
 import com.github.rinde.rinsim.core.model.comm.CommModel;
 import com.github.rinde.rinsim.core.model.pdp.DefaultPDPModel;
@@ -8,8 +10,15 @@ import com.github.rinde.rinsim.core.model.time.TickListener;
 import com.github.rinde.rinsim.core.model.time.TimeLapse;
 import com.github.rinde.rinsim.ui.View;
 import com.github.rinde.rinsim.ui.renderers.*;
+import mas.buildings.CityGraphCreator;
+import mas.maps.ChargingStation;
+import mas.pizza.DeliveryTask;
+import mas.buildings.Pizzeria;
+import mas.robot.Battery;
+import mas.robot.Robot;
 import org.apache.commons.math3.random.RandomGenerator;
 import org.jetbrains.annotations.NotNull;
+import mas.renderers.DeliveryTaskRenderer;
 
 import javax.measure.unit.SI;
 
@@ -44,7 +53,7 @@ public class PizzaDeliverySimulator {
      *                starting and stopping itself such that it can be run from a unit test.
      */
     private static void run(boolean testing) {
-        // Configure the GUI with separate renderers for the road, robots, customers, ...
+        // Configure the GUI with separate mas.renderers for the road, robots, customers, ...
         View.Builder viewBuilder = View.builder()
             .withTitleAppendix("Pizza delivery multi agent system simulator")
             .withAutoPlay()
@@ -66,15 +75,13 @@ public class PizzaDeliverySimulator {
          * https://www.shutterstock.com/search/source+station
          */
 
-        CityGraphCreator graphCreator = new CityGraphCreator(VEHICLE_LENGTH);
-
         // initialize a new Simulator instance
         final Simulator sim = Simulator.builder()
             // set the length of a simulation 'tick'
             .setTickLength(TICK_LENGTH)
             // set the random seed we use in this 'experiment'
             .setRandomSeed(RANDOM_SEED)
-            .addModel(RoadModelBuilders.dynamicGraph(graphCreator.createGraph(10))
+            .addModel(RoadModelBuilders.dynamicGraph(CityGraphCreator.createGraph(10, VEHICLE_LENGTH))
                 .withDistanceUnit(SI.METER)
                 .withModificationCheck(true))
             .addModel(DefaultPDPModel.builder())

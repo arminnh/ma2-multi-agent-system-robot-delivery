@@ -1,3 +1,5 @@
+package mas.robot;
+
 import com.github.rinde.rinsim.core.model.comm.*;
 import com.github.rinde.rinsim.core.model.pdp.PDPModel;
 import com.github.rinde.rinsim.core.model.pdp.Parcel;
@@ -30,7 +32,7 @@ public class Robot extends Vehicle implements MovingRoadUser, TickListener, Rand
     private Optional<PDPModel> pdpModel;
 
 
-    Robot(VehicleDTO vdto, Battery battery, int id) {
+    public Robot(VehicleDTO vdto, Battery battery, int id) {
         super(vdto);
 
         this.battery = battery;

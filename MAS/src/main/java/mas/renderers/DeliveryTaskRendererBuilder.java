@@ -1,3 +1,5 @@
+package mas.renderers;
+
 import com.github.rinde.rinsim.core.model.DependencyProvider;
 import com.github.rinde.rinsim.core.model.ModelBuilder;
 import com.github.rinde.rinsim.core.model.pdp.PDPModel;
@@ -19,14 +21,16 @@ public class DeliveryTaskRendererBuilder extends ModelBuilder.AbstractModelBuild
         return new DeliveryTaskRenderer(rm, pm);
     }
 
+
     public boolean equals(Object o) {
         if (o == this) {
             return true;
         } else {
-            // DeliveryTaskRendererBuilder that = (DeliveryTaskRendererBuilder)o;
+            // mas.DeliveryTaskRendererBuilderlder that = (mas.DeliveryTaskRendererBuilderlder)o;
             return o instanceof DeliveryTaskRendererBuilder;
         }
     }
+
 
     public int hashCode() {
         int h = 1;

@@ -1,3 +1,5 @@
+package mas.renderers;
+
 import com.github.rinde.rinsim.core.model.pdp.PDPModel;
 import com.github.rinde.rinsim.core.model.road.RoadModel;
 import com.github.rinde.rinsim.core.model.road.RoadUser;
@@ -6,6 +8,7 @@ import com.github.rinde.rinsim.ui.renderers.CanvasRenderer.AbstractCanvasRendere
 import com.github.rinde.rinsim.ui.renderers.ViewPort;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Maps;
+import mas.pizza.DeliveryTask;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.GC;
 
@@ -30,7 +33,7 @@ public class DeliveryTaskRenderer extends AbstractCanvasRenderer {
     @Override
     public void renderStatic(GC gc, ViewPort vp) {}
 
-    enum Filter implements Predicate<Entry<RoadUser, Point>> {
+    private enum Filter implements Predicate<Entry<RoadUser, Point>> {
         DELIVERY_TASKS {
             @Override
             public boolean apply(Entry<RoadUser, Point> input) {
@@ -64,7 +67,7 @@ public class DeliveryTaskRenderer extends AbstractCanvasRenderer {
         }
 
         /*for (final Entry<RoadUser, Point> entry : map.entrySet()) {
-            final Robot t = (Robot) entry.getKey();
+            final mas.robot.Robot t = (mas.robot.Robot) entry.getKey();
             final Point p = entry.getValue();
             final int x = vp.toCoordX(p.x) + X_OFFSET;
             final int y = vp.toCoordY(p.y) + Y_OFFSET;
@@ -96,7 +99,7 @@ public class DeliveryTaskRenderer extends AbstractCanvasRenderer {
         }*/
     }
 
-    static DeliveryTaskRendererBuilder builder() {
+    public static DeliveryTaskRendererBuilder builder() {
         return new DeliveryTaskRendererBuilder();
     }
 }

@@ -1,10 +1,12 @@
+package mas.buildings;
+
 import com.github.rinde.rinsim.core.model.road.RoadModel;
 import com.github.rinde.rinsim.core.model.road.RoadUser;
 import com.github.rinde.rinsim.geom.Point;
 import com.google.common.base.Optional;
 
 /**
- * Implementation of a Pizzeria
+ * Implementation of a mas.buildings.Pizzeria
  */
 public class Pizzeria implements RoadUser {
 
@@ -15,7 +17,7 @@ public class Pizzeria implements RoadUser {
     private Point position;
     private Optional<RoadModel> roadModel;
 
-    Pizzeria(Point position) {
+    public Pizzeria(Point position) {
         this.position = position;
     }
 

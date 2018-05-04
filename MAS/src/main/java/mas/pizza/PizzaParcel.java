@@ -1,3 +1,5 @@
+package mas.pizza;
+
 import com.github.rinde.rinsim.core.model.pdp.Parcel;
 import com.github.rinde.rinsim.core.model.pdp.ParcelDTO;
 

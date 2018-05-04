@@ -1,3 +1,5 @@
+package mas.pizza;
+
 import com.github.rinde.rinsim.core.model.comm.CommDevice;
 import com.github.rinde.rinsim.core.model.comm.CommDeviceBuilder;
 import com.github.rinde.rinsim.core.model.comm.CommUser;
@@ -17,7 +19,7 @@ public class DeliveryTask implements RoadUser, CommUser {
     private Optional<CommDevice> comm;
 
 
-    DeliveryTask(Point position, int pizzaAmount) {
+    public DeliveryTask(Point position, int pizzaAmount) {
         this.position = position;
         this.pizzaAmount = pizzaAmount;
     }
