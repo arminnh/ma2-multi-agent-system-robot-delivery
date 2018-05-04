@@ -1,12 +1,18 @@
 import com.github.rinde.rinsim.core.Simulator;
+import com.github.rinde.rinsim.core.model.comm.CommModel;
+import com.github.rinde.rinsim.core.model.pdp.DefaultPDPModel;
+import com.github.rinde.rinsim.core.model.pdp.Parcel;
 import com.github.rinde.rinsim.core.model.road.RoadModel;
 import com.github.rinde.rinsim.core.model.road.RoadModelBuilders;
+import com.github.rinde.rinsim.core.model.time.TickListener;
+import com.github.rinde.rinsim.core.model.time.TimeLapse;
 import com.github.rinde.rinsim.geom.*;
 import com.github.rinde.rinsim.geom.Point;
 import com.github.rinde.rinsim.ui.View;
 import com.github.rinde.rinsim.ui.renderers.*;
 import com.google.common.collect.ImmutableTable;
 import com.google.common.collect.Table;
+import org.apache.commons.math3.random.RandomGenerator;
 
 import javax.measure.unit.SI;
 import java.util.*;
@@ -50,6 +56,7 @@ public class PizzaDeliverySimulator {
                         .withImageAssociation(Pizzeria.class, "/pizzeria.png")
                         // https://www.shutterstock.com/search/source+station
                         .withImageAssociation(ChargingStation.class, "/charging_station.png")
+                        //.withImageAssociation(DeliveryTask.class, "/graphics/flat/person-black-32.png")
                 );
 
         viewBuilder = viewBuilder.withTitleAppendix("Pizza delivery multi agent system simulator").withAutoPlay();
@@ -59,11 +66,13 @@ public class PizzaDeliverySimulator {
                                 .withDistanceUnit(SI.METER)
                                 .withModificationCheck(true))
                 .addModel(viewBuilder)
+                .addModel(DefaultPDPModel.builder())
+                .addModel(CommModel.builder())
                 .build();
 
         final RoadModel roadModel = sim.getModelProvider().getModel(RoadModel.class);
 
-        Pizzeria pizzeria = new Pizzeria(roadModel.getRandomPosition(sim.getRandomGenerator()), NUM_AGVS);
+        final Pizzeria pizzeria = new Pizzeria(roadModel.getRandomPosition(sim.getRandomGenerator()), NUM_AGVS);
         ChargingStation chargingStation = new ChargingStation(
                 roadModel.getRandomPosition(sim.getRandomGenerator()),
                 NUM_AGVS * 0.3
@@ -77,6 +86,25 @@ public class PizzaDeliverySimulator {
             sim.register(new Robot(pizzeria.getLocation(), MAX_CAPACITY, robot_id));
             robot_id += 1;
         }
+
+        final RandomGenerator rng = sim.getRandomGenerator();
+
+        sim.addTickListener(new TickListener() {
+            @Override
+            public void tick(TimeLapse time) {
+                if (rng.nextDouble() < NEW_PARCEL) {
+                    sim.register(new DeliveryTask(
+                            Parcel.builder(pizzeria.getLocation(),
+                                    roadModel.getRandomPosition(rng))
+                                    .serviceDuration(10)
+                                    .neededCapacity(1)
+                                    .buildDTO()));
+                }
+            }
+
+            @Override
+            public void afterTick(TimeLapse timeLapse) {}
+        });
 
         sim.start();
     }

@@ -26,7 +26,6 @@ class Robot extends Vehicle implements MovingRoadUser, TickListener, RandomUser,
     private CommDevice comm;
     private static final double VEHICLE_SPEED_KMH = 50d;
     private int id;
-    private String name;
     private Optional<Parcel> curr;
 
     Robot(Point startPosition, int capacity, int id) {
@@ -42,20 +41,19 @@ class Robot extends Vehicle implements MovingRoadUser, TickListener, RandomUser,
 
     @Override
     public void tickImpl(@NotNull TimeLapse time) {
+        final RoadModel rm = getRoadModel();
+        final PDPModel pm = getPDPModel();
+
+        if (!time.hasTimeLeft()) {
+            return;
+        }
+        if (!curr.isPresent()) {
+            curr = Optional.fromNullable(RoadModels.findClosestObject(
+                    rm.getPosition(this), rm, Parcel.class));
+        }
 
     }
 
-    static class MyNameIs implements MessageContents {
-        private final String name;
-
-        MyNameIs(String nm) {
-            name = nm;
-        }
-
-        String getName() {
-            return name;
-        }
-    }
 
     @Override
     public void afterTick(@NotNull TimeLapse timeLapse) { }
