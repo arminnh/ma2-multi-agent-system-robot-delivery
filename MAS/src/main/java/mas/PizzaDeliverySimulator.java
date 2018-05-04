@@ -105,6 +105,7 @@ public class PizzaDeliverySimulator {
             roadModel.getRandomPosition(sim.getRandomGenerator()),
             charging_station_capacity.intValue()
         );
+
         sim.register(chargingStation);
 
         for(int i = 0; i < NUM_ROBOTS; i++) {

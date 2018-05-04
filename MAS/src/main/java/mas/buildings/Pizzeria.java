@@ -88,15 +88,16 @@ public class Pizzeria implements RoadUser, TickListener {
 
         List<Robot> waitingRobots = getWaitingRobots();
         List<DeliveryTask> waitingsTasks = getAvailableDeliveryTasks();
-        System.out.println(waitingsTasks.size());
 
         for(final DeliveryTask task: waitingsTasks){
             // Task allocation
             //System.out.println("yey");
             for(final Robot robot: waitingRobots){
-
                 if(task.getPizzasLeft() == 0){
                     break;
+                }
+                if(robot.hasTask()){
+                    continue;
                 }
                 int capacity_left = robot.getCapacityLeft();
                 int pizza_amount = Math.min(task.getPizzasLeft(), capacity_left);

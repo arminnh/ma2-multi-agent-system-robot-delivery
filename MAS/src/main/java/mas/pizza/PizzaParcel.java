@@ -15,8 +15,6 @@ public class PizzaParcel extends Parcel {
         this.amountPizzas = pizzaAmount;
     }
 
-
-
     public DeliveryTask getDeliveryTask(){
         return this.task;
     }

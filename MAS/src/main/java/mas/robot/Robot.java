@@ -101,13 +101,17 @@ public class Robot extends Vehicle implements MovingRoadUser, TickListener, Rand
         if(current_task.isPresent()){
             DeliveryTask current_task = this.current_task.get().getDeliveryTask();
             if (roadModel.get().equalPosition(this, current_task)){
-                System.out.println("Delivery");
                 // Deliver the pizzas
                 pdpModel.get().deliver(this, this.current_task.get(), time);
                 this.current_task.get().getDeliveryTask().deliverPizzas(this.current_task.get().getAmountPizzas());
 
                 // Unload pizza's
+                System.out.println("pre");
+                System.out.println(this.current_capacity);
+
                 this.current_capacity -= this.current_task.get().getAmountPizzas();
+                System.out.println("post");
+                System.out.println(this.current_capacity);
 
                 if(this.current_task.get().getDeliveryTask().receivedAllPizzas()){
                     // All pizza's have been delivered, now we have to delete the task.

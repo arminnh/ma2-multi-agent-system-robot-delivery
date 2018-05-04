@@ -35,11 +35,9 @@ public class DeliveryTask implements RoadUser, CommUser {
         model.addObjectAt(this, position);
     }
 
-
     public Optional<Point> getPosition() {
         return Optional.of(this.position);
     }
-
 
     public int getPizzaAmount() {
         return this.pizzaAmount;
