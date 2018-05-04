@@ -7,6 +7,7 @@ import com.github.rinde.rinsim.core.model.pdp.Vehicle;
 import com.github.rinde.rinsim.core.model.pdp.VehicleDTO;
 import com.github.rinde.rinsim.core.model.rand.RandomProvider;
 import com.github.rinde.rinsim.core.model.rand.RandomUser;
+import com.github.rinde.rinsim.core.model.road.MoveProgress;
 import com.github.rinde.rinsim.core.model.road.MovingRoadUser;
 import com.github.rinde.rinsim.core.model.road.RoadModel;
 import com.github.rinde.rinsim.core.model.road.RoadModels;
@@ -19,6 +20,7 @@ import mas.pizza.PizzaParcel;
 import org.apache.commons.math3.random.RandomGenerator;
 import org.jetbrains.annotations.NotNull;
 
+import javax.measure.unit.SI;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
@@ -39,6 +41,7 @@ public class Robot extends Vehicle implements MovingRoadUser, TickListener, Rand
     private Optional<Queue<Point>> current_path;
     private Point pizzeriaPos;
     private int current_capacity;
+    private double moved = 0;
 
     public Robot(VehicleDTO vdto, Battery battery, int id, Point pizzeriaPos) {
         super(vdto);
@@ -94,8 +97,13 @@ public class Robot extends Vehicle implements MovingRoadUser, TickListener, Rand
         }
 
         if(this.current_path.get().size() > 0){
-            this.battery.decrementCapacity();
-            roadModel.get().followPath(this, this.current_path.get(), time);
+            MoveProgress progress = roadModel.get().followPath(this, this.current_path.get(), time);
+            //System.out.println(progress.distance().doubleValue(SI.METER));
+            moved += progress.distance().doubleValue(SI.METER);
+            if(moved > 1.0){
+                this.battery.decrementCapacity();
+                moved -= 1.0;
+            }
         }
 
         if(current_task.isPresent()){
