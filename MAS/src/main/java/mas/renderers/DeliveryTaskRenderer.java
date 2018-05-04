@@ -30,24 +30,19 @@ public class DeliveryTaskRenderer extends AbstractCanvasRenderer {
         pdpModel = p;
     }
 
+    public static DeliveryTaskRendererBuilder builder() {
+        return new DeliveryTaskRendererBuilder();
+    }
+
     @Override
-    public void renderStatic(GC gc, ViewPort vp) {}
-
-    private enum Filter implements Predicate<Entry<RoadUser, Point>> {
-        DELIVERY_TASKS {
-            @Override
-            public boolean apply(Entry<RoadUser, Point> input) {
-                return input.getKey() instanceof DeliveryTask;
-            }
-
-        }
+    public void renderStatic(GC gc, ViewPort vp) {
     }
 
     @Override
     public void renderDynamic(GC gc, ViewPort vp, long time) {
         final Map<RoadUser, Point> map = Maps.filterEntries(roadModel.getObjectsAndPositions(), Filter.DELIVERY_TASKS);
 
-        for (final Entry<RoadUser, Point> parcel: map.entrySet()){
+        for (final Entry<RoadUser, Point> parcel : map.entrySet()) {
             final DeliveryTask task = (DeliveryTask) parcel.getKey();
             final Point p = parcel.getValue();
             final double pizzaAmount = task.getPizzaAmount();
@@ -99,8 +94,14 @@ public class DeliveryTaskRenderer extends AbstractCanvasRenderer {
         }*/
     }
 
-    public static DeliveryTaskRendererBuilder builder() {
-        return new DeliveryTaskRendererBuilder();
+    private enum Filter implements Predicate<Entry<RoadUser, Point>> {
+        DELIVERY_TASKS {
+            @Override
+            public boolean apply(Entry<RoadUser, Point> input) {
+                return input.getKey() instanceof DeliveryTask;
+            }
+
+        }
     }
 }
 

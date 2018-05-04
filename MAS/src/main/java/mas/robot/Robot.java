@@ -1,8 +1,9 @@
 package mas.robot;
 
-import com.github.rinde.rinsim.core.model.comm.*;
+import com.github.rinde.rinsim.core.model.comm.CommDevice;
+import com.github.rinde.rinsim.core.model.comm.CommDeviceBuilder;
+import com.github.rinde.rinsim.core.model.comm.CommUser;
 import com.github.rinde.rinsim.core.model.pdp.PDPModel;
-import com.github.rinde.rinsim.core.model.pdp.Parcel;
 import com.github.rinde.rinsim.core.model.pdp.Vehicle;
 import com.github.rinde.rinsim.core.model.pdp.VehicleDTO;
 import com.github.rinde.rinsim.core.model.rand.RandomProvider;
@@ -10,7 +11,6 @@ import com.github.rinde.rinsim.core.model.rand.RandomUser;
 import com.github.rinde.rinsim.core.model.road.MoveProgress;
 import com.github.rinde.rinsim.core.model.road.MovingRoadUser;
 import com.github.rinde.rinsim.core.model.road.RoadModel;
-import com.github.rinde.rinsim.core.model.road.RoadModels;
 import com.github.rinde.rinsim.core.model.time.TickListener;
 import com.github.rinde.rinsim.core.model.time.TimeLapse;
 import com.github.rinde.rinsim.geom.Point;
@@ -23,7 +23,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.measure.unit.SI;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Queue;
 import java.util.Set;
 
@@ -32,33 +31,33 @@ import java.util.Set;
  */
 public class Robot extends Vehicle implements MovingRoadUser, TickListener, RandomUser, CommUser {
 
-    private Battery battery;
     private int id;
-    private Optional<PizzaParcel> current_task;
+    private Battery battery;
+    private double moved = 0;
+    private Point pizzeriaPos;
+    private int currentCapacity;
+    private Optional<Queue<Point>> currentPath;
+    private Optional<PizzaParcel> currentParcel;
 
     private Optional<RandomGenerator> rnd;
-    private Optional<CommDevice> comm;
     private Optional<RoadModel> roadModel;
     private Optional<PDPModel> pdpModel;
-    private Optional<Queue<Point>> current_path;
-    private Point pizzeriaPos;
-    private int current_capacity;
-    private double moved = 0;
+    private Optional<CommDevice> comm;
 
     public Robot(VehicleDTO vdto, Battery battery, int id, Point pizzeriaPos) {
         super(vdto);
 
-        this.battery = battery;
         this.id = id;
-        current_task = Optional.absent();
-        this.current_path = Optional.absent();
+        this.battery = battery;
         this.pizzeriaPos = pizzeriaPos;
+        this.currentPath = Optional.absent();
+        this.currentParcel = Optional.absent();
     }
 
     @Override
     public void initRoadPDP(RoadModel pRoadModel, PDPModel pPdpModel) {
-        this.roadModel = Optional.of(pRoadModel);
         this.pdpModel = Optional.of(pPdpModel);
+        this.roadModel = Optional.of(pRoadModel);
     }
 
     @Override
@@ -80,7 +79,7 @@ public class Robot extends Vehicle implements MovingRoadUser, TickListener, Rand
         comm = Optional.of(builder.build());
     }
 
-    private Set<ChargingStation> getClosestChargeStation(){
+    private Set<ChargingStation> getClosestChargeStation() {
         return this.roadModel.get().getObjectsOfType(ChargingStation.class);
     }
 
@@ -91,55 +90,56 @@ public class Robot extends Vehicle implements MovingRoadUser, TickListener, Rand
         }
 
         // No parcel so move to pizzeria
-        if (!current_task.isPresent()) {
+        if (!currentParcel.isPresent()) {
             toPizzeriaOrChargingStation();
-        }else{
+        } else {
             // We have a parcel
             toCustomerOrChargingStation();
         }
 
-        if(this.current_path.get().size() > 0){
-            MoveProgress progress = roadModel.get().followPath(this, this.current_path.get(), time);
+        if (this.currentPath.get().size() > 0) {
+            MoveProgress progress = roadModel.get().followPath(this, this.currentPath.get(), time);
             //System.out.println(progress.distance().doubleValue(SI.METER));
             moved += progress.distance().doubleValue(SI.METER);
-            if(moved > 1.0){
+            if (moved > 1.0) {
                 this.battery.decrementCapacity();
                 moved -= 1.0;
             }
         }
 
-        if(current_task.isPresent()){
-            DeliveryTask current_task = this.current_task.get().getDeliveryTask();
-            if (roadModel.get().equalPosition(this, current_task)){
+        if (currentParcel.isPresent()) {
+            DeliveryTask currentTask = this.currentParcel.get().getDeliveryTask();
+
+            if (roadModel.get().equalPosition(this, currentTask)) {
                 // Deliver the pizzas
-                pdpModel.get().deliver(this, this.current_task.get(), time);
-                this.current_task.get().getDeliveryTask().deliverPizzas(this.current_task.get().getAmountPizzas());
+                pdpModel.get().deliver(this, this.currentParcel.get(), time);
+                this.currentParcel.get().getDeliveryTask().deliverPizzas(this.currentParcel.get().getAmountPizzas());
 
-                // Unload pizza's
-                this.current_capacity -= this.current_task.get().getAmountPizzas();
+                // Unload pizzas
+                this.currentCapacity -= this.currentParcel.get().getAmountPizzas();
 
-                if(this.current_task.get().getDeliveryTask().receivedAllPizzas()){
-                    // All pizza's have been delivered, now we have to delete the task.
-                    roadModel.get().removeObject(this.current_task.get().getDeliveryTask());
+                if (this.currentParcel.get().getDeliveryTask().receivedAllPizzas()) {
+                    // All pizzas have been delivered, now we have to delete the task.
+                    roadModel.get().removeObject(this.currentParcel.get().getDeliveryTask());
                 }
 
                 // Remove current task
-                this.current_task = Optional.absent();
+                this.currentParcel = Optional.absent();
 
                 // Remove current path
-                this.current_path = Optional.absent();
+                this.currentPath = Optional.absent();
             }
-        }else{
-            if (roadModel.get().getPosition(this) == this.pizzeriaPos){
-                this.current_path = Optional.absent();
+        } else {
+            if (roadModel.get().getPosition(this) == this.pizzeriaPos) {
+                this.currentPath = Optional.absent();
             }
         }
     }
 
     private void toCustomerOrChargingStation() {
-        if(!this.current_path.isPresent()) {
-            Queue<Point> path = new LinkedList<>(roadModel.get().getShortestPathTo(this, this.current_task.get().getDeliveryLocation()));
-            this.current_path = Optional.of(path);
+        if (!this.currentPath.isPresent()) {
+            Queue<Point> path = new LinkedList<>(roadModel.get().getShortestPathTo(this, this.currentParcel.get().getDeliveryLocation()));
+            this.currentPath = Optional.of(path);
 
             rechargeIfNecessary(path);
         }
@@ -149,9 +149,9 @@ public class Robot extends Vehicle implements MovingRoadUser, TickListener, Rand
     private void toPizzeriaOrChargingStation() {
         // Logic to decide if we have to go to the pizzeria or recharge our battery in a charging station
 
-        if(!this.current_path.isPresent()){
+        if (!this.currentPath.isPresent()) {
             Queue<Point> path = new LinkedList<>(roadModel.get().getShortestPathTo(this, this.pizzeriaPos));
-            this.current_path = Optional.of(path);
+            this.currentPath = Optional.of(path);
 
             rechargeIfNecessary(path);
         }
@@ -160,46 +160,47 @@ public class Robot extends Vehicle implements MovingRoadUser, TickListener, Rand
     private void rechargeIfNecessary(Queue<Point> path) {
         // If distance of our path is more than our battery can take, recharge!
 
-        if(new Double(Math.ceil(getDistanceOfPathInMeters(path))).intValue() > battery.getRemainingCapacity()){
-            Queue<Point> new_path = null;
+        if (new Double(Math.ceil(getDistanceOfPathInMeters(path))).intValue() > battery.getRemainingCapacity()) {
+            Queue<Point> newPath = null;
             // Find closest charging station
-            for(final ChargingStation station : getClosestChargeStation()){
-                Queue<Point> temp_path = new LinkedList<>(roadModel.get().getShortestPathTo(this, station.getPosition()));
-                if(new_path == null){
-                    new_path = temp_path;
+            for (final ChargingStation station : getClosestChargeStation()) {
+                Queue<Point> tempPath = new LinkedList<>(roadModel.get().getShortestPathTo(this, station.getPosition()));
+                if (newPath == null) {
+                    newPath = tempPath;
                 }
 
-                if(getDistanceOfPathInMeters(new_path) > getDistanceOfPathInMeters(temp_path)){
-                    new_path = temp_path;
+                if (getDistanceOfPathInMeters(newPath) > getDistanceOfPathInMeters(tempPath)) {
+                    newPath = tempPath;
                 }
             }
 
-            this.current_path = Optional.of(new_path);
+            this.currentPath = Optional.of(newPath);
 
         }
     }
 
-    private double getDistanceOfPathInMeters(Queue<Point> new_path) {
-        return roadModel.get().getDistanceOfPath(new_path).doubleValue(SI.METER);
+    private double getDistanceOfPathInMeters(Queue<Point> newPath) {
+        return roadModel.get().getDistanceOfPath(newPath).doubleValue(SI.METER);
     }
 
-    public int getCurrentBatteryCapacity(){
+    public int getCurrentBatteryCapacity() {
         return this.battery.getRemainingCapacity();
     }
 
-    public boolean hasTask(){
-        return current_task.isPresent();
+    public boolean hasTask() {
+        return currentParcel.isPresent();
     }
 
-    public int getCapacityLeft(){
-        return new Double(this.getCapacity()).intValue() - this.current_capacity;
+    public int getCapacityLeft() {
+        return new Double(this.getCapacity()).intValue() - this.currentCapacity;
     }
 
-    public void setTask(PizzaParcel task){
-        this.current_task = Optional.of(task);
-        this.current_capacity += task.getAmountPizzas();
+    public void setTask(PizzaParcel task) {
+        this.currentParcel = Optional.of(task);
+        this.currentCapacity += task.getAmountPizzas();
     }
 
     @Override
-    public void afterTick(@NotNull TimeLapse timeLapse) { }
+    public void afterTick(@NotNull TimeLapse timeLapse) {
+    }
 }

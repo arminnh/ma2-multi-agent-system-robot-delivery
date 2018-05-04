@@ -3,8 +3,6 @@ package mas.pizza;
 import com.github.rinde.rinsim.core.model.pdp.Parcel;
 import com.github.rinde.rinsim.core.model.pdp.ParcelDTO;
 
-import javax.annotation.Nullable;
-
 public class PizzaParcel extends Parcel {
     private DeliveryTask task;
     private int amountPizzas;
@@ -15,7 +13,7 @@ public class PizzaParcel extends Parcel {
         this.amountPizzas = pizzaAmount;
     }
 
-    public DeliveryTask getDeliveryTask(){
+    public DeliveryTask getDeliveryTask() {
         return this.task;
     }
 

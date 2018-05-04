@@ -1,7 +1,9 @@
 package mas.buildings;
 
 import com.github.rinde.rinsim.core.Simulator;
-import com.github.rinde.rinsim.core.model.pdp.*;
+import com.github.rinde.rinsim.core.model.pdp.PDPModel;
+import com.github.rinde.rinsim.core.model.pdp.Parcel;
+import com.github.rinde.rinsim.core.model.pdp.ParcelDTO;
 import com.github.rinde.rinsim.core.model.road.RoadModel;
 import com.github.rinde.rinsim.core.model.road.RoadUser;
 import com.github.rinde.rinsim.core.model.time.TickListener;
@@ -40,16 +42,14 @@ public class Pizzeria implements RoadUser, TickListener {
 
 
     @Override
-    public void initRoadUser(RoadModel model) {
+    public void initRoadUser(@NotNull RoadModel model) {
         this.roadModel = Optional.of(model);
 
         model.addObjectAt(this, position);
     }
 
 
-
-    private List<Robot> getWaitingRobots(){
-
+    private List<Robot> getWaitingRobots() {
         List<Robot> robots = new LinkedList<>(this.roadModel.get().getObjectsAt(this, Robot.class));
 
         // Filter out any robots that are in the pizzeria but have a task...
@@ -63,12 +63,11 @@ public class Pizzeria implements RoadUser, TickListener {
         return robots;
     }
 
-    private List<DeliveryTask> getAvailableDeliveryTasks(){
-
+    private List<DeliveryTask> getAvailableDeliveryTasks() {
         List<DeliveryTask> tasks = new LinkedList<>(this.roadModel.get().getObjectsOfType(DeliveryTask.class));
 
         // Filter out any tasks that are not fully served yet.
-        // Served here meaning we sent out the required amount of pizza's
+        // Served here meaning we sent out the required amount of pizzas
         CollectionUtils.filter(tasks, new Predicate<DeliveryTask>() {
             @Override
             public boolean evaluate(DeliveryTask o) {
@@ -87,38 +86,39 @@ public class Pizzeria implements RoadUser, TickListener {
         }
 
         List<Robot> waitingRobots = getWaitingRobots();
-        List<DeliveryTask> waitingsTasks = getAvailableDeliveryTasks();
+        List<DeliveryTask> waitingTasks = getAvailableDeliveryTasks();
 
-        for(final DeliveryTask task: waitingsTasks){
+        for (final DeliveryTask task : waitingTasks) {
             // Task allocation
             //System.out.println("yey");
-            for(final Robot robot: waitingRobots){
-                if(task.getPizzasLeft() == 0){
+            for (final Robot robot : waitingRobots) {
+                if (task.getPizzasLeft() == 0) {
                     break;
                 }
-                if(robot.hasTask()){
+                if (robot.hasTask()) {
                     continue;
                 }
-                int capacity_left = robot.getCapacityLeft();
-                int pizza_amount = Math.min(task.getPizzasLeft(), capacity_left);
-                //System.out.println(pizza_amount);
+                int capacityLeft = robot.getCapacityLeft();
+                int pizzaAmount = Math.min(task.getPizzasLeft(), capacityLeft);
+                //System.out.println(pizzaAmount);
                 ParcelDTO pdto = Parcel.builder(this.position, task.getPosition().get())
-                     .neededCapacity(pizza_amount)
-                     .buildDTO();
+                        .neededCapacity(pizzaAmount)
+                        .buildDTO();
 
-                PizzaParcel parcel = new PizzaParcel(pdto, task, pizza_amount);
+                PizzaParcel parcel = new PizzaParcel(pdto, task, pizzaAmount);
                 sim.register(parcel);
                 robot.setTask(parcel);
-                task.addReadyPizzas(pizza_amount);
+                task.addReadyPizzas(pizzaAmount);
 
-                this.pdpModel.get().pickup(robot,parcel, time);
+                this.pdpModel.get().pickup(robot, parcel, time);
             }
 
         }
     }
 
     @Override
-    public void afterTick(@NotNull TimeLapse timeLapse) { }
+    public void afterTick(@NotNull TimeLapse timeLapse) {
+    }
 
     public Point getPosition() {
         return this.position;

@@ -8,7 +8,6 @@ import com.github.rinde.rinsim.ui.renderers.CanvasRenderer.AbstractCanvasRendere
 import com.github.rinde.rinsim.ui.renderers.ViewPort;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Maps;
-import mas.pizza.DeliveryTask;
 import mas.robot.Robot;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.GC;
@@ -31,24 +30,19 @@ public class RobotRenderer extends AbstractCanvasRenderer {
         pdpModel = p;
     }
 
+    public static RobotRendererBuilder builder() {
+        return new RobotRendererBuilder();
+    }
+
     @Override
-    public void renderStatic(GC gc, ViewPort vp) {}
-
-    private enum Filter implements Predicate<Entry<RoadUser, Point>> {
-        ROBOTS {
-            @Override
-            public boolean apply(Entry<RoadUser, Point> input) {
-                return input.getKey() instanceof Robot;
-            }
-
-        }
+    public void renderStatic(GC gc, ViewPort vp) {
     }
 
     @Override
     public void renderDynamic(GC gc, ViewPort vp, long time) {
         final Map<RoadUser, Point> map = Maps.filterEntries(roadModel.getObjectsAndPositions(), Filter.ROBOTS);
 
-        for (final Entry<RoadUser, Point> robotEntry: map.entrySet()){
+        for (final Entry<RoadUser, Point> robotEntry : map.entrySet()) {
             final Robot robot = (Robot) robotEntry.getKey();
             final Point p = robot.getPosition().get();
             final int currentBattery = robot.getCurrentBatteryCapacity();
@@ -61,21 +55,21 @@ public class RobotRenderer extends AbstractCanvasRenderer {
             gc.fillRoundRectangle(x - extent.x / 2, y - extent.y / 2,
                     extent.x + 2, extent.y + 2, ROUND_RECT_ARC_HEIGHT,
                     ROUND_RECT_ARC_HEIGHT);
-            if(currentBattery > 80){
+            if (currentBattery > 80) {
                 gc.setBackground(gc.getDevice().getSystemColor(SWT.COLOR_GREEN));
 
-            } else if( currentBattery > 30){
+            } else if (currentBattery > 30) {
                 gc.setBackground(gc.getDevice().getSystemColor(SWT.COLOR_YELLOW));
-            } else{
+            } else {
                 gc.setBackground(gc.getDevice().getSystemColor(SWT.COLOR_RED));
             }
 
-            gc.fillRoundRectangle(x - extent.x / 2   , y - extent.y / 2,
-                    Math.max((extent.x + 2)* robot.getCurrentBatteryCapacity()/100,0), extent.y + 2, ROUND_RECT_ARC_HEIGHT,
+            gc.fillRoundRectangle(x - extent.x / 2, y - extent.y / 2,
+                    Math.max((extent.x + 2) * robot.getCurrentBatteryCapacity() / 100, 0), extent.y + 2, ROUND_RECT_ARC_HEIGHT,
                     ROUND_RECT_ARC_HEIGHT);
             gc.setForeground(gc.getDevice().getSystemColor(SWT.COLOR_BLACK));
 
-            gc.drawText(Integer.toString(Math.max(currentBattery,0)) + "%", x - extent.x / 2 + 1, y - extent.y / 2 + 1,
+            gc.drawText(Integer.toString(Math.max(currentBattery, 0)) + "%", x - extent.x / 2 + 1, y - extent.y / 2 + 1,
                     true);
         }
 
@@ -112,8 +106,14 @@ public class RobotRenderer extends AbstractCanvasRenderer {
         }*/
     }
 
-    public static RobotRendererBuilder builder() {
-        return new RobotRendererBuilder();
+    private enum Filter implements Predicate<Entry<RoadUser, Point>> {
+        ROBOTS {
+            @Override
+            public boolean apply(Entry<RoadUser, Point> input) {
+                return input.getKey() instanceof Robot;
+            }
+
+        }
     }
 }
 

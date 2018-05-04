@@ -7,7 +7,7 @@ import com.github.rinde.rinsim.core.model.road.RoadModel;
 
 public class RobotRendererBuilder extends ModelBuilder.AbstractModelBuilder<RobotRenderer, Void> {
 
-    private static final long serialVersionUID = -1772420262312399129L;
+    private static final long serialVersionUID = -1772420262312399130L;
 
     RobotRendererBuilder() {
         setDependencies(RoadModel.class, PDPModel.class);
@@ -26,7 +26,7 @@ public class RobotRendererBuilder extends ModelBuilder.AbstractModelBuilder<Robo
         if (o == this) {
             return true;
         } else {
-            // mas.DeliveryTaskRendererBuilderlder that = (mas.DeliveryTaskRendererBuilderlder)o;
+            //RobotRendererBuilder that = (RobotRendererBuilder)o;
             return o instanceof RobotRendererBuilder;
         }
     }

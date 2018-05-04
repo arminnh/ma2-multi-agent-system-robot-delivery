@@ -26,7 +26,7 @@ public class DeliveryTaskRendererBuilder extends ModelBuilder.AbstractModelBuild
         if (o == this) {
             return true;
         } else {
-            // mas.DeliveryTaskRendererBuilderlder that = (mas.DeliveryTaskRendererBuilderlder)o;
+            //DeliveryTaskRendererBuilder that = (DeliveryTaskRendererBuilder)o;
             return o instanceof DeliveryTaskRendererBuilder;
         }
     }
