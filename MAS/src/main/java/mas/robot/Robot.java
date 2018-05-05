@@ -15,7 +15,6 @@ import com.github.rinde.rinsim.core.model.time.TickListener;
 import com.github.rinde.rinsim.core.model.time.TimeLapse;
 import com.github.rinde.rinsim.geom.Point;
 import com.google.common.base.Optional;
-import com.sun.jna.platform.win32.WinDef;
 import mas.buildings.ChargingStation;
 import mas.pizza.DeliveryTask;
 import mas.pizza.PizzaParcel;
@@ -34,7 +33,7 @@ public class Robot extends Vehicle implements MovingRoadUser, TickListener, Rand
 
     private int id;
     private Battery battery;
-    private double moved = 0;
+    private double metersMoved = 0;
     private Point pizzeriaPos;
     private int currentCapacity;
     private Optional<Queue<Point>> currentPath;
@@ -120,10 +119,10 @@ public class Robot extends Vehicle implements MovingRoadUser, TickListener, Rand
         if (this.currentPath.get().size() > 0) {
             MoveProgress progress = roadModel.get().followPath(this, this.currentPath.get(), time);
             //System.out.println(progress.distance().doubleValue(SI.METER));
-            moved += progress.distance().doubleValue(SI.METER);
-            if (moved > 1.0) {
+            metersMoved += progress.distance().doubleValue(SI.METER);
+            if (metersMoved > 1.0) {
                 this.battery.decrementCapacity();
-                moved -= 1.0;
+                metersMoved -= 1.0;
             }
         }
 
