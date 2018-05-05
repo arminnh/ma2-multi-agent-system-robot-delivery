@@ -186,10 +186,13 @@ public class Robot extends Vehicle implements MovingRoadUser, TickListener, Rand
                 newPath = tempPath;
             }
 
+            // Check the path between our destination and the charging station
             Queue<Point> fromDestToCharge = new LinkedList<>(roadModel.get().getShortestPathTo(nextStartPos, station.getPosition()));
 
+            // What is the total distance of our current path + moving from our current destination to the charging station?
             double distToDestThenToChargeStation = Math.ceil(getDistanceOfPathInMeters(path) +  getDistanceOfPathInMeters(fromDestToCharge));
 
+            // If our battery can handle this, then we can reach the station
             if (new Double(distToDestThenToChargeStation).intValue() < battery.getRemainingCapacity()) {
                 canReachStation = true;
             }
@@ -199,6 +202,8 @@ public class Robot extends Vehicle implements MovingRoadUser, TickListener, Rand
             }
         }
 
+        // If we cannot reach any station by first going to our destination and then going to a station
+        // We first need to pass through a station
         if(!canReachStation){
             this.currentPath = Optional.of(newPath);
         }
