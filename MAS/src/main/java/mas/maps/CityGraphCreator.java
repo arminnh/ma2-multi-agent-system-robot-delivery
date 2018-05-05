@@ -1,4 +1,4 @@
-package mas.buildings;
+package mas.maps;
 
 import com.github.rinde.rinsim.geom.*;
 import com.google.common.collect.ImmutableTable;

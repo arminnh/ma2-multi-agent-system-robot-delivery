@@ -15,7 +15,8 @@ import com.github.rinde.rinsim.core.model.time.TickListener;
 import com.github.rinde.rinsim.core.model.time.TimeLapse;
 import com.github.rinde.rinsim.geom.Point;
 import com.google.common.base.Optional;
-import mas.maps.ChargingStation;
+import com.sun.jna.platform.win32.WinDef;
+import mas.buildings.ChargingStation;
 import mas.pizza.DeliveryTask;
 import mas.pizza.PizzaParcel;
 import org.apache.commons.math3.random.RandomGenerator;
@@ -79,13 +80,30 @@ public class Robot extends Vehicle implements MovingRoadUser, TickListener, Rand
         comm = Optional.of(builder.build());
     }
 
-    private Set<ChargingStation> getClosestChargeStation() {
+    private Set<ChargingStation> getChargeStations() {
         return this.roadModel.get().getObjectsOfType(ChargingStation.class);
+    }
+
+    private boolean isAtChargeStationRecharging(){
+        // We are recharging when we're at a charging station and our current capacity is less than 100%
+        for(final ChargingStation station: getChargeStations()){
+            if(roadModel.get().equalPosition(this, station)){
+                // Okay we are at a charging station
+                if(!this.battery.isAtMaxCapacity()){
+                    // Remove current path as we don't need it anymore
+                    // Current path is the path to the charging station
+                    this.currentPath = Optional.absent();
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     @Override
     public void tickImpl(@NotNull TimeLapse time) {
-        if (!time.hasTimeLeft()) {
+        if (!time.hasTimeLeft() || isAtChargeStationRecharging() || this.battery.getRemainingCapacity() == 0) {
             return;
         }
 
@@ -141,7 +159,7 @@ public class Robot extends Vehicle implements MovingRoadUser, TickListener, Rand
             Queue<Point> path = new LinkedList<>(roadModel.get().getShortestPathTo(this, this.currentParcel.get().getDeliveryLocation()));
             this.currentPath = Optional.of(path);
 
-            rechargeIfNecessary(path);
+            rechargeIfNecessary(path, this.currentParcel.get().getDeliveryLocation());
         }
 
     }
@@ -153,17 +171,42 @@ public class Robot extends Vehicle implements MovingRoadUser, TickListener, Rand
             Queue<Point> path = new LinkedList<>(roadModel.get().getShortestPathTo(this, this.pizzeriaPos));
             this.currentPath = Optional.of(path);
 
-            rechargeIfNecessary(path);
+            rechargeIfNecessary(path, this.pizzeriaPos);
         }
     }
 
-    private void rechargeIfNecessary(Queue<Point> path) {
+    private void rechargeIfNecessary(Queue<Point> path, Point nextStartPos) {
         // If distance of our path is more than our battery can take, recharge!
+        boolean canReachStation = false;
+        Queue<Point> newPath = null;
 
-        if (new Double(Math.ceil(getDistanceOfPathInMeters(path))).intValue() > battery.getRemainingCapacity()) {
+        for (final ChargingStation station : getChargeStations()) {
+            Queue<Point> tempPath = new LinkedList<>(roadModel.get().getShortestPathTo(this, station.getPosition()));
+            if (newPath == null) {
+                newPath = tempPath;
+            }
+
+            Queue<Point> fromDestToCharge = new LinkedList<>(roadModel.get().getShortestPathTo(nextStartPos, station.getPosition()));
+
+            double distToDestThenToChargeStation = Math.ceil(getDistanceOfPathInMeters(path) +  getDistanceOfPathInMeters(fromDestToCharge));
+
+            if (new Double(distToDestThenToChargeStation).intValue() < battery.getRemainingCapacity()) {
+                canReachStation = true;
+            }
+
+            if (getDistanceOfPathInMeters(newPath) > getDistanceOfPathInMeters(tempPath)) {
+                newPath = tempPath;
+            }
+        }
+
+        if(!canReachStation){
+            this.currentPath = Optional.of(newPath);
+        }
+
+        /*if (new Double(Math.ceil(getDistanceOfPathInMeters(path))).intValue() > battery.getRemainingCapacity()) {
             Queue<Point> newPath = null;
             // Find closest charging station
-            for (final ChargingStation station : getClosestChargeStation()) {
+            for (final ChargingStation station : getChargeStations()) {
                 Queue<Point> tempPath = new LinkedList<>(roadModel.get().getShortestPathTo(this, station.getPosition()));
                 if (newPath == null) {
                     newPath = tempPath;
@@ -176,7 +219,7 @@ public class Robot extends Vehicle implements MovingRoadUser, TickListener, Rand
 
             this.currentPath = Optional.of(newPath);
 
-        }
+        }*/
     }
 
     private double getDistanceOfPathInMeters(Queue<Point> newPath) {
@@ -203,4 +246,9 @@ public class Robot extends Vehicle implements MovingRoadUser, TickListener, Rand
     @Override
     public void afterTick(@NotNull TimeLapse timeLapse) {
     }
+
+    public void chargeBattery(){
+        this.battery.incrementCapacity();
+    }
+
 }

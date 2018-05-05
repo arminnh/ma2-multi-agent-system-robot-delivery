@@ -2,7 +2,7 @@ package mas.robot;
 
 public class Battery {
     private static int maxCapacity;
-    private static int capacity;
+    private int capacity;
 
     public Battery(int maxCapacity) {
         Battery.maxCapacity = maxCapacity;
@@ -21,7 +21,17 @@ public class Battery {
         capacity = c;
     }
 
+    public boolean isAtMaxCapacity(){return capacity == maxCapacity;}
+
     public void decrementCapacity() {
-        capacity--;
+        if(capacity > 0){
+            capacity--;
+        }
+    }
+
+    public void incrementCapacity(){
+        if(capacity < maxCapacity){
+            capacity++;
+        }
     }
 }

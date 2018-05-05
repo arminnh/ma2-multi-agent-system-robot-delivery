@@ -12,9 +12,9 @@ import com.github.rinde.rinsim.core.model.time.TimeLapse;
 import com.github.rinde.rinsim.ui.View;
 import com.github.rinde.rinsim.ui.renderers.GraphRoadModelRenderer;
 import com.github.rinde.rinsim.ui.renderers.RoadUserRenderer;
-import mas.buildings.CityGraphCreator;
+import mas.maps.CityGraphCreator;
 import mas.buildings.Pizzeria;
-import mas.maps.ChargingStation;
+import mas.buildings.ChargingStation;
 import mas.pizza.DeliveryTask;
 import mas.renderers.DeliveryTaskRenderer;
 import mas.renderers.RobotRenderer;
@@ -31,7 +31,7 @@ public class PizzaDeliverySimulator {
     private static final long RANDOM_SEED = 123L;
     private static final int SIM_SPEEDUP = 2;
 
-    private static final int NUM_ROBOTS = 1;
+    private static final int NUM_ROBOTS = 3;
     private static final int ROBOT_CAPACITY = 5;
     private static final int BATTERY_CAPACITY = 100;
     private static final int VEHICLE_LENGTH = 1;
