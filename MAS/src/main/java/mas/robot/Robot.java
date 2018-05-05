@@ -92,7 +92,9 @@ public class Robot extends Vehicle implements MovingRoadUser, TickListener, Rand
                 if(!this.battery.isAtMaxCapacity()){
                     // Remove current path as we don't need it anymore
                     // Current path is the path to the charging station
-                    this.currentPath = Optional.absent();
+                    if(this.currentPath.isPresent()){
+                        this.currentPath = Optional.absent();
+                    }
                     return true;
                 }
             }
@@ -208,23 +210,6 @@ public class Robot extends Vehicle implements MovingRoadUser, TickListener, Rand
             this.currentPath = Optional.of(newPath);
         }
 
-        /*if (new Double(Math.ceil(getDistanceOfPathInMeters(path))).intValue() > battery.getRemainingCapacity()) {
-            Queue<Point> newPath = null;
-            // Find closest charging station
-            for (final ChargingStation station : getChargeStations()) {
-                Queue<Point> tempPath = new LinkedList<>(roadModel.get().getShortestPathTo(this, station.getPosition()));
-                if (newPath == null) {
-                    newPath = tempPath;
-                }
-
-                if (getDistanceOfPathInMeters(newPath) > getDistanceOfPathInMeters(tempPath)) {
-                    newPath = tempPath;
-                }
-            }
-
-            this.currentPath = Optional.of(newPath);
-
-        }*/
     }
 
     private double getDistanceOfPathInMeters(Queue<Point> newPath) {
