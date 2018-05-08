@@ -9,6 +9,7 @@ import com.github.rinde.rinsim.core.model.road.RoadModel;
 import com.github.rinde.rinsim.core.model.road.RoadModelBuilders;
 import com.github.rinde.rinsim.core.model.time.TickListener;
 import com.github.rinde.rinsim.core.model.time.TimeLapse;
+import com.github.rinde.rinsim.pdptw.common.StatsTracker;
 import com.github.rinde.rinsim.ui.View;
 import com.github.rinde.rinsim.ui.renderers.GraphRoadModelRenderer;
 import com.github.rinde.rinsim.ui.renderers.RoadUserRenderer;
@@ -37,6 +38,8 @@ public class PizzaDeliverySimulator {
     private static final int VEHICLE_LENGTH = 1;
     private static final double VEHICLE_SPEED_KMH = 1;
     private static final double PROB_NEW_PARCEL = .02;
+    private static final double PROB_NEW_CHARGE_STATION = .001;
+
 
     private static int ROBOT_ID = 1;
     private static int PIZZAPARCEL_ID = 1;
@@ -130,6 +133,13 @@ public class PizzaDeliverySimulator {
                     // TODO: generate amount of pizzas using Gaussian
                     sim.register(new DeliveryTask(roadModel.getRandomPosition(rng), 1));
                 }
+ /*               if (rng.nextDouble() < PROB_NEW_CHARGE_STATION) {
+                    // TODO: generate amount of pizzas using Gaussian
+                    sim.register(new ChargingStation(
+                            roadModel.getRandomPosition(sim.getRandomGenerator()),
+                            new Double(NUM_ROBOTS * 0.3).intValue()
+                    ));
+                }*/
             }
 
             @Override
