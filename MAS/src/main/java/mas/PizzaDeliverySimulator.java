@@ -9,13 +9,12 @@ import com.github.rinde.rinsim.core.model.road.RoadModel;
 import com.github.rinde.rinsim.core.model.road.RoadModelBuilders;
 import com.github.rinde.rinsim.core.model.time.TickListener;
 import com.github.rinde.rinsim.core.model.time.TimeLapse;
-import com.github.rinde.rinsim.pdptw.common.StatsTracker;
 import com.github.rinde.rinsim.ui.View;
 import com.github.rinde.rinsim.ui.renderers.GraphRoadModelRenderer;
 import com.github.rinde.rinsim.ui.renderers.RoadUserRenderer;
-import mas.maps.CityGraphCreator;
-import mas.buildings.Pizzeria;
 import mas.buildings.ChargingStation;
+import mas.buildings.Pizzeria;
+import mas.maps.CityGraphCreator;
 import mas.pizza.DeliveryTask;
 import mas.renderers.DeliveryTaskRenderer;
 import mas.renderers.RobotRenderer;
@@ -37,9 +36,15 @@ public class PizzaDeliverySimulator {
     private static final int BATTERY_CAPACITY = 100;
     private static final int VEHICLE_LENGTH = 1;
     private static final double VEHICLE_SPEED_KMH = 1;
-    private static final double PROB_NEW_PARCEL = .02;
-    private static final double PROB_NEW_CHARGE_STATION = .001;
 
+    private static final double PROB_NEW_PARCEL = .02;
+    private static final double PROB_PIZZERIA_OPEN = .002;
+    private static final double PROB_PIZZERIA_CLOSE = .002;
+    private static final double PROB_NEW_CHARGING_STATION = .001;
+    private static final double PROB_ROAD_WORKS_START = .005;
+    private static final double PROB_ROAD_WORKS_END = .005;
+    private static final double PIZZA_MOUNT_STD = 0.75;
+    private static final double PIZZA_AMOUNT_MEAN = 4;
 
     private static int ROBOT_ID = 1;
     private static int PIZZAPARCEL_ID = 1;
@@ -131,11 +136,15 @@ public class PizzaDeliverySimulator {
             @Override
             public void tick(@NotNull TimeLapse time) {
                 if (rng.nextDouble() < PROB_NEW_PARCEL) {
-                    // TODO: generate amount of pizzas using Gaussian
-                    sim.register(new DeliveryTask(roadModel.getRandomPosition(rng), 1));
+                    int pizzaAmount = (int) (rng.nextGaussian() * PIZZA_MOUNT_STD + PIZZA_AMOUNT_MEAN);
+
+                    sim.register(new DeliveryTask(
+                            roadModel.getRandomPosition(rng),
+                            pizzaAmount,
+                            time.getStartTime()
+                    ));
                 }
- /*               if (rng.nextDouble() < PROB_NEW_CHARGE_STATION) {
-                    // TODO: generate amount of pizzas using Gaussian
+                /*if (rng.nextDouble() < PROB_NEW_CHARGING_STATION) {
                     sim.register(new ChargingStation(
                             roadModel.getRandomPosition(sim.getRandomGenerator()),
                             new Double(NUM_ROBOTS * 0.3).intValue()
