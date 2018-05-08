@@ -126,20 +126,26 @@ public class Robot extends Vehicle implements MovingRoadUser, TickListener, Rand
             }
         }
 
-        if (currentParcel.isPresent()) {
-            DeliveryTask currentTask = this.currentParcel.get().getDeliveryTask();
+        RoadModel rModel = roadModel.get();
+        PDPModel pModel = pdpModel.get();
 
-            if (roadModel.get().equalPosition(this, currentTask)) {
+        if (currentParcel.isPresent()) {
+            PizzaParcel currParcel = this.currentParcel.get();
+            DeliveryTask currentTask = currParcel.getDeliveryTask();
+
+            if (rModel.equalPosition(this, currentTask)) {
                 // Deliver the pizzas
-                pdpModel.get().deliver(this, this.currentParcel.get(), time);
-                this.currentParcel.get().getDeliveryTask().deliverPizzas(this.currentParcel.get().getAmountPizzas());
+                pModel.deliver(this, currParcel, time);
+                currParcel.getDeliveryTask().deliverPizzas(
+                    currParcel.getAmountPizzas(), time.getEndTime(), currParcel, this
+                );
 
                 // Unload pizzas
-                this.currentCapacity -= this.currentParcel.get().getAmountPizzas();
+                this.currentCapacity -= currParcel.getAmountPizzas();
 
-                if (this.currentParcel.get().getDeliveryTask().receivedAllPizzas()) {
+                if (currParcel.getDeliveryTask().receivedAllPizzas()) {
                     // All pizzas have been delivered, now we have to delete the task.
-                    roadModel.get().removeObject(this.currentParcel.get().getDeliveryTask());
+                    rModel.removeObject(currParcel.getDeliveryTask());
                 }
 
                 // Remove current task
@@ -149,7 +155,7 @@ public class Robot extends Vehicle implements MovingRoadUser, TickListener, Rand
                 this.currentPath = Optional.absent();
             }
         } else {
-            if (roadModel.get().getPosition(this) == this.pizzeriaPos) {
+            if (rModel.getPosition(this) == this.pizzeriaPos) {
                 this.currentPath = Optional.absent();
             }
         }
@@ -162,7 +168,6 @@ public class Robot extends Vehicle implements MovingRoadUser, TickListener, Rand
 
             rechargeIfNecessary(path, this.currentParcel.get().getDeliveryLocation());
         }
-
     }
 
     private void toPizzeriaOrChargingStation() {

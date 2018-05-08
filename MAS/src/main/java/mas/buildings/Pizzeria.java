@@ -105,7 +105,7 @@ public class Pizzeria implements RoadUser, TickListener {
                         .neededCapacity(pizzaAmount)
                         .buildDTO();
 
-                PizzaParcel parcel = new PizzaParcel(pdto, task, pizzaAmount);
+                PizzaParcel parcel = new PizzaParcel(pdto, task, pizzaAmount, time.getStartTime());
                 sim.register(parcel);
                 robot.setTask(parcel);
                 task.addReadyPizzas(pizzaAmount);

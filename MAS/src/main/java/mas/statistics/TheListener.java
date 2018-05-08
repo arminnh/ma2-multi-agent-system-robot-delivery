@@ -15,14 +15,15 @@ import com.github.rinde.rinsim.geom.Point;
 import com.github.rinde.rinsim.pdptw.common.AddParcelEvent;
 import com.github.rinde.rinsim.pdptw.common.AddVehicleEvent;
 import com.github.rinde.rinsim.pdptw.common.StatsProvider;
+import com.github.rinde.rinsim.scenario.ScenarioController;
 import com.github.rinde.rinsim.scenario.ScenarioController.ScenarioEvent;
 import com.github.rinde.rinsim.scenario.TimeOutEvent;
+import mas.pizza.DeliveryTask.DeliveryTaskEventType;
+import mas.pizza.DeliveryTaskEvent;
+import mas.pizza.PizzaParcel;
 
 import java.util.Map;
 
-import static com.github.rinde.rinsim.core.model.pdp.PDPModel.PDPModelEventType.NEW_PARCEL;
-import static com.github.rinde.rinsim.core.model.pdp.PDPModel.PDPModelEventType.NEW_VEHICLE;
-import static com.github.rinde.rinsim.scenario.ScenarioController.EventType.SCENARIO_EVENT;
 import static com.google.common.base.Verify.verify;
 import static com.google.common.collect.Maps.newLinkedHashMap;
 
@@ -32,9 +33,14 @@ public class TheListener implements Listener {
     private static final double MOVE_THRESHOLD = 0.0001;
     public final Map<MovingRoadUser, Double> distanceMap;
     public final Map<MovingRoadUser, Long> lastArrivalTimeAtDepot;
+    // tasks
+    public int totalTasks;
+    public int totalTasksFinished;
+    public int totalTaskWaitingTime;
     // parcels
     public int totalParcels;
     public int acceptedParcels;
+    public int totalPizzaTravelTime;
     // vehicles
     public int totalVehicles;
     public double totalDistance;
@@ -84,6 +90,7 @@ public class TheListener implements Listener {
         } else if (e.getEventType() == Clock.ClockEventType.STOPPED) {
             computationTime = System.currentTimeMillis() - startTimeReal;
             simulationTime = clock.getCurrentTime() - startTimeSim;
+
         } else if (e.getEventType() == GenericRoadModel.RoadEventType.MOVE) {
             verify(e instanceof MoveEvent);
             final MoveEvent me = (MoveEvent) e;
@@ -124,8 +131,10 @@ public class TheListener implements Listener {
                         StatsProvider.EventTypes.PICKUP_TARDINESS, this, p, v, tardiness,
                         pme.time));*/
             }
+
         } else if (e.getEventType() == PDPModelEventType.END_PICKUP) {
             totalPickups++;
+
         } else if (e.getEventType() == PDPModelEventType.START_DELIVERY) {
             final PDPModelEvent pme = (PDPModelEvent) e;
 
@@ -143,9 +152,16 @@ public class TheListener implements Listener {
                         StatsProvider.EventTypes.DELIVERY_TARDINESS, this, p, v,
                         tardiness, pme.time));*/
             }
+
         } else if (e.getEventType() == PDPModelEventType.END_DELIVERY) {
             totalDeliveries++;
-        } else if (e.getEventType() == SCENARIO_EVENT) {
+            final PDPModelEvent pme = (PDPModelEvent) e;
+            final PizzaParcel p = (PizzaParcel) pme.parcel;
+            //final Vehicle v = pme.vehicle;
+
+            totalPizzaTravelTime += clock.getCurrentTime() - p.start_time;
+
+        } else if (e.getEventType() == ScenarioController.EventType.SCENARIO_EVENT) {
             final ScenarioEvent se = (ScenarioEvent) e;
             if (se.getTimedEvent() instanceof AddParcelEvent) {
                 totalParcels++;
@@ -155,17 +171,32 @@ public class TheListener implements Listener {
                 simFinish = true;
                 scenarioEndTime = se.getTimedEvent().getTime();
             }
-        } else if (e.getEventType() == NEW_PARCEL) {
+
+        } else if (e.getEventType() == DeliveryTaskEventType.NEW_TASK) {
+            totalTasks++;
+
+        } else if (e.getEventType() == DeliveryTaskEventType.END_TASK) {
+            final DeliveryTaskEvent ev = (DeliveryTaskEvent) e;
+
+            totalTasksFinished++;
+            totalTaskWaitingTime += clock.getCurrentTime() - ev.time;
+
+        } else if (e.getEventType() == PDPModelEventType.NEW_PARCEL) {
             // pdp model event
             acceptedParcels++;
-        } else if (e.getEventType() == NEW_VEHICLE) {
+
+        } else if (e.getEventType() == PDPModelEventType.NEW_VEHICLE) {
             verify(e instanceof PDPModelEvent);
             final PDPModelEvent ev = (PDPModelEvent) e;
             lastArrivalTimeAtDepot.put(ev.vehicle, clock.getCurrentTime());
+
         } else {
             // currently not handling fall throughs
         }
 
+        System.out.println("Total tasks: " + totalTasks +
+                ".\t Task waiting time: " + totalTaskWaitingTime +
+                ".\t Total pizza travel time: " + (totalPizzaTravelTime / 1000) + "s");
     }
 
     private void increment(MovingRoadUser mru, double num) {
