@@ -18,9 +18,11 @@ import com.github.rinde.rinsim.pdptw.common.StatsProvider;
 import com.github.rinde.rinsim.scenario.ScenarioController;
 import com.github.rinde.rinsim.scenario.ScenarioController.ScenarioEvent;
 import com.github.rinde.rinsim.scenario.TimeOutEvent;
+import com.google.common.base.Optional;
 import mas.pizza.DeliveryTask.DeliveryTaskEventType;
 import mas.pizza.DeliveryTaskEvent;
 import mas.pizza.PizzaParcel;
+import mas.robot.Robot;
 
 import java.util.Map;
 
@@ -49,6 +51,8 @@ public class TheListener implements Listener {
     public int totalDeliveries;
     public long pickupTardiness;
     public long deliveryTardiness;
+    public long totalTimeIdle;
+    public long totalTimeCharging;
     // simulation
     public long startTimeReal;
     public long startTimeSim;
@@ -97,8 +101,7 @@ public class TheListener implements Listener {
             increment((MovingRoadUser) me.roadUser, me.pathProgress.distance().getValue().doubleValue());
             totalDistance += me.pathProgress.distance().getValue().doubleValue();
             totalTime += me.pathProgress.time().getValue();
-            // if we are closer than 10 cm to the depot, we say we are 'at'
-            // the depot
+            // if we are closer than 10 cm to the depot, we say we are 'at' the depot
             if (Point.distance(me.roadModel.getPosition(me.roadUser),
                     ((Vehicle) me.roadUser).getStartPosition()) < MOVE_THRESHOLD) {
                 // only override time if the vehicle did actually move
@@ -134,6 +137,13 @@ public class TheListener implements Listener {
 
         } else if (e.getEventType() == PDPModelEventType.END_PICKUP) {
             totalPickups++;
+
+            final PDPModelEvent pme = (PDPModelEvent) e;
+            Robot r = (Robot) pme.vehicle;
+            if (r.timestamp_idle.isPresent()) {
+                totalTimeIdle += pme.time - r.timestamp_idle.get();
+                r.timestamp_idle = Optional.absent();
+            }
 
         } else if (e.getEventType() == PDPModelEventType.START_DELIVERY) {
             final PDPModelEvent pme = (PDPModelEvent) e;
@@ -189,14 +199,14 @@ public class TheListener implements Listener {
             verify(e instanceof PDPModelEvent);
             final PDPModelEvent ev = (PDPModelEvent) e;
             lastArrivalTimeAtDepot.put(ev.vehicle, clock.getCurrentTime());
-
         } else {
             // currently not handling fall throughs
         }
 
-        System.out.println("Total tasks: " + totalTasks +
-                ". Task waiting time: " + (totalTaskWaitingTime / 1000) + "s" +
-                ". Total pizza travel time: " + (totalPizzaTravelTime / 1000) + "s");
+        //System.out.println("Total tasks: " + totalTasks +
+        //        ". Task waiting time: " + (totalTaskWaitingTime / 1000) + "s" +
+        //        ". Total pizza travel time: " + (totalPizzaTravelTime / 1000) + "s");
+        System.out.println("Total pickups: " + totalPickups + ". Total robot time idle: " + (totalTimeIdle / 1000) + "s");
     }
 
     private void increment(MovingRoadUser mru, double num) {

@@ -38,6 +38,7 @@ public class Robot extends Vehicle implements MovingRoadUser, TickListener, Rand
     private int currentCapacity;
     private Optional<Queue<Point>> currentPath;
     private Optional<PizzaParcel> currentParcel;
+    public Optional<Long> timestamp_idle;
 
     private Optional<RandomGenerator> rnd;
     private Optional<RoadModel> roadModel;
@@ -52,6 +53,7 @@ public class Robot extends Vehicle implements MovingRoadUser, TickListener, Rand
         this.pizzeriaPos = pizzeriaPos;
         this.currentPath = Optional.absent();
         this.currentParcel = Optional.absent();
+        this.timestamp_idle = Optional.absent();
     }
 
     @Override
@@ -157,6 +159,11 @@ public class Robot extends Vehicle implements MovingRoadUser, TickListener, Rand
         } else {
             if (rModel.getPosition(this) == this.pizzeriaPos) {
                 this.currentPath = Optional.absent();
+
+                if (!this.timestamp_idle.isPresent()) {
+                    this.timestamp_idle = Optional.of(time.getEndTime());
+                    System.out.println("SET TIMESTAMP IDLE: " + this.timestamp_idle);
+                }
             }
         }
     }
