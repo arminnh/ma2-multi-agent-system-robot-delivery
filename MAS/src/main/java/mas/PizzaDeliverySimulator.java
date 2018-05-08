@@ -63,8 +63,8 @@ public class PizzaDeliverySimulator {
         // Configure the GUI with separate mas.renderers for the road, robots, customers, ...
         View.Builder viewBuilder = View.builder()
                 .withTitleAppendix("Pizza delivery multi agent system simulator")
-                //.withAutoPlay()
-                //.withSpeedUp(SIM_SPEEDUP)
+                .withAutoPlay()
+                .withSpeedUp(SIM_SPEEDUP)
                 .with(GraphRoadModelRenderer.builder()
                         .withMargin(VEHICLE_LENGTH)
                 )
@@ -94,6 +94,7 @@ public class PizzaDeliverySimulator {
                         .withModificationCheck(true))
                 .addModel(DefaultPDPModel.builder())
                 .addModel(CommModel.builder())
+                .addModel(mas.statistics.StatsTracker.builder())
                 // in case a GUI is not desired simply don't add it.
                 .addModel(viewBuilder)
                 .build();
