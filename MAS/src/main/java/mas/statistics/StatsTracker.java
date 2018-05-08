@@ -14,7 +14,6 @@ import static com.github.rinde.rinsim.core.model.pdp.PDPModel.PDPModelEventType.
 import static com.github.rinde.rinsim.core.model.road.GenericRoadModel.RoadEventType.MOVE;
 import static com.github.rinde.rinsim.core.model.time.Clock.ClockEventType.STARTED;
 import static com.github.rinde.rinsim.core.model.time.Clock.ClockEventType.STOPPED;
-import static com.github.rinde.rinsim.scenario.ScenarioController.EventType.*;
 
 /**
  * This class tracks statistics in a simulation.
@@ -39,10 +38,13 @@ public final class StatsTracker extends AbstractModelVoid implements StatsProvid
 
         roadModel.getEventAPI().addListener(theListener, MOVE);
         clock.getEventAPI().addListener(theListener, STARTED, STOPPED);
-
         pm.getEventAPI().addListener(theListener, START_PICKUP, END_PICKUP, START_DELIVERY, END_DELIVERY, NEW_PARCEL, NEW_VEHICLE);
 
         System.out.println("STATS TRACKER INIT");
+    }
+
+    public TheListener getTheListener() {
+        return this.theListener;
     }
 
     /**

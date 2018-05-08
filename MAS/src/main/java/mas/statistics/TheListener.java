@@ -179,7 +179,7 @@ public class TheListener implements Listener {
             final DeliveryTaskEvent ev = (DeliveryTaskEvent) e;
 
             totalTasksFinished++;
-            totalTaskWaitingTime += clock.getCurrentTime() - ev.time;
+            totalTaskWaitingTime += clock.getCurrentTime() - ev.deliveryTask.start_time;
 
         } else if (e.getEventType() == PDPModelEventType.NEW_PARCEL) {
             // pdp model event
@@ -195,8 +195,8 @@ public class TheListener implements Listener {
         }
 
         System.out.println("Total tasks: " + totalTasks +
-                ".\t Task waiting time: " + totalTaskWaitingTime +
-                ".\t Total pizza travel time: " + (totalPizzaTravelTime / 1000) + "s");
+                ". Task waiting time: " + (totalTaskWaitingTime / 1000) + "s" +
+                ". Total pizza travel time: " + (totalPizzaTravelTime / 1000) + "s");
     }
 
     private void increment(MovingRoadUser mru, double num) {

@@ -20,6 +20,7 @@ import mas.renderers.DeliveryTaskRenderer;
 import mas.renderers.RobotRenderer;
 import mas.robot.Battery;
 import mas.robot.Robot;
+import mas.statistics.StatsTracker;
 import org.apache.commons.math3.random.RandomGenerator;
 import org.jetbrains.annotations.NotNull;
 
@@ -69,7 +70,7 @@ public class PizzaDeliverySimulator {
         View.Builder viewBuilder = View.builder()
                 .withTitleAppendix("Pizza delivery multi agent system simulator")
                 .withAutoPlay()
-                .withSpeedUp(SIM_SPEEDUP)
+                //.withSpeedUp(SIM_SPEEDUP)
                 .with(GraphRoadModelRenderer.builder()
                         .withMargin(VEHICLE_LENGTH)
                 )
@@ -107,6 +108,7 @@ public class PizzaDeliverySimulator {
         final RandomGenerator rng = sim.getRandomGenerator();
         final RoadModel roadModel = sim.getModelProvider().getModel(RoadModel.class);
         final PDPModel pdpModel = sim.getModelProvider().getModel(PDPModel.class);
+        final StatsTracker statsTracker = sim.getModelProvider().getModel(StatsTracker.class);
 
         final Pizzeria pizzeria = new Pizzeria(roadModel.getRandomPosition(rng), pdpModel, sim);
         sim.register(pizzeria);
@@ -141,7 +143,8 @@ public class PizzaDeliverySimulator {
                     sim.register(new DeliveryTask(
                             roadModel.getRandomPosition(rng),
                             pizzaAmount,
-                            time.getStartTime()
+                            time.getStartTime(),
+                            statsTracker.getTheListener()
                     ));
                 }
                 /*if (rng.nextDouble() < PROB_NEW_CHARGING_STATION) {
