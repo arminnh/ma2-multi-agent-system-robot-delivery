@@ -9,6 +9,7 @@ import com.github.rinde.rinsim.core.model.road.RoadModel;
 import com.github.rinde.rinsim.core.model.road.RoadModelBuilders;
 import com.github.rinde.rinsim.core.model.time.TickListener;
 import com.github.rinde.rinsim.core.model.time.TimeLapse;
+import com.github.rinde.rinsim.pdptw.common.StatsPanel;
 import com.github.rinde.rinsim.ui.View;
 import com.github.rinde.rinsim.ui.renderers.GraphRoadModelRenderer;
 import com.github.rinde.rinsim.ui.renderers.RoadUserRenderer;
@@ -45,7 +46,7 @@ public class PizzaDeliverySimulator {
     private static final double PROB_NEW_CHARGING_STATION = .001;
     private static final double PROB_ROAD_WORKS_START = .005;
     private static final double PROB_ROAD_WORKS_END = .005;
-    private static final double PIZZA_MOUNT_STD = 0.75;
+    private static final double PIZZA_AMOUNT_STD = 0.75;
     private static final double PIZZA_AMOUNT_MEAN = 4;
 
     private static int ROBOT_ID = 1;
@@ -67,7 +68,7 @@ public class PizzaDeliverySimulator {
      *                starting and stopping itself such that it can be run from a unit test.
      */
     private static void run(boolean testing) {
-        // Configure the GUI with separate mas.renderers for the road, robots, customers, ...
+        // Configure the GUI with separate mas.renderers for the road, totalVehicles, customers, ...
         View.Builder viewBuilder = View.builder()
                 .withTitleAppendix("Pizza delivery multi agent system simulator")
                 .withAutoPlay()
@@ -82,7 +83,9 @@ public class PizzaDeliverySimulator {
                         .withImageAssociation(DeliveryTask.class, "/graphics/flat/person-black-32.png")
                 )
                 .with(DeliveryTaskRenderer.builder())
-                .with(RobotRenderer.builder());
+                .with(RobotRenderer.builder())
+                .with(StatsPanel.builder())
+                .withResolution(1920, 1080);
         /*
          * Image sources:
          * https://www.shutterstock.com/image-vector/line-pixel-style-classic-robot-rectangle-488817829
@@ -143,21 +146,8 @@ public class PizzaDeliverySimulator {
             @Override
             public void tick(@NotNull TimeLapse time) {
                 if (rng.nextDouble() < PROB_NEW_PARCEL) {
-                    int pizzaAmount = (int) (rng.nextGaussian() * PIZZA_MOUNT_STD + PIZZA_AMOUNT_MEAN);
-
-                    sim.register(new DeliveryTask(
-                            roadModel.getRandomPosition(rng),
-                            pizzaAmount,
-                            time.getStartTime(),
-                            statsTracker.getTheListener()
-                    ));
+                    dtModel.createNewDeliveryTask(rng, PIZZA_AMOUNT_MEAN, PIZZA_AMOUNT_STD, time.getStartTime());
                 }
-                /*if (rng.nextDouble() < PROB_NEW_CHARGING_STATION) {
-                    sim.register(new ChargingStation(
-                            roadModel.getRandomPosition(sim.getRandomGenerator()),
-                            new Double(NUM_ROBOTS * 0.3).intValue()
-                    ));
-                }*/
             }
 
             @Override

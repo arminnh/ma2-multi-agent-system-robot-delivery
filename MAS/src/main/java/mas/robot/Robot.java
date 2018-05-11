@@ -14,6 +14,7 @@ import com.github.rinde.rinsim.core.model.road.RoadModel;
 import com.github.rinde.rinsim.core.model.time.TickListener;
 import com.github.rinde.rinsim.core.model.time.TimeLapse;
 import com.github.rinde.rinsim.geom.Point;
+import com.github.rinde.rinsim.pdptw.common.RouteFollowingVehicle;
 import com.google.common.base.Optional;
 import mas.buildings.ChargingStation;
 import mas.models.DeliveryTaskModel;
@@ -147,6 +148,7 @@ public class Robot extends Vehicle implements MovingRoadUser, TickListener, Rand
 
         RoadModel rModel = roadModel.get();
         PDPModel pModel = pdpModel.get();
+        DeliveryTaskModel dtModel = this.dtModel.get();
 
         if (currentParcel.isPresent()) {
             PizzaParcel currParcel = this.currentParcel.get();
@@ -155,9 +157,7 @@ public class Robot extends Vehicle implements MovingRoadUser, TickListener, Rand
             if (rModel.equalPosition(this, currentTask)) {
                 // Deliver the pizzas
                 pModel.deliver(this, currParcel, time);
-                currParcel.getDeliveryTask().deliverPizzas(
-                    currParcel.getAmountPizzas(), time.getEndTime(), currParcel, this
-                );
+                dtModel.deliverPizzas(this, currParcel, time.getEndTime());
 
                 // Unload pizzas
                 this.currentCapacity -= currParcel.getAmountPizzas();

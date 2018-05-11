@@ -6,7 +6,6 @@ import com.github.rinde.rinsim.core.model.road.RoadModel;
 import com.github.rinde.rinsim.core.model.time.Clock;
 import com.github.rinde.rinsim.event.EventAPI;
 import com.github.rinde.rinsim.event.EventDispatcher;
-import com.github.rinde.rinsim.pdptw.common.StatisticsDTO;
 import com.github.rinde.rinsim.pdptw.common.StatsProvider;
 import com.github.rinde.rinsim.scenario.ScenarioController;
 import mas.models.DeliveryTaskModel;
@@ -48,11 +47,7 @@ public final class StatsTracker extends AbstractModelVoid implements StatsProvid
 
     public void addDeliveryTaskModelListener(DeliveryTaskModel dtModel){
         dtModel.getEventAPI().addListener(theListener, ROBOT_ENTERING_CHARGINGSTATION, ROBOT_LEAVING_CHARGINGSTATION,
-                NEW_PIZZERIA, NEW_ROADWORK, NEW_TASK, CLOSE_PIZZERIA, FINISH_ROADWORK);
-    }
-
-    public TheListener getTheListener() {
-        return this.theListener;
+                NEW_PIZZERIA, NEW_ROADWORK, NEW_TASK, END_TASK, CLOSE_PIZZERIA, FINISH_ROADWORK);
     }
 
     /**
@@ -87,14 +82,17 @@ public final class StatsTracker extends AbstractModelVoid implements StatsProvid
             compTime = System.currentTimeMillis() - theListener.startTimeReal;
         }
 
-        return new StatisticsDTO(theListener.totalDistance, theListener.totalTime,
-                theListener.totalPickups, theListener.totalDeliveries,
-                theListener.totalParcels, theListener.acceptedParcels,
-                theListener.pickupTardiness, theListener.deliveryTardiness, compTime,
-                clock.getCurrentTime(), theListener.simFinish, vehicleBack,
-                overTime, theListener.totalVehicles, theListener.distanceMap.size(),
-                clock.getTimeUnit(), roadModel.getDistanceUnit(),
-                roadModel.getSpeedUnit());
+        TheListener t = theListener;
+        double avgPizzasPerRobot = 1;
+//        double avgPizzasPerRobot = t.pizzas / (t.totalVehicles - t.vehiclesIdle);
+        return new StatisticsDTO(
+                t.totalDistance, t.totalTime, t.totalPickups, t.totalDeliveries, t.totalParcels, t.acceptedParcels,
+                t.pickupTardiness, t.deliveryTardiness, compTime, clock.getCurrentTime(), t.simFinish, vehicleBack,
+                overTime, t.totalVehicles, t.distanceMap.size(), clock.getTimeUnit(), roadModel.getDistanceUnit(),
+                roadModel.getSpeedUnit(), t.tasksWaitingTime, t.totalTaskWaitingTime, t.vehiclesIdle,
+                t.totalRobotsTimeDriving, t.totalRobotsTimeIdle, t.totalRobotsTimeCharging, t.tasks, t.totalTasks,
+                t.totalTasksFinished, t.pizzas, t.totalPizzas, avgPizzasPerRobot, t.pizzerias, t.roadWorks
+        );
     }
 
     @Override

@@ -7,18 +7,13 @@ import com.github.rinde.rinsim.core.model.pdp.Parcel;
 import com.github.rinde.rinsim.core.model.pdp.Vehicle;
 import com.github.rinde.rinsim.core.model.road.RoadModel;
 import com.github.rinde.rinsim.core.model.road.RoadUser;
-import com.github.rinde.rinsim.event.EventDispatcher;
 import com.github.rinde.rinsim.geom.Point;
 import com.google.common.base.Optional;
-import mas.models.DeliveryTaskEvent;
-import mas.models.DeliveryTaskEventType;
-import mas.statistics.TheListener;
 import org.jetbrains.annotations.NotNull;
 
 
 public class DeliveryTask implements RoadUser, CommUser {
 
-    private final EventDispatcher eventDispatcher;
     private Optional<RoadModel> roadModel;
     private Optional<CommDevice> comm;
 
@@ -30,20 +25,11 @@ public class DeliveryTask implements RoadUser, CommUser {
     private int pizzasDelivered;
 
 
-    public DeliveryTask(Point position, int pizzaAmount, long time, TheListener theListener) {
+    public DeliveryTask(Point position, int pizzaAmount, long time) {
         this.position = position;
         this.pizzaAmount = pizzaAmount;
         this.pizzasDelivered = 0;
         this.start_time = time;
-
-        eventDispatcher = new EventDispatcher(DeliveryTaskEventType.values());
-
-        // TODO: move this to something like DeliveryTaskModel but with a better name
-        eventDispatcher.addListener(theListener, DeliveryTaskEventType.NEW_TASK, DeliveryTaskEventType.END_TASK);
-
-        eventDispatcher.dispatchEvent(new DeliveryTaskEvent(
-                DeliveryTaskEventType.NEW_TASK, this, time, null, null
-        ));
     }
 
     @Override
@@ -69,6 +55,10 @@ public class DeliveryTask implements RoadUser, CommUser {
         return this.pizzasDelivered;
     }
 
+    public boolean isFinished() {
+        return this.pizzasDelivered == this.pizzaAmount;
+    }
+
     public int getPizzasLeft() {
         return this.pizzaAmount - this.pizzasReady;
     }
@@ -81,14 +71,9 @@ public class DeliveryTask implements RoadUser, CommUser {
         this.pizzasReady += amount;
     }
 
-    public void deliverPizzas(int amount, long time, Parcel parcel, Vehicle vehicle) {
+    public void deliverPizzas(int amount) {
         this.pizzasDelivered += amount;
-        if (this.pizzasDelivered == this.pizzaAmount) {
-
-            eventDispatcher.dispatchEvent(new DeliveryTaskEvent(
-                    DeliveryTaskEventType.END_TASK, this, time,parcel, vehicle
-            ));
-        }
+        System.out.println("delivered pizzas: " + amount + ". Requested: " + pizzaAmount);
     }
 
     @Override

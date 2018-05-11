@@ -58,7 +58,7 @@ public class ChargingStation implements RoadUser, TickListener {
             return;
         }
 
-        // At the moment we don't do anything concerning with the maximum amount of robots that can station here
+        // At the moment we don't do anything concerning with the maximum amount of totalVehicles that can station here
         for(Iterator<Robot> it = this.chargingRobots.iterator(); it.hasNext(); ){
             it.next().chargeBattery();
         }

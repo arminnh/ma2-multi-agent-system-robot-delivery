@@ -50,7 +50,7 @@ public class Pizzeria implements RoadUser, TickListener, PizzaUser {
     private List<Robot> getWaitingRobots() {
         List<Robot> robots = new LinkedList<>(this.roadModel.get().getObjectsAt(this, Robot.class));
 
-        // Filter out any robots that are in the pizzeria but have a task...
+        // Filter out any totalVehicles that are in the pizzeria but have a task...
         CollectionUtils.filter(robots, new Predicate<Robot>() {
             @Override
             public boolean evaluate(Robot o) {

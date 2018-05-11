@@ -5,12 +5,12 @@ import com.github.rinde.rinsim.core.model.Model;
 import com.github.rinde.rinsim.core.model.pdp.PDPModel;
 import com.github.rinde.rinsim.core.model.pdp.Parcel;
 import com.github.rinde.rinsim.core.model.pdp.ParcelDTO;
+import com.github.rinde.rinsim.core.model.pdp.Vehicle;
 import com.github.rinde.rinsim.core.model.road.RoadModel;
 import com.github.rinde.rinsim.core.model.time.TimeLapse;
 import com.github.rinde.rinsim.event.EventAPI;
 import com.github.rinde.rinsim.event.EventDispatcher;
 import com.github.rinde.rinsim.geom.Point;
-import com.github.rinde.rinsim.pdptw.common.StatsProvider;
 import mas.buildings.ChargingStation;
 import mas.buildings.Pizzeria;
 import mas.pizza.DeliveryTask;
@@ -30,21 +30,43 @@ public class DeliveryTaskModel extends Model.AbstractModel<PizzaUser> {
 
     private final EventDispatcher eventDispatcher;
     private Simulator sim;
-    private RoadModel rmModel;
+    private RoadModel rModel;
     private PDPModel pdpModel;
     private RandomGenerator rng;
 
-    public DeliveryTaskModel(RoadModel rmModel, PDPModel pdpModel){
+    public DeliveryTaskModel(RoadModel rModel, PDPModel pdpModel) {
         eventDispatcher = new EventDispatcher(DeliveryTaskEventType.values());
         //this.sim = sim;
-        this.rmModel = rmModel;
+        this.rModel = rModel;
         this.pdpModel = pdpModel;
+    }
+
+    public void createNewDeliveryTask(RandomGenerator rng, double pizzaMean, double pizzaStd, long time) {
+        int pizzaAmount = (int) (rng.nextGaussian() * pizzaStd + pizzaMean);
+
+        DeliveryTask task = new DeliveryTask(rModel.getRandomPosition(rng), pizzaAmount, time);
+        sim.register(task);
+
+        eventDispatcher.dispatchEvent(new DeliveryTaskEvent(
+                DeliveryTaskEventType.NEW_TASK, task, time, null, null
+        ));
+    }
+
+    public void deliverPizzas(Robot vehicle, PizzaParcel parcel, long time) {
+        DeliveryTask task = parcel.getDeliveryTask();
+
+        task.deliverPizzas(parcel.getAmountPizzas());
+
+        if (task.isFinished()) {
+            eventDispatcher.dispatchEvent(new DeliveryTaskEvent(
+                    DeliveryTaskEventType.END_TASK, task, time, parcel, vehicle
+            ));
+        }
     }
 
     public void setSimulator(Simulator sim){
         this.sim = sim;
         this.rng = sim.getRandomGenerator();
-
     }
 
     public EventAPI getEventAPI(){
@@ -52,7 +74,7 @@ public class DeliveryTaskModel extends Model.AbstractModel<PizzaUser> {
     }
 
     public Pizzeria openPizzeria(){
-        Pizzeria pizzeria = new Pizzeria(this.rmModel.getRandomPosition(rng), sim);
+        Pizzeria pizzeria = new Pizzeria(this.rModel.getRandomPosition(rng), sim);
         sim.register(pizzeria);
 
         eventDispatcher.dispatchEvent(

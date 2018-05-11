@@ -32,27 +32,39 @@ import static com.google.common.collect.Maps.newLinkedHashMap;
 
 public class TheListener implements Listener {
 
-    private static final double MOVE_THRESHOLD = 0.0001;
-    public final Map<MovingRoadUser, Double> distanceMap;
-    public final Map<MovingRoadUser, Long> lastArrivalTimeAtDepot;
+    // pizzerias
+    public int pizzerias;
+
     // tasks
+    public int tasks;
     public int totalTasks;
     public int totalTasksFinished;
+    public long tasksWaitingTime;
     public int totalTaskWaitingTime;
-    // parcels
-    public int totalParcels;
-    public int acceptedParcels;
+
+    // pizzas & parcels
+    public int pizzas;
+    public int totalPizzas;
+    public int totalParcels; // The total number of parcels in the scenario. SCENARIOOO??
+    public int acceptedParcels; // Same as totalPickups. The total number of parcels that were actually added in the model.
     public int totalPizzaTravelTime;
-    // vehicles
+
+    // totalVehicles
     public int totalVehicles;
+    public int vehiclesIdle;
     public double totalDistance;
     public long totalTime;
-    public int totalPickups;
+    public int totalPickups; // same as acceptedParcels
     public int totalDeliveries;
     public long pickupTardiness;
     public long deliveryTardiness;
-    public long totalTimeIdle;
-    public long totalTimeCharging;
+    public long totalRobotsTimeDriving;
+    public long totalRobotsTimeIdle;
+    public long totalRobotsTimeCharging;
+
+    // road works
+    public int roadWorks;
+
     // simulation
     public long startTimeReal;
     public long startTimeSim;
@@ -62,6 +74,10 @@ public class TheListener implements Listener {
     public long scenarioEndTime;
     private Clock clock;
     private EventDispatcher eventDispatcher;
+
+    private static final double MOVE_THRESHOLD = 0.0001;
+    public final Map<MovingRoadUser, Double> distanceMap;
+    public final Map<MovingRoadUser, Long> lastArrivalTimeAtDepot;
 
     TheListener(Clock clock, EventDispatcher eventDispatcher) {
         this.clock = clock;
@@ -141,7 +157,7 @@ public class TheListener implements Listener {
             final PDPModelEvent pme = (PDPModelEvent) e;
             Robot r = (Robot) pme.vehicle;
             if (r.timestamp_idle.isPresent()) {
-                totalTimeIdle += pme.time - r.timestamp_idle.get();
+                totalRobotsTimeIdle += pme.time - r.timestamp_idle.get();
                 r.timestamp_idle = Optional.absent();
             }
 
@@ -170,6 +186,7 @@ public class TheListener implements Listener {
             //final Vehicle v = pme.vehicle;
 
             totalPizzaTravelTime += clock.getCurrentTime() - p.start_time;
+            pizzas -= p.getAmountPizzas();
 
         } else if (e.getEventType() == ScenarioController.EventType.SCENARIO_EVENT) {
             final ScenarioEvent se = (ScenarioEvent) e;
@@ -183,35 +200,37 @@ public class TheListener implements Listener {
             }
 
         } else if (e.getEventType() == DeliveryTaskEventType.NEW_TASK) {
+            tasks++;
             totalTasks++;
 
         } else if (e.getEventType() == DeliveryTaskEventType.END_TASK) {
-            final DeliveryTaskEvent ev = (DeliveryTaskEvent) e;
-
+            tasks--;
             totalTasksFinished++;
+
+            final DeliveryTaskEvent ev = (DeliveryTaskEvent) e;
             totalTaskWaitingTime += clock.getCurrentTime() - ev.deliveryTask.start_time;
 
         } else if (e.getEventType() == PDPModelEventType.NEW_PARCEL) {
             // pdp model event
             acceptedParcels++;
 
+            PDPModelEvent pme = (PDPModelEvent) e;
+            PizzaParcel p = (PizzaParcel) pme.parcel;
+            pizzas += p.getAmountPizzas();
+            totalPizzas += pizzas;
+
         } else if (e.getEventType() == PDPModelEventType.NEW_VEHICLE) {
             verify(e instanceof PDPModelEvent);
             final PDPModelEvent ev = (PDPModelEvent) e;
             lastArrivalTimeAtDepot.put(ev.vehicle, clock.getCurrentTime());
-        } else if (e.getEventType() == DeliveryTaskEventType.ROBOT_ENTERING_CHARGINGSTATION){
+        } else if (e.getEventType() == DeliveryTaskEventType.ROBOT_ENTERING_CHARGINGSTATION) {
             System.out.println("Robot enters charging station");
-        } else if (e.getEventType() == DeliveryTaskEventType.ROBOT_LEAVING_CHARGINGSTATION){
+        } else if (e.getEventType() == DeliveryTaskEventType.ROBOT_LEAVING_CHARGINGSTATION) {
             System.out.println("Robot leaves charging station");
 
         } else {
             // currently not handling fall throughs
         }
-
-        //System.out.println("Total tasks: " + totalTasks +
-        //        ". Task waiting time: " + (totalTaskWaitingTime / 1000) + "s" +
-        //        ". Total pizza travel time: " + (totalPizzaTravelTime / 1000) + "s");
-        System.out.println("Total pickups: " + totalPickups + ". Total robot time idle: " + (totalTimeIdle / 1000) + "s");
     }
 
     private void increment(MovingRoadUser mru, double num) {
