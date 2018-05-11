@@ -27,10 +27,9 @@ public class PizzeriaModel extends Model.AbstractModel<PizzeriaUser> {
     private RandomGenerator rng;
 
     public PizzeriaModel(RoadModel rModel, PDPModel pdpModel) {
-        eventDispatcher = new EventDispatcher(PizzeriaEventType.values());
-        //this.sim = sim;
         this.rModel = rModel;
         this.pdpModel = pdpModel;
+        eventDispatcher = new EventDispatcher(PizzeriaEventType.values());
     }
 
     public void setSimulator(Simulator sim, RandomGenerator rng) {

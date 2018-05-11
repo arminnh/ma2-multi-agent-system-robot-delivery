@@ -14,9 +14,8 @@ public class StatsTrackerBuilder extends AbstractModelBuilder<StatsTracker, Obje
     private static final long serialVersionUID = -4339759920383479477L;
 
     StatsTrackerBuilder() {
-        //setDependencies(ScenarioController.class, Clock.class, RoadModel.class, PDPModel.class);
-
-        setDependencies(Clock.class, RoadModel.class, PDPModel.class);//, PizzeriaModel.class);
+        //setDependencies(ScenarioController.class);
+        setDependencies(Clock.class, RoadModel.class, PDPModel.class);
 
         setProvidingTypes(StatsProvider.class);
     }
@@ -24,11 +23,9 @@ public class StatsTrackerBuilder extends AbstractModelBuilder<StatsTracker, Obje
     @Override
     public StatsTracker build(DependencyProvider dependencyProvider) {
         // final ScenarioController ctrl = dependencyProvider.get(ScenarioController.class);
-
         final Clock clck = dependencyProvider.get(Clock.class);
         final RoadModel rm = dependencyProvider.get(RoadModel.class);
         final PDPModel pm = dependencyProvider.get(PDPModel.class);
-        //final PizzeriaModel dtModel = dependencyProvider.get(PizzeriaModel.class);
 
         return new StatsTracker(null, clck, rm, pm);
     }

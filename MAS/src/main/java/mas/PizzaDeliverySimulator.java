@@ -32,18 +32,17 @@ public class PizzaDeliverySimulator {
 
     private static final long TICK_LENGTH = 1000L;
     private static final long RANDOM_SEED = 123L;
-    private static final int SIM_SPEEDUP = 2;
+    private static final int SIM_SPEEDUP = 1;
 
     private static final int NUM_ROBOTS = 3;
     private static final int ROBOT_CAPACITY = 5;
     private static final int BATTERY_CAPACITY = 100;
     private static final int VEHICLE_LENGTH = 1;
-    private static final double VEHICLE_SPEED_KMH = 1;
+    private static final double VEHICLE_SPEED_KMH = 0.5;
 
     private static final double PROB_NEW_PARCEL = .02;
     private static final double PROB_PIZZERIA_OPEN = .002;
     private static final double PROB_PIZZERIA_CLOSE = .002;
-    private static final double PROB_NEW_CHARGING_STATION = .001;
     private static final double PROB_ROAD_WORKS_START = .005;
     private static final double PROB_ROAD_WORKS_END = .005;
     private static final double PIZZA_AMOUNT_STD = 0.75;
@@ -72,7 +71,7 @@ public class PizzaDeliverySimulator {
         View.Builder viewBuilder = View.builder()
                 .withTitleAppendix("Pizza delivery multi agent system simulator")
                 .withAutoPlay()
-                //.withSpeedUp(SIM_SPEEDUP)
+                .withSpeedUp(SIM_SPEEDUP)
                 .with(GraphRoadModelRenderer.builder()
                         .withMargin(VEHICLE_LENGTH)
                 )

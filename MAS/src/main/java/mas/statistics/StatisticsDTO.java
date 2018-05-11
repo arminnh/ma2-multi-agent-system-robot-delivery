@@ -9,10 +9,9 @@ public class StatisticsDTO extends com.github.rinde.rinsim.pdptw.common.Statisti
 
     public long tasksWaitingTime;
     public long totalTasksWaitingTime;
-    public int robotsIdle;
-    public long totalRobotsTimeDriving;
-    public long totalRobotsTimeIdle;
-    public long totalRobotsTimeCharging;
+    public int vehiclesIdle;
+    public long totalIdleTime;
+    public long totalChargingTime;
     public int tasks;
     public int totalTasks;
     public int totalTasksFinished;
@@ -21,51 +20,78 @@ public class StatisticsDTO extends com.github.rinde.rinsim.pdptw.common.Statisti
     public double avgPizzasPerRobot;
     public int pizzerias;
     public int roadWorks;
+    public int totalRoadWorks;
 
     /**
      * Create a new statistics object.
-     *
-     * @param dist     {@link #totalDistance}.
-     * @param tt       {@link #totalTravelTime}.
-     * @param pick     {@link #totalPickups}.
-     * @param del      {@link #totalDeliveries}.
-     * @param parc     {@link #totalParcels}.
-     * @param accP     {@link #acceptedParcels}.
-     * @param pickTar  {@link #pickupTardiness}.
-     * @param delTar   {@link #deliveryTardiness}.
-     * @param compT    {@link #computationTime}.
-     * @param simT     {@link #simulationTime}.
-     * @param finish   {@link #simFinish}.
-     * @param atDepot  {@link #vehiclesAtDepot}.
-     * @param overT    {@link #overTime}.
-     * @param total    {@link #totalVehicles}.
-     * @param moved    {@link #movedVehicles}.
-     * @param time     {@link #timeUnit}.
-     * @param distUnit {@link #distanceUnit}.
-     * @param speed    {@link #speedUnit}.
      */
     public StatisticsDTO(
-            double dist, double tt, int pick, int del, int parc, int accP, long pickTar, long delTar, long compT,
-            long simT, boolean finish, int atDepot, long overT, int total, int moved, Unit<Duration> time,
-            Unit<Length> distUnit, Unit<Velocity> speed, long twt, long ttwt, int ri, long trtd, long trti, long trtc,
-            int tasks, int ttasks, int ttf, int pizzas, int totalPizzas, double appr,  int p, int rw
+            double totalDistance,
+            double totalTravelTime,
+            long totalIdleTime,
+            long totalChargingTime,
+            int totalPickups,
+            int totalDeliveries,
+            int totalParcels,
+            int acceptedParcels,
+            long pickupTardiness,
+            long deliveryTardiness,
+            long computationTime,
+            long simulationTime,
+            boolean simFinish,
+            int vehiclesAtDepot,
+            long overTime,
+            int totalVehicles,
+            int movedVehicles,
+            Unit<Duration> timeUnit,
+            Unit<Length> distanceUnit,
+            Unit<Velocity> speedUnit,
+            long tasksWaitingTime,
+            long totalTasksWaitingTime,
+            int vehiclesIdle,
+            int tasks,
+            int totalTasks,
+            int totalTasksFinished,
+            int pizzas,
+            int totalPizzas,
+            double avgPizzasPerRobot,
+            int pizzerias,
+            int roadWorks,
+            int totalRoadWorks
     ) {
-        super(dist, tt, pick, del, parc, accP, pickTar, delTar, compT, simT, finish, atDepot, overT, total, moved, time,
-                distUnit, speed);
-
-        this.tasksWaitingTime = twt;
-        this.totalTasksWaitingTime = ttwt;
-        this.robotsIdle = ri;
-        this.totalRobotsTimeDriving = trtd;
-        this.totalRobotsTimeIdle = trti;
-        this.totalRobotsTimeCharging = trtc;
+        super(
+                totalDistance,
+                totalTravelTime,
+                totalPickups,
+                totalDeliveries,
+                totalParcels,
+                acceptedParcels,
+                pickupTardiness,
+                deliveryTardiness,
+                computationTime,
+                simulationTime,
+                simFinish,
+                vehiclesAtDepot,
+                overTime,
+                totalVehicles,
+                movedVehicles,
+                timeUnit,
+                distanceUnit,
+                speedUnit
+        );
+        this.tasksWaitingTime = tasksWaitingTime;
+        this.totalTasksWaitingTime = totalTasksWaitingTime;
+        this.vehiclesIdle = vehiclesIdle;
+        this.totalIdleTime = totalIdleTime;
+        this.totalChargingTime = totalChargingTime;
         this.tasks = tasks;
-        this.totalTasks = ttasks;
-        this.totalTasksFinished = ttf;
+        this.totalTasks = totalTasks;
+        this.totalTasksFinished = totalTasksFinished;
         this.pizzas = pizzas;
         this.totalPizzas = totalPizzas;
-        this.avgPizzasPerRobot = appr;
-        this.pizzerias = p;
-        this.roadWorks = rw;
+        this.avgPizzasPerRobot = avgPizzasPerRobot;
+        this.pizzerias = pizzerias;
+        this.roadWorks = roadWorks;
+        this.totalRoadWorks = totalRoadWorks;
     }
 }

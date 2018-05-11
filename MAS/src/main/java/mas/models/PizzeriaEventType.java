@@ -34,7 +34,6 @@ public enum PizzeriaEventType {
      */
     FINISH_ROADWORK,
 
-
     /**
      * Indicates that a {@link mas.robot.Robot} has entered a {@link mas.buildings.ChargingStation}
      */
