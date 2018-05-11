@@ -10,6 +10,8 @@ import com.github.rinde.rinsim.core.model.road.RoadUser;
 import com.github.rinde.rinsim.event.EventDispatcher;
 import com.github.rinde.rinsim.geom.Point;
 import com.google.common.base.Optional;
+import mas.models.DeliveryTaskEvent;
+import mas.models.DeliveryTaskEventType;
 import mas.statistics.TheListener;
 import org.jetbrains.annotations.NotNull;
 
@@ -92,18 +94,6 @@ public class DeliveryTask implements RoadUser, CommUser {
     @Override
     public void setCommDevice(@NotNull CommDeviceBuilder builder) {
         comm = Optional.of(builder.build());
-    }
-
-    public enum DeliveryTaskEventType {
-        /**
-         * Indicates the start of a customer waiting for {@link PizzaParcel}s.
-         */
-        NEW_TASK,
-
-        /**
-         * Indicates that enough {@link PizzaParcel}s have been delivered for the task and that the task is thus done.
-         */
-        END_TASK
     }
 
 }

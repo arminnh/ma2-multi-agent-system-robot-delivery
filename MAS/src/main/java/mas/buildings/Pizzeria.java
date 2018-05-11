@@ -10,6 +10,8 @@ import com.github.rinde.rinsim.core.model.time.TickListener;
 import com.github.rinde.rinsim.core.model.time.TimeLapse;
 import com.github.rinde.rinsim.geom.Point;
 import com.google.common.base.Optional;
+import mas.models.DeliveryTaskModel;
+import mas.models.PizzaUser;
 import mas.pizza.DeliveryTask;
 import mas.pizza.PizzaParcel;
 import mas.robot.Robot;
@@ -24,22 +26,18 @@ import java.util.List;
 /**
  * Implementation of a mas.buildings.Pizzeria
  */
-public class Pizzeria implements RoadUser, TickListener {
+public class Pizzeria implements RoadUser, TickListener, PizzaUser {
 
     /**
      * For isRegistered implementation, see PDPObjectImpl
      */
     private Point position;
     private Optional<RoadModel> roadModel;
-    private Optional<PDPModel> pdpModel;
-    private Simulator sim;
+    private Optional<DeliveryTaskModel> dtModel;
 
-    public Pizzeria(Point position, PDPModel pdp, Simulator sim) {
+    public Pizzeria(Point position, Simulator sim) {
         this.position = position;
-        this.pdpModel = Optional.of(pdp);
-        this.sim = sim;
     }
-
 
     @Override
     public void initRoadUser(@NotNull RoadModel model) {
@@ -101,16 +99,14 @@ public class Pizzeria implements RoadUser, TickListener {
                 int capacityLeft = robot.getCapacityLeft();
                 int pizzaAmount = Math.min(task.getPizzasLeft(), capacityLeft);
                 //System.out.println(pizzaAmount);
-                ParcelDTO pdto = Parcel.builder(this.position, task.getPosition().get())
-                        .neededCapacity(pizzaAmount)
-                        .buildDTO();
 
-                PizzaParcel parcel = new PizzaParcel(pdto, task, pizzaAmount, time.getStartTime());
-                sim.register(parcel);
+                PizzaParcel parcel = dtModel.get().newParcel(this.position, task, pizzaAmount, time);
+
                 robot.setTask(parcel);
                 task.addReadyPizzas(pizzaAmount);
 
-                this.pdpModel.get().pickup(robot, parcel, time);
+                dtModel.get().newParcelForRobot(robot, parcel, time);
+                //this.pdpModel.get().pickup(robot, parcel, time);
             }
 
         }
@@ -124,4 +120,8 @@ public class Pizzeria implements RoadUser, TickListener {
         return this.position;
     }
 
+    @Override
+    public void initPizzaUser(DeliveryTaskModel model) {
+        this.dtModel = Optional.of(model);
+    }
 }

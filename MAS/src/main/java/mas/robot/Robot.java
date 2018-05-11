@@ -16,6 +16,8 @@ import com.github.rinde.rinsim.core.model.time.TimeLapse;
 import com.github.rinde.rinsim.geom.Point;
 import com.google.common.base.Optional;
 import mas.buildings.ChargingStation;
+import mas.models.DeliveryTaskModel;
+import mas.models.PizzaUser;
 import mas.pizza.DeliveryTask;
 import mas.pizza.PizzaParcel;
 import org.apache.commons.math3.random.RandomGenerator;
@@ -29,7 +31,7 @@ import java.util.Set;
 /**
  * Implementation of a very simple delivery robot.
  */
-public class Robot extends Vehicle implements MovingRoadUser, TickListener, RandomUser, CommUser {
+public class Robot extends Vehicle implements MovingRoadUser, TickListener, RandomUser, CommUser, PizzaUser {
 
     private int id;
     private Battery battery;
@@ -44,6 +46,10 @@ public class Robot extends Vehicle implements MovingRoadUser, TickListener, Rand
     private Optional<RoadModel> roadModel;
     private Optional<PDPModel> pdpModel;
     private Optional<CommDevice> comm;
+    private Optional<DeliveryTaskModel> dtModel;
+    private boolean goingToCharge;
+    private boolean isCharging;
+    private ChargingStation isAtChargingStation;
 
     public Robot(VehicleDTO vdto, Battery battery, int id, Point pizzeriaPos) {
         super(vdto);
@@ -54,6 +60,7 @@ public class Robot extends Vehicle implements MovingRoadUser, TickListener, Rand
         this.currentPath = Optional.absent();
         this.currentParcel = Optional.absent();
         this.timestamp_idle = Optional.absent();
+        this.isAtChargingStation = null;
     }
 
     @Override
@@ -87,18 +94,28 @@ public class Robot extends Vehicle implements MovingRoadUser, TickListener, Rand
 
     private boolean isAtChargeStationRecharging(){
         // We are recharging when we're at a charging station and our current capacity is less than 100%
-        for(final ChargingStation station: getChargeStations()){
-            if(roadModel.get().equalPosition(this, station)){
-                // Okay we are at a charging station
-                if(!this.battery.isAtMaxCapacity()){
+        if(this.goingToCharge) {
+            // Check if we're at charging station
+            for (final ChargingStation station : getChargeStations()) {
+                if (roadModel.get().equalPosition(this, station)) {
+                    dtModel.get().robotAtChargingStation(this, station);
+                    this.goingToCharge = false;
+                    this.isCharging = true;
+                    this.isAtChargingStation = station;
+
                     // Remove current path as we don't need it anymore
                     // Current path is the path to the charging station
-                    if(this.currentPath.isPresent()){
+                    if (this.currentPath.isPresent()) {
                         this.currentPath = Optional.absent();
                     }
                     return true;
                 }
             }
+        }
+
+        if(this.isCharging){
+            // Okay we are at a charging station
+            return !this.battery.isAtMaxCapacity();
         }
 
         return false;
@@ -219,6 +236,8 @@ public class Robot extends Vehicle implements MovingRoadUser, TickListener, Rand
         // We first need to pass through a station
         if(!canReachStation){
             this.currentPath = Optional.of(newPath);
+            this.goingToCharge = true;
+
         }
 
     }
@@ -250,6 +269,15 @@ public class Robot extends Vehicle implements MovingRoadUser, TickListener, Rand
 
     public void chargeBattery(){
         this.battery.incrementCapacity();
+        if(this.battery.isAtMaxCapacity()){
+            this.isCharging = false;
+            dtModel.get().robotLeavingChargingStation(this, this.isAtChargingStation);
+            this.isAtChargingStation = null;
+        }
     }
 
+    @Override
+    public void initPizzaUser(DeliveryTaskModel model) {
+        dtModel = Optional.of(model);
+    }
 }

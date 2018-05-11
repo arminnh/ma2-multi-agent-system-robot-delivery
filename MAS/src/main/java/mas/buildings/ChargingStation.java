@@ -15,8 +15,11 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.Predicate;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedDeque;
 
 /**
  * Implementation of a Charging Station
@@ -30,10 +33,12 @@ public class ChargingStation implements RoadUser, TickListener {
     private int capacity;
     private Point position;
     private Optional<RoadModel> roadModel;
+    private Queue<Robot> chargingRobots;
 
     public ChargingStation(Point position, int capacity) {
         this.position = position;
         this.capacity = capacity;
+        this.chargingRobots = new ConcurrentLinkedDeque<>();
     }
 
     @Override
@@ -47,28 +52,31 @@ public class ChargingStation implements RoadUser, TickListener {
         return this.position;
     }
 
-    private List<Robot> getWaitingRobots() {
-        List<Robot> robots = new LinkedList<>(this.roadModel.get().getObjectsAt(this, Robot.class));
-
-        return robots;
-    }
-
     @Override
-    public void tick(@NotNull TimeLapse time) {
+    synchronized public void tick(@NotNull TimeLapse time) {
         if (!time.hasTimeLeft()) {
             return;
         }
 
-        List<Robot> waitingRobots = getWaitingRobots();
-
         // At the moment we don't do anything concerning with the maximum amount of robots that can station here
-        for(final Robot robot: waitingRobots){
-            robot.chargeBattery();
+        for(Iterator<Robot> it = this.chargingRobots.iterator(); it.hasNext(); ){
+            it.next().chargeBattery();
         }
     }
 
     @Override
     public void afterTick(@NotNull TimeLapse timeLapse) {
+
     }
 
+    synchronized public boolean addRobot(Robot r) {
+        if(this.chargingRobots.contains(r)){
+            return false;
+        }
+        return this.chargingRobots.add(r);
+    }
+
+    public void removeRobot(Robot r){
+        this.chargingRobots.remove(r);
+    }
 }

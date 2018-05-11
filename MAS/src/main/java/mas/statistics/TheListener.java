@@ -19,8 +19,8 @@ import com.github.rinde.rinsim.scenario.ScenarioController;
 import com.github.rinde.rinsim.scenario.ScenarioController.ScenarioEvent;
 import com.github.rinde.rinsim.scenario.TimeOutEvent;
 import com.google.common.base.Optional;
-import mas.pizza.DeliveryTask.DeliveryTaskEventType;
-import mas.pizza.DeliveryTaskEvent;
+import mas.models.DeliveryTaskEvent;
+import mas.models.DeliveryTaskEventType;
 import mas.pizza.PizzaParcel;
 import mas.robot.Robot;
 
@@ -199,6 +199,11 @@ public class TheListener implements Listener {
             verify(e instanceof PDPModelEvent);
             final PDPModelEvent ev = (PDPModelEvent) e;
             lastArrivalTimeAtDepot.put(ev.vehicle, clock.getCurrentTime());
+        } else if (e.getEventType() == DeliveryTaskEventType.ROBOT_ENTERING_CHARGINGSTATION){
+            System.out.println("Robot enters charging station");
+        } else if (e.getEventType() == DeliveryTaskEventType.ROBOT_LEAVING_CHARGINGSTATION){
+            System.out.println("Robot leaves charging station");
+
         } else {
             // currently not handling fall throughs
         }

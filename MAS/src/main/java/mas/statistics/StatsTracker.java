@@ -9,11 +9,13 @@ import com.github.rinde.rinsim.event.EventDispatcher;
 import com.github.rinde.rinsim.pdptw.common.StatisticsDTO;
 import com.github.rinde.rinsim.pdptw.common.StatsProvider;
 import com.github.rinde.rinsim.scenario.ScenarioController;
+import mas.models.DeliveryTaskModel;
 
 import static com.github.rinde.rinsim.core.model.pdp.PDPModel.PDPModelEventType.*;
 import static com.github.rinde.rinsim.core.model.road.GenericRoadModel.RoadEventType.MOVE;
 import static com.github.rinde.rinsim.core.model.time.Clock.ClockEventType.STARTED;
 import static com.github.rinde.rinsim.core.model.time.Clock.ClockEventType.STOPPED;
+import static mas.models.DeliveryTaskEventType.*;
 
 /**
  * This class tracks statistics in a simulation.
@@ -39,8 +41,14 @@ public final class StatsTracker extends AbstractModelVoid implements StatsProvid
         roadModel.getEventAPI().addListener(theListener, MOVE);
         clock.getEventAPI().addListener(theListener, STARTED, STOPPED);
         pm.getEventAPI().addListener(theListener, START_PICKUP, END_PICKUP, START_DELIVERY, END_DELIVERY, NEW_PARCEL, NEW_VEHICLE);
+        //dtModel.getEventAPI().addListener(theListener, ROBOT_ENTERING_CHARGINGSTATION);
 
         System.out.println("STATS TRACKER INIT");
+    }
+
+    public void addDeliveryTaskModelListener(DeliveryTaskModel dtModel){
+        dtModel.getEventAPI().addListener(theListener, ROBOT_ENTERING_CHARGINGSTATION, ROBOT_LEAVING_CHARGINGSTATION,
+                NEW_PIZZERIA, NEW_ROADWORK, NEW_TASK, CLOSE_PIZZERIA, FINISH_ROADWORK);
     }
 
     public TheListener getTheListener() {

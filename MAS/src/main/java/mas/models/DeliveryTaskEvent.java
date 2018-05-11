@@ -1,11 +1,12 @@
-package mas.pizza;
+package mas.models;
 
 import javax.annotation.Nullable;
 
 import com.github.rinde.rinsim.core.model.pdp.Parcel;
 import com.github.rinde.rinsim.core.model.pdp.Vehicle;
 import com.github.rinde.rinsim.event.Event;
-import mas.pizza.DeliveryTask.DeliveryTaskEventType;
+import mas.models.DeliveryTaskEventType;
+import mas.pizza.DeliveryTask;
 
 /**
  * Event object that is dispatched by {@link DeliveryTask}.
