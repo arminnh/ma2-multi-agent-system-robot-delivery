@@ -160,7 +160,7 @@ public class Robot extends Vehicle implements MovingRoadUser, TickListener, Rand
                 // Unload pizzas
                 this.currentCapacity -= currParcel.getAmountPizzas();
 
-                if (currParcel.getDeliveryTask().receivedAllPizzas()) {
+                if (currParcel.getDeliveryTask().isFinished()) {
                     // All pizzas have been delivered, now we have to delete the task.
                     rModel.removeObject(currParcel.getDeliveryTask());
                 }

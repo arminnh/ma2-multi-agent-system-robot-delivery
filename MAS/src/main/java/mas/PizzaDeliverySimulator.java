@@ -30,7 +30,7 @@ import javax.measure.unit.SI;
 
 public class PizzaDeliverySimulator {
 
-    private static final long TICK_LENGTH = 1000L;
+    private static final long TICK_LENGTH = 100L;
     private static final long RANDOM_SEED = 123L;
     private static final int SIM_SPEEDUP = 1;
 
@@ -38,7 +38,7 @@ public class PizzaDeliverySimulator {
     private static final int ROBOT_CAPACITY = 5;
     private static final int BATTERY_CAPACITY = 100;
     private static final int VEHICLE_LENGTH = 1;
-    private static final double VEHICLE_SPEED_KMH = 0.5;
+    private static final double VEHICLE_SPEED_KMH = 1;
 
     private static final double PROB_NEW_PARCEL = .02;
     private static final double PROB_PIZZERIA_OPEN = .002;

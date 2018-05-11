@@ -7,6 +7,7 @@ import com.github.rinde.rinsim.core.model.pdp.Vehicle;
 import com.github.rinde.rinsim.core.model.road.GenericRoadModel;
 import com.github.rinde.rinsim.core.model.road.MoveEvent;
 import com.github.rinde.rinsim.core.model.road.MovingRoadUser;
+import com.github.rinde.rinsim.core.model.road.RoadModel;
 import com.github.rinde.rinsim.core.model.time.Clock;
 import com.github.rinde.rinsim.event.Event;
 import com.github.rinde.rinsim.event.EventDispatcher;
@@ -31,10 +32,11 @@ import static com.google.common.collect.Maps.newLinkedHashMap;
 
 
 public class TheListener implements Listener {
-
     private static final double MOVE_THRESHOLD = 0.0001;
     public final Map<MovingRoadUser, Double> distanceMap;
     public final Map<MovingRoadUser, Long> lastArrivalTimeAtDepot;
+    private final Clock clock;
+    private final EventDispatcher eventDispatcher;
     // pizzerias
     public int pizzerias;
     // tasks
@@ -49,7 +51,7 @@ public class TheListener implements Listener {
     public int totalParcels; // The total number of parcels in the scenario. SCENARIOOO??
     public int acceptedParcels; // Same as totalPickups. The total number of parcels that were actually added in the model.
     public long totalPizzaTravelTime;
-    // totalVehicles
+    // vehicles
     public int totalVehicles;
     public int vehiclesIdle;
     public int vehiclesCharging;
@@ -71,8 +73,6 @@ public class TheListener implements Listener {
     public long simulationTime;
     public boolean simFinish;
     public long scenarioEndTime;
-    private Clock clock;
-    private EventDispatcher eventDispatcher;
 
     TheListener(Clock clock, EventDispatcher eventDispatcher) {
         this.clock = clock;
@@ -131,19 +131,34 @@ public class TheListener implements Listener {
         } else if (e.getEventType() == GenericRoadModel.RoadEventType.MOVE) {
             verify(e instanceof MoveEvent);
             final MoveEvent me = (MoveEvent) e;
-            increment((MovingRoadUser) me.roadUser, me.pathProgress.distance().getValue().doubleValue());
-            totalDistance += me.pathProgress.distance().getValue().doubleValue();
+
+            MovingRoadUser mru = (MovingRoadUser) me.roadUser;
+            double moveDistance = me.pathProgress.distance().getValue();
+            if (!distanceMap.containsKey(mru)) {
+                distanceMap.put(mru, moveDistance);
+            } else {
+                distanceMap.put(mru, distanceMap.get(mru) + moveDistance);
+            }
+
+            totalDistance += moveDistance;
             totalTravelTime += me.pathProgress.time().getValue();
+            // System.out.println(moveDistance);
+
+            double distanceFromDepot = Point.distance(
+                    me.roadModel.getPosition(me.roadUser),
+                    ((Vehicle) me.roadUser).getStartPosition()
+            );
+
             // if we are closer than 10 cm to the depot, we say we are 'at' the depot
-            if (Point.distance(me.roadModel.getPosition(me.roadUser),
-                    ((Vehicle) me.roadUser).getStartPosition()) < MOVE_THRESHOLD) {
+            if (distanceFromDepot < MOVE_THRESHOLD) {
                 // only override time if the vehicle did actually move
-                if (me.pathProgress.distance().getValue().doubleValue() > MOVE_THRESHOLD) {
+                if (moveDistance > MOVE_THRESHOLD) {
                     lastArrivalTimeAtDepot.put((MovingRoadUser) me.roadUser, clock.getCurrentTime());
+
                     if (totalVehicles == lastArrivalTimeAtDepot.size()) {
-                        eventDispatcher.dispatchEvent(
-                                new Event(StatsProvider.EventTypes.ALL_VEHICLES_AT_DEPOT, this)
-                        );
+                        eventDispatcher.dispatchEvent(new Event(
+                                StatsProvider.EventTypes.ALL_VEHICLES_AT_DEPOT, this
+                        ));
                     }
                 }
             } else {
@@ -158,14 +173,10 @@ public class TheListener implements Listener {
             assert p != null;
             assert v != null;
 
-            final long latestBeginTime = p.getPickupTimeWindow().end()
-                    - p.getPickupDuration();
+            final long latestBeginTime = p.getPickupTimeWindow().end() - p.getPickupDuration();
             if (pme.time > latestBeginTime) {
                 final long tardiness = pme.time - latestBeginTime;
                 pickupTardiness += tardiness;
-                /*eventDispatcher.dispatchEvent(new StatsEvent(
-                        StatsProvider.EventTypes.PICKUP_TARDINESS, this, p, v, tardiness,
-                        pme.time));*/
             }
 
         } else if (e.getEventType() == PDPModelEventType.END_PICKUP) {
@@ -186,21 +197,16 @@ public class TheListener implements Listener {
             assert p != null;
             assert v != null;
 
-            final long latestBeginTime = p.getDeliveryTimeWindow().end()
-                    - p.getDeliveryDuration();
+            final long latestBeginTime = p.getDeliveryTimeWindow().end() - p.getDeliveryDuration();
             if (pme.time > latestBeginTime) {
                 final long tardiness = pme.time - latestBeginTime;
                 deliveryTardiness += tardiness;
-                /*eventDispatcher.dispatchEvent(new StatsEvent(
-                        StatsProvider.EventTypes.DELIVERY_TARDINESS, this, p, v,
-                        tardiness, pme.time));*/
             }
 
         } else if (e.getEventType() == PDPModelEventType.END_DELIVERY) {
             totalDeliveries++;
             final PDPModelEvent pme = (PDPModelEvent) e;
             final PizzaParcel p = (PizzaParcel) pme.parcel;
-            //final Vehicle v = pme.vehicle;
 
             totalPizzaTravelTime += clock.getCurrentTime() - p.start_time;
             pizzas -= p.getAmountPizzas();
@@ -217,7 +223,6 @@ public class TheListener implements Listener {
             }
 
         } else if (e.getEventType() == PDPModelEventType.NEW_PARCEL) {
-            // pdp model event
             acceptedParcels++;
 
             PDPModelEvent pme = (PDPModelEvent) e;
@@ -240,8 +245,6 @@ public class TheListener implements Listener {
             totalTasksFinished++;
 
             final PizzeriaEvent ev = (PizzeriaEvent) e;
-            System.out.println("END TASK TIME: " + ev.time + "  ->  " + (ev.time - ev.deliveryTask.start_time));
-            System.out.println("END TASK TIME: " + clock.getCurrentTime() + "  ->  " + (clock.getCurrentTime() - ev.deliveryTask.start_time));
             totalTaskWaitingTime += clock.getCurrentTime() - ev.deliveryTask.start_time;
 
         } else if (e.getEventType() == PizzeriaEventType.NEW_PIZZERIA) {
@@ -269,14 +272,6 @@ public class TheListener implements Listener {
             } catch (Exception e1) {
                 e1.printStackTrace();
             }
-        }
-    }
-
-    private void increment(MovingRoadUser mru, double num) {
-        if (!distanceMap.containsKey(mru)) {
-            distanceMap.put(mru, num);
-        } else {
-            distanceMap.put(mru, distanceMap.get(mru) + num);
         }
     }
 }

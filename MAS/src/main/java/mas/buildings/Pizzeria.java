@@ -10,7 +10,6 @@ import com.google.common.base.Optional;
 import mas.models.PizzeriaModel;
 import mas.models.PizzeriaUser;
 import mas.pizza.DeliveryTask;
-import mas.pizza.PizzaParcel;
 import mas.robot.Robot;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.Predicate;
@@ -85,25 +84,17 @@ public class Pizzeria implements RoadUser, TickListener, PizzeriaUser {
 
         for (final DeliveryTask task : waitingTasks) {
             // Task allocation
-            //System.out.println("yey");
             for (final Robot robot : waitingRobots) {
                 if (task.getPizzasLeft() == 0) {
                     break;
                 }
+
                 if (robot.hasTask()) {
                     continue;
                 }
-                int capacityLeft = robot.getCapacityLeft();
-                int pizzaAmount = Math.min(task.getPizzasLeft(), capacityLeft);
-                //System.out.println(pizzaAmount);
+                int pizzaAmount = Math.min(task.getPizzasLeft(), robot.getCapacityLeft());
 
-                PizzaParcel parcel = dtModel.get().newParcel(this.position, task, pizzaAmount, time);
-
-                robot.setTask(parcel);
-                task.addReadyPizzas(pizzaAmount);
-
-                dtModel.get().newParcelForRobot(robot, parcel, time);
-                //this.pdpModel.get().pickup(robot, parcel, time);
+                dtModel.get().newParcelForRobot(robot, task, this.position, pizzaAmount, time);
             }
 
         }

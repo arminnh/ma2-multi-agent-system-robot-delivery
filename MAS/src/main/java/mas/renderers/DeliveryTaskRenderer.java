@@ -45,7 +45,7 @@ public class DeliveryTaskRenderer extends AbstractCanvasRenderer {
         for (final Entry<RoadUser, Point> parcel : map.entrySet()) {
             final DeliveryTask task = (DeliveryTask) parcel.getKey();
             final Point p = parcel.getValue();
-            final double pizzaAmount = task.getPizzaAmount();
+            final double pizzaAmount = task.getPizzasRequested();
             final int x = vp.toCoordX(p.x) + X_OFFSET;
             final int y = vp.toCoordY(p.y) + Y_OFFSET;
 

@@ -9,6 +9,10 @@ import com.github.rinde.rinsim.event.EventDispatcher;
 import com.github.rinde.rinsim.pdptw.common.StatsProvider;
 import com.github.rinde.rinsim.scenario.ScenarioController;
 import mas.models.PizzeriaModel;
+import mas.pizza.DeliveryTask;
+import org.apache.commons.collections4.CollectionUtils;
+
+import java.util.stream.Collectors;
 
 import static com.github.rinde.rinsim.core.model.pdp.PDPModel.PDPModelEventType.*;
 import static com.github.rinde.rinsim.core.model.road.GenericRoadModel.RoadEventType.MOVE;
@@ -84,6 +88,10 @@ public final class StatsTracker extends AbstractModelVoid implements StatsProvid
         int movedVehicles = tl.distanceMap.size();
         double avgPizzasPerRobot = (double) tl.pizzas / (tl.totalVehicles - tl.vehiclesIdle);
 
+        long tasksWaitingTime = this.roadModel.getObjectsOfType(DeliveryTask.class).stream()
+                .mapToLong(t -> t.getWaitingTime(clock.getCurrentTime()))
+                .sum();
+
         return new StatisticsDTO(
                 tl.totalDistance,
                 tl.totalTravelTime,
@@ -105,7 +113,7 @@ public final class StatsTracker extends AbstractModelVoid implements StatsProvid
                 clock.getTimeUnit(),
                 roadModel.getDistanceUnit(),
                 roadModel.getSpeedUnit(),
-                tl.tasksWaitingTime,
+                tasksWaitingTime,
                 tl.totalTaskWaitingTime,
                 tl.vehiclesIdle,
                 tl.tasks,

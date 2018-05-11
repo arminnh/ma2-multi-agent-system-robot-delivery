@@ -84,18 +84,23 @@ public class PizzeriaModel extends Model.AbstractModel<PizzeriaUser> {
         ));
     }
 
-    public PizzaParcel newParcel(Point position, DeliveryTask task, int pizzaAmount, TimeLapse time) {
+    public PizzaParcel newParcel(DeliveryTask task, Point position, int pizzaAmount, long time) {
         ParcelDTO pdto = Parcel.builder(position, task.getPosition().get())
                 .neededCapacity(pizzaAmount)
                 .buildDTO();
 
-        PizzaParcel parcel = new PizzaParcel(pdto, task, pizzaAmount, time.getStartTime());
+        PizzaParcel parcel = new PizzaParcel(pdto, task, pizzaAmount, time);
         sim.register(parcel);
 
         return parcel;
     }
 
-    public void newParcelForRobot(Robot robot, PizzaParcel parcel, TimeLapse time) {
+    public void newParcelForRobot(Robot robot, DeliveryTask task, Point position, int pizzaAmount, TimeLapse time) {
+        PizzaParcel parcel = this.newParcel(task, position, pizzaAmount, time.getStartTime());
+
+        robot.setTask(parcel);
+        task.addReadyPizzas(pizzaAmount);
+
         this.pdpModel.pickup(robot, parcel, time);
     }
 
