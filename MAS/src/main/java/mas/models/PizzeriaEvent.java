@@ -5,14 +5,13 @@ import javax.annotation.Nullable;
 import com.github.rinde.rinsim.core.model.pdp.Parcel;
 import com.github.rinde.rinsim.core.model.pdp.Vehicle;
 import com.github.rinde.rinsim.event.Event;
-import mas.models.DeliveryTaskEventType;
 import mas.pizza.DeliveryTask;
 
 /**
  * Event object that is dispatched by {@link DeliveryTask}.
  * @author ARMIN HALILOVIC!!!!!
  */
-public class DeliveryTaskEvent extends Event {
+public class PizzeriaEvent extends Event {
 
     /**
      * The {@link DeliveryTask} that dispatched this event.
@@ -38,10 +37,10 @@ public class DeliveryTaskEvent extends Event {
     @Nullable
     public final Vehicle vehicle;
 
-    public DeliveryTaskEvent(
-            DeliveryTaskEventType type,
-            DeliveryTask task,
+    public PizzeriaEvent(
+            PizzeriaEventType type,
             long t,
+            @Nullable DeliveryTask task,
             @Nullable Parcel p,
             @Nullable Vehicle v
     ) {

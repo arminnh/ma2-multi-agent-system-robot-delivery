@@ -14,11 +14,10 @@ import com.github.rinde.rinsim.core.model.road.RoadModel;
 import com.github.rinde.rinsim.core.model.time.TickListener;
 import com.github.rinde.rinsim.core.model.time.TimeLapse;
 import com.github.rinde.rinsim.geom.Point;
-import com.github.rinde.rinsim.pdptw.common.RouteFollowingVehicle;
 import com.google.common.base.Optional;
 import mas.buildings.ChargingStation;
-import mas.models.DeliveryTaskModel;
-import mas.models.PizzaUser;
+import mas.models.PizzeriaModel;
+import mas.models.PizzeriaUser;
 import mas.pizza.DeliveryTask;
 import mas.pizza.PizzaParcel;
 import org.apache.commons.math3.random.RandomGenerator;
@@ -32,7 +31,7 @@ import java.util.Set;
 /**
  * Implementation of a very simple delivery robot.
  */
-public class Robot extends Vehicle implements MovingRoadUser, TickListener, RandomUser, CommUser, PizzaUser {
+public class Robot extends Vehicle implements MovingRoadUser, TickListener, RandomUser, CommUser, PizzeriaUser {
 
     private int id;
     private Battery battery;
@@ -47,7 +46,7 @@ public class Robot extends Vehicle implements MovingRoadUser, TickListener, Rand
     private Optional<RoadModel> roadModel;
     private Optional<PDPModel> pdpModel;
     private Optional<CommDevice> comm;
-    private Optional<DeliveryTaskModel> dtModel;
+    private Optional<PizzeriaModel> dtModel;
     private boolean goingToCharge;
     private boolean isCharging;
     private ChargingStation isAtChargingStation;
@@ -148,7 +147,7 @@ public class Robot extends Vehicle implements MovingRoadUser, TickListener, Rand
 
         RoadModel rModel = roadModel.get();
         PDPModel pModel = pdpModel.get();
-        DeliveryTaskModel dtModel = this.dtModel.get();
+        PizzeriaModel dtModel = this.dtModel.get();
 
         if (currentParcel.isPresent()) {
             PizzaParcel currParcel = this.currentParcel.get();
@@ -277,7 +276,7 @@ public class Robot extends Vehicle implements MovingRoadUser, TickListener, Rand
     }
 
     @Override
-    public void initPizzaUser(DeliveryTaskModel model) {
+    public void initPizzaUser(PizzeriaModel model) {
         dtModel = Optional.of(model);
     }
 }

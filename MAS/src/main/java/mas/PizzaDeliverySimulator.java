@@ -16,7 +16,7 @@ import com.github.rinde.rinsim.ui.renderers.RoadUserRenderer;
 import mas.buildings.ChargingStation;
 import mas.buildings.Pizzeria;
 import mas.maps.CityGraphCreator;
-import mas.models.DeliveryTaskModel;
+import mas.models.PizzeriaModel;
 import mas.pizza.DeliveryTask;
 import mas.renderers.DeliveryTaskRenderer;
 import mas.renderers.RobotRenderer;
@@ -104,7 +104,7 @@ public class PizzaDeliverySimulator {
                         .withModificationCheck(true))
                 .addModel(DefaultPDPModel.builder())
                 .addModel(CommModel.builder())
-                .addModel(DeliveryTaskModel.builder())
+                .addModel(PizzeriaModel.builder())
                 .addModel(mas.statistics.StatsTracker.builder())
                 // in case a GUI is not desired simply don't add it.
                 .addModel(viewBuilder)
@@ -113,11 +113,10 @@ public class PizzaDeliverySimulator {
         final RandomGenerator rng = sim.getRandomGenerator();
         final RoadModel roadModel = sim.getModelProvider().getModel(RoadModel.class);
         final PDPModel pdpModel = sim.getModelProvider().getModel(PDPModel.class);
-        final DeliveryTaskModel dtModel = sim.getModelProvider().getModel(DeliveryTaskModel.class);
+        final PizzeriaModel dtModel = sim.getModelProvider().getModel(PizzeriaModel.class);
+        dtModel.setSimulator(sim, rng);
         final StatsTracker statsTracker = sim.getModelProvider().getModel(StatsTracker.class);
         statsTracker.addDeliveryTaskModelListener(dtModel);
-
-        dtModel.setSimulator(sim);
 
         final Pizzeria pizzeria = dtModel.openPizzeria();
 

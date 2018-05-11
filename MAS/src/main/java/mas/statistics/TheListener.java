@@ -19,8 +19,8 @@ import com.github.rinde.rinsim.scenario.ScenarioController;
 import com.github.rinde.rinsim.scenario.ScenarioController.ScenarioEvent;
 import com.github.rinde.rinsim.scenario.TimeOutEvent;
 import com.google.common.base.Optional;
-import mas.models.DeliveryTaskEvent;
-import mas.models.DeliveryTaskEventType;
+import mas.models.PizzeriaEvent;
+import mas.models.PizzeriaEventType;
 import mas.pizza.PizzaParcel;
 import mas.robot.Robot;
 
@@ -199,15 +199,15 @@ public class TheListener implements Listener {
                 scenarioEndTime = se.getTimedEvent().getTime();
             }
 
-        } else if (e.getEventType() == DeliveryTaskEventType.NEW_TASK) {
+        } else if (e.getEventType() == PizzeriaEventType.NEW_TASK) {
             tasks++;
             totalTasks++;
 
-        } else if (e.getEventType() == DeliveryTaskEventType.END_TASK) {
+        } else if (e.getEventType() == PizzeriaEventType.END_TASK) {
             tasks--;
             totalTasksFinished++;
 
-            final DeliveryTaskEvent ev = (DeliveryTaskEvent) e;
+            final PizzeriaEvent ev = (PizzeriaEvent) e;
             totalTaskWaitingTime += clock.getCurrentTime() - ev.deliveryTask.start_time;
 
         } else if (e.getEventType() == PDPModelEventType.NEW_PARCEL) {
@@ -223,9 +223,9 @@ public class TheListener implements Listener {
             verify(e instanceof PDPModelEvent);
             final PDPModelEvent ev = (PDPModelEvent) e;
             lastArrivalTimeAtDepot.put(ev.vehicle, clock.getCurrentTime());
-        } else if (e.getEventType() == DeliveryTaskEventType.ROBOT_ENTERING_CHARGINGSTATION) {
+        } else if (e.getEventType() == PizzeriaEventType.ROBOT_AT_CHARGING_STATION) {
             System.out.println("Robot enters charging station");
-        } else if (e.getEventType() == DeliveryTaskEventType.ROBOT_LEAVING_CHARGINGSTATION) {
+        } else if (e.getEventType() == PizzeriaEventType.ROBOT_LEAVING_CHARGING_STATION) {
             System.out.println("Robot leaves charging station");
 
         } else {

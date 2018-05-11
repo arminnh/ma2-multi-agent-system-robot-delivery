@@ -1,31 +1,23 @@
 package mas.models;
 
-import com.github.rinde.rinsim.core.Simulator;
 import com.github.rinde.rinsim.core.model.DependencyProvider;
 import com.github.rinde.rinsim.core.model.ModelBuilder;
 import com.github.rinde.rinsim.core.model.pdp.PDPModel;
 import com.github.rinde.rinsim.core.model.road.RoadModel;
-import com.github.rinde.rinsim.core.model.time.Clock;
-import com.github.rinde.rinsim.pdptw.common.StatsProvider;
-import mas.pizza.DeliveryTask;
-import mas.statistics.StatsTracker;
+import org.jetbrains.annotations.NotNull;
 
-public class DeliveryTaskModelBuilder extends ModelBuilder.AbstractModelBuilder<DeliveryTaskModel, Object> {
-    private static final long serialVersionUID = -4339759920383479477L;
+
+public class DeliveryTaskModelBuilder extends ModelBuilder.AbstractModelBuilder<PizzeriaModel, Object> {
 
     DeliveryTaskModelBuilder() {
-        //setDependencies(ScenarioController.class, Clock.class, RoadModel.class, PDPModel.class);
-
         setDependencies(RoadModel.class, PDPModel.class);
     }
 
     @Override
-    public DeliveryTaskModel build(DependencyProvider dependencyProvider) {
-        // final ScenarioController ctrl = dependencyProvider.get(ScenarioController.class);
-        //final Simulator sim = dependencyProvider.get(Simulator.class);
+    public PizzeriaModel build(@NotNull DependencyProvider dependencyProvider) {
         final RoadModel rmModel = dependencyProvider.get(RoadModel.class);
         final PDPModel pdpModel = dependencyProvider.get(PDPModel.class);
 
-        return new DeliveryTaskModel(rmModel, pdpModel);
+        return new PizzeriaModel(rmModel, pdpModel);
     }
 }

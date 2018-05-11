@@ -1,17 +1,14 @@
 package mas.buildings;
 
 import com.github.rinde.rinsim.core.Simulator;
-import com.github.rinde.rinsim.core.model.pdp.PDPModel;
-import com.github.rinde.rinsim.core.model.pdp.Parcel;
-import com.github.rinde.rinsim.core.model.pdp.ParcelDTO;
 import com.github.rinde.rinsim.core.model.road.RoadModel;
 import com.github.rinde.rinsim.core.model.road.RoadUser;
 import com.github.rinde.rinsim.core.model.time.TickListener;
 import com.github.rinde.rinsim.core.model.time.TimeLapse;
 import com.github.rinde.rinsim.geom.Point;
 import com.google.common.base.Optional;
-import mas.models.DeliveryTaskModel;
-import mas.models.PizzaUser;
+import mas.models.PizzeriaModel;
+import mas.models.PizzeriaUser;
 import mas.pizza.DeliveryTask;
 import mas.pizza.PizzaParcel;
 import mas.robot.Robot;
@@ -26,14 +23,14 @@ import java.util.List;
 /**
  * Implementation of a mas.buildings.Pizzeria
  */
-public class Pizzeria implements RoadUser, TickListener, PizzaUser {
+public class Pizzeria implements RoadUser, TickListener, PizzeriaUser {
 
     /**
      * For isRegistered implementation, see PDPObjectImpl
      */
     private Point position;
     private Optional<RoadModel> roadModel;
-    private Optional<DeliveryTaskModel> dtModel;
+    private Optional<PizzeriaModel> dtModel;
 
     public Pizzeria(Point position, Simulator sim) {
         this.position = position;
@@ -121,7 +118,7 @@ public class Pizzeria implements RoadUser, TickListener, PizzaUser {
     }
 
     @Override
-    public void initPizzaUser(DeliveryTaskModel model) {
+    public void initPizzaUser(PizzeriaModel model) {
         this.dtModel = Optional.of(model);
     }
 }

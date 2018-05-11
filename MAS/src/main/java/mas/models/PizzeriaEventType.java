@@ -3,7 +3,7 @@ package mas.models;
 
 import mas.pizza.PizzaParcel;
 
-public enum DeliveryTaskEventType {
+public enum PizzeriaEventType {
     /**
      * Indicates the start of a customer waiting for {@link PizzaParcel}s.
      */
@@ -38,11 +38,11 @@ public enum DeliveryTaskEventType {
     /**
      * Indicates that a {@link mas.robot.Robot} has entered a {@link mas.buildings.ChargingStation}
      */
-    ROBOT_ENTERING_CHARGINGSTATION,
+    ROBOT_AT_CHARGING_STATION,
 
     /**
      * Indicates that a {@link mas.robot.Robot} is leaving a {@link mas.buildings.ChargingStation}
      */
-    ROBOT_LEAVING_CHARGINGSTATION
+    ROBOT_LEAVING_CHARGING_STATION
 
 }
