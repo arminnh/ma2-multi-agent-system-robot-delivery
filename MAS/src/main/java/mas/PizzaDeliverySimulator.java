@@ -40,7 +40,7 @@ public class PizzaDeliverySimulator {
     private static final long RANDOM_SEED = 123L;
     private static final int SIM_SPEEDUP = 1;
 
-    private static final int NUM_ROBOTS = 3;
+    private static final int NUM_ROBOTS = 1;
     private static final int ROBOT_CAPACITY = 5;
     private static final int BATTERY_CAPACITY = 100;
     private static final int VEHICLE_LENGTH = 1;
@@ -87,7 +87,7 @@ public class PizzaDeliverySimulator {
                         .withImageAssociation(ChargingStation.class, "/charging_station.png")
                         .withImageAssociation(DeliveryTask.class, "/graphics/flat/person-black-32.png")
                 )
-                .with(CommRenderer.builder()
+                .with(CommRenderer.builder().withMessageCount()
                         //.withReliabilityColors()
                         //.withToString()
                         //.withMessageCount())
@@ -168,7 +168,8 @@ public class PizzaDeliverySimulator {
 
         // At every node insert a resource manager
         for(Point node: graph.getGraph().getNodes()){
-            sim.register(new ResourceManager(node));
+
+            sim.register(new ResourceManager(node, sim.getRandomGenerator()));
         }
 
         sim.start();

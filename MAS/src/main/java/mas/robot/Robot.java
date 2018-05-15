@@ -38,6 +38,7 @@ public class Robot extends Vehicle implements MovingRoadUser, TickListener, Rand
 
     public Optional<Long> timestamp_idle;
     private int id;
+    private int antId = 0;
     private Battery battery;
     private double metersMoved = 0;
     private Point pizzeriaPos;
@@ -52,6 +53,7 @@ public class Robot extends Vehicle implements MovingRoadUser, TickListener, Rand
     private boolean goingToCharge;
     private boolean isCharging;
     private ChargingStation isAtChargingStation;
+    private boolean isMovingToDestination = false;
 
     public Robot(VehicleDTO vdto, Battery battery, int id, Point pizzeriaPos) {
         super(vdto);
@@ -86,7 +88,7 @@ public class Robot extends Vehicle implements MovingRoadUser, TickListener, Rand
 
     @Override
     public void setCommDevice(@NotNull CommDeviceBuilder builder) {
-        builder.setMaxRange(2);
+        builder.setMaxRange(1);
         comm = Optional.of(builder.build());
     }
 
@@ -129,13 +131,19 @@ public class Robot extends Vehicle implements MovingRoadUser, TickListener, Rand
             return;
         }
 
-        for(Message m: this.comm.get().getUnreadMessages()){
-            if(m.getContents().getClass() == ExplorationAnt.class){
-                ExplorationAnt ant = (ExplorationAnt) m.getContents();
+        if(!this.currentPath.isPresent()){
+            for(Message m: this.comm.get().getUnreadMessages()){
+                if(m.getContents().getClass() == ExplorationAnt.class){
+                    ExplorationAnt ant = (ExplorationAnt) m.getContents();
 
-                if(ant.hasReachedDestination() && ant.getRobot_id() == this.id){
-                    // We have found a path for our current parcel
-                    this.currentPath = Optional.of(new LinkedList<Point>(ant.getPath()));
+                    if(ant.hasReachedDestination() && ant.getRobot_id() == this.id){
+                        System.out.println("GOT PATH!!!!");
+                        // We have found a path for our current parcel
+                        //System.out.println(ant.getPath());
+                        //this.currentPath = Optional.of(new LinkedList<Point>(ant.getPath()));
+                        //System.out.println(this.getPosition().get());
+                        //this.isMovingToDestination = true;
+                    }
                 }
             }
         }
@@ -148,8 +156,17 @@ public class Robot extends Vehicle implements MovingRoadUser, TickListener, Rand
             toCustomerOrChargingStation();
         }
 
-        if (this.currentPath.isPresent() && this.currentPath.get().size() > 0) {
-            MoveProgress progress = roadModel.get().followPath(this, this.currentPath.get(), time);
+        if (this.isMovingToDestination) {
+            MoveProgress progress;
+            //System.out.println(this.currentPath.get());
+            //System.out.println(this.getPosition().get());
+            if(this.getPosition().get() != this.currentPath.get().peek()){
+                progress = roadModel.get().moveTo(this, this.currentPath.get().peek(), time);
+            }else{
+                progress = roadModel.get().moveTo(this, this.currentPath.get().remove(), time);
+            }
+            //MoveProgress
+            //progress = roadModel.get().followPath(this, this.currentPath.get(), time);
             //System.out.println(progress.distance().doubleValue(SI.METER));
             metersMoved += progress.distance().doubleValue(SI.METER);
             if (metersMoved > 1.0) {
@@ -184,10 +201,15 @@ public class Robot extends Vehicle implements MovingRoadUser, TickListener, Rand
 
                 // Remove current path
                 this.currentPath = Optional.absent();
+
+                this.isMovingToDestination = false;
+                sendExplorationAnt(this.pizzeriaPos);
+
             }
         } else {
             if (rModel.getPosition(this) == this.pizzeriaPos) {
                 this.currentPath = Optional.absent();
+                this.isMovingToDestination = false;
 
                 if (!this.timestamp_idle.isPresent()) {
                     this.timestamp_idle = Optional.of(time.getEndTime());
@@ -202,7 +224,7 @@ public class Robot extends Vehicle implements MovingRoadUser, TickListener, Rand
             //Queue<Point> path = new LinkedList<>(roadModel.get().getShortestPathTo(this, this.currentParcel.get().getDeliveryLocation()));
             //this.currentPath = Optional.of(path);
 
-            rechargeIfNecessary(this.currentPath.get(), this.currentParcel.get().getDeliveryLocation());
+            //rechargeIfNecessary(this.currentPath.get(), this.currentParcel.get().getDeliveryLocation());
         }
     }
 
@@ -213,7 +235,7 @@ public class Robot extends Vehicle implements MovingRoadUser, TickListener, Rand
             //Queue<Point> path = new LinkedList<>(roadModel.get().getShortestPathTo(this, this.pizzeriaPos));
             //this.currentPath = Optional.of(path);
 
-            rechargeIfNecessary(this.currentPath.get(), this.pizzeriaPos);
+            //rechargeIfNecessary(this.currentPath.get(), this.pizzeriaPos);
         }
     }
 
@@ -251,7 +273,6 @@ public class Robot extends Vehicle implements MovingRoadUser, TickListener, Rand
             this.goingToCharge = true;
 
         }
-
     }
 
     private double getDistanceOfPathInMeters(Queue<Point> newPath) {
@@ -273,9 +294,14 @@ public class Robot extends Vehicle implements MovingRoadUser, TickListener, Rand
     public void setTask(PizzaParcel task) {
         this.currentParcel = Optional.of(task);
         this.currentCapacity += task.getAmountPizzas();
+        sendExplorationAnt(task.getDeliveryLocation());
+    }
+
+    private void sendExplorationAnt(Point destination) {
         List<Point> path = new LinkedList<>();
         path.add(this.getPosition().get());
-        this.comm.get().broadcast(new ExplorationAnt(path,this.id, task.getDeliveryLocation()));
+        this.comm.get().broadcast(new ExplorationAnt(path, this.id, destination, this.antId, this));
+        this.antId += 1;
     }
 
     @Override
