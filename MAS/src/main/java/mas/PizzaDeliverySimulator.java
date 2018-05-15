@@ -5,16 +5,22 @@ import com.github.rinde.rinsim.core.model.comm.CommModel;
 import com.github.rinde.rinsim.core.model.pdp.DefaultPDPModel;
 import com.github.rinde.rinsim.core.model.pdp.PDPModel;
 import com.github.rinde.rinsim.core.model.pdp.VehicleDTO;
+import com.github.rinde.rinsim.core.model.road.GraphRoadModel;
 import com.github.rinde.rinsim.core.model.road.RoadModel;
 import com.github.rinde.rinsim.core.model.road.RoadModelBuilders;
 import com.github.rinde.rinsim.core.model.time.TickListener;
 import com.github.rinde.rinsim.core.model.time.TimeLapse;
+import com.github.rinde.rinsim.geom.LengthData;
+import com.github.rinde.rinsim.geom.ListenableGraph;
+import com.github.rinde.rinsim.geom.Point;
 import com.github.rinde.rinsim.pdptw.common.StatsPanel;
 import com.github.rinde.rinsim.ui.View;
+import com.github.rinde.rinsim.ui.renderers.CommRenderer;
 import com.github.rinde.rinsim.ui.renderers.GraphRoadModelRenderer;
 import com.github.rinde.rinsim.ui.renderers.RoadUserRenderer;
 import mas.buildings.ChargingStation;
 import mas.buildings.Pizzeria;
+import mas.managers.ResourceManager;
 import mas.maps.CityGraphCreator;
 import mas.models.PizzeriaModel;
 import mas.pizza.DeliveryTask;
@@ -30,7 +36,7 @@ import javax.measure.unit.SI;
 
 public class PizzaDeliverySimulator {
 
-    private static final long TICK_LENGTH = 100L;
+    private static final long TICK_LENGTH = 1000L;
     private static final long RANDOM_SEED = 123L;
     private static final int SIM_SPEEDUP = 1;
 
@@ -81,6 +87,11 @@ public class PizzaDeliverySimulator {
                         .withImageAssociation(ChargingStation.class, "/charging_station.png")
                         .withImageAssociation(DeliveryTask.class, "/graphics/flat/person-black-32.png")
                 )
+                .with(CommRenderer.builder()
+                        //.withReliabilityColors()
+                        //.withToString()
+                        //.withMessageCount())
+                )
                 .with(DeliveryTaskRenderer.builder())
                 .with(RobotRenderer.builder())
                 .with(StatsPanel.builder())
@@ -117,6 +128,8 @@ public class PizzaDeliverySimulator {
         final StatsTracker statsTracker = sim.getModelProvider().getModel(StatsTracker.class);
         statsTracker.addDeliveryTaskModelListener(dtModel);
 
+        final GraphRoadModel graph = sim.getModelProvider().getModel(GraphRoadModel.class);
+
         final Pizzeria pizzeria = dtModel.openPizzeria();
 
         ChargingStation chargingStation = new ChargingStation(
@@ -152,6 +165,11 @@ public class PizzaDeliverySimulator {
             public void afterTick(@NotNull TimeLapse timeLapse) {
             }
         });
+
+        // At every node insert a resource manager
+        for(Point node: graph.getGraph().getNodes()){
+            sim.register(new ResourceManager(node));
+        }
 
         sim.start();
     }
