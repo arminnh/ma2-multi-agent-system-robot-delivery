@@ -142,7 +142,7 @@ public class PizzaDeliverySimulator {
             VehicleDTO vdto = VehicleDTO.builder()
                     .capacity(ROBOT_CAPACITY)
                     //.startPosition(pizzeria.getPosition())
-                    .startPosition(roadModel.getRandomPosition(rng))
+                    .startPosition(pizzeria.getPosition())//roadModel.getRandomPosition(rng))
                     .speed(VEHICLE_SPEED_KMH)
                     .build();
 

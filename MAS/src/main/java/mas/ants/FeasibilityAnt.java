@@ -12,5 +12,4 @@ import com.github.rinde.rinsim.core.model.time.TimeLapse;
  */
 public class FeasibilityAnt implements MessageContents {
 
-
 }

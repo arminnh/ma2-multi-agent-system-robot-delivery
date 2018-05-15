@@ -7,6 +7,8 @@ import com.github.rinde.rinsim.core.model.time.TickListener;
 import com.github.rinde.rinsim.core.model.time.TimeLapse;
 import com.github.rinde.rinsim.geom.Point;
 import com.google.common.base.Optional;
+import com.google.common.collect.Lists;
+import mas.ants.ExplorationAnt;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -17,7 +19,7 @@ public class ResourceManager implements CommUser, RoadUser, TickListener {
     private Point position;
     private boolean first_tick = true;
     Optional<CommDevice> device;
-    private List<Point> neighbors;
+    private List<CommUser> neighbors;
 
     public ResourceManager(Point position){
         this.position = position;
@@ -50,8 +52,44 @@ public class ResourceManager implements CommUser, RoadUser, TickListener {
         }
 
         for(Message m: this.device.get().getUnreadMessages()){
-            if(m.getContents() == Messages.NICE_TO_MEET_YOU){
-                neighbors.add(m.getSender().getPosition().get());
+            if(m.getContents() == Messages.NICE_TO_MEET_YOU) {
+                neighbors.add(m.getSender());
+            }else if(m.getContents().getClass() == ExplorationAnt.class){
+                ExplorationAnt ant = (ExplorationAnt) m.getContents();
+                // check if current position is destination
+                // send message back
+                if(ant.hasReachedDestination()){
+                    List<Point> return_path = ant.getReturning_path().subList(1, ant.getReturning_path().size());
+                    ExplorationAnt new_ant = new ExplorationAnt(ant.getPath(), ant.getRobot_id(), ant.getDestination(), return_path);
+                    for(CommUser neighbor: neighbors) {
+                        if(neighbor.getPosition().get() == return_path.get(0)){
+                            this.device.get().send(new_ant, neighbor);
+                        }
+                    }
+                }else{
+                    List<Point> new_path = new LinkedList<>(ant.getPath());
+                    new_path.add(this.getPosition().get());
+
+                    if(this.getPosition().get() == ant.getDestination()){
+
+                        List<Point> return_path = new LinkedList<>(ant.getPath());
+                        return_path = Lists.reverse(return_path);
+                        ExplorationAnt new_ant = new ExplorationAnt(new_path, ant.getRobot_id(), ant.getDestination(), return_path);
+
+                        this.device.get().send(new_ant, m.getSender());
+
+                    }else{
+                        // destination not reached yet
+                        for(CommUser neighbor: neighbors){
+                            // Check if our neighbor is already visited
+                            if(!ant.getPath().contains(neighbor)){
+                                ExplorationAnt new_ant = new ExplorationAnt(new_path, ant.getRobot_id(), ant.getDestination());
+                                this.device.get().send(new_ant,neighbor);
+                            }
+                        }
+                    }
+                }
+
             }
         }
 

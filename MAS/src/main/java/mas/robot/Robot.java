@@ -3,6 +3,7 @@ package mas.robot;
 import com.github.rinde.rinsim.core.model.comm.CommDevice;
 import com.github.rinde.rinsim.core.model.comm.CommDeviceBuilder;
 import com.github.rinde.rinsim.core.model.comm.CommUser;
+import com.github.rinde.rinsim.core.model.comm.Message;
 import com.github.rinde.rinsim.core.model.pdp.PDPModel;
 import com.github.rinde.rinsim.core.model.pdp.Vehicle;
 import com.github.rinde.rinsim.core.model.pdp.VehicleDTO;
@@ -15,6 +16,7 @@ import com.github.rinde.rinsim.core.model.time.TickListener;
 import com.github.rinde.rinsim.core.model.time.TimeLapse;
 import com.github.rinde.rinsim.geom.Point;
 import com.google.common.base.Optional;
+import mas.ants.ExplorationAnt;
 import mas.buildings.ChargingStation;
 import mas.models.PizzeriaModel;
 import mas.models.PizzeriaUser;
@@ -25,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.measure.unit.SI;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Queue;
 import java.util.Set;
 
@@ -83,7 +86,7 @@ public class Robot extends Vehicle implements MovingRoadUser, TickListener, Rand
 
     @Override
     public void setCommDevice(@NotNull CommDeviceBuilder builder) {
-        builder.setMaxRange(0.5);
+        builder.setMaxRange(2);
         comm = Optional.of(builder.build());
     }
 
@@ -126,6 +129,17 @@ public class Robot extends Vehicle implements MovingRoadUser, TickListener, Rand
             return;
         }
 
+        for(Message m: this.comm.get().getUnreadMessages()){
+            if(m.getContents().getClass() == ExplorationAnt.class){
+                ExplorationAnt ant = (ExplorationAnt) m.getContents();
+
+                if(ant.hasReachedDestination() && ant.getRobot_id() == this.id){
+                    // We have found a path for our current parcel
+                    this.currentPath = Optional.of(new LinkedList<Point>(ant.getPath()));
+                }
+            }
+        }
+
         // No parcel so move to pizzeria
         if (!currentParcel.isPresent()) {
             toPizzeriaOrChargingStation();
@@ -134,7 +148,7 @@ public class Robot extends Vehicle implements MovingRoadUser, TickListener, Rand
             toCustomerOrChargingStation();
         }
 
-        if (this.currentPath.get().size() > 0) {
+        if (this.currentPath.isPresent() && this.currentPath.get().size() > 0) {
             MoveProgress progress = roadModel.get().followPath(this, this.currentPath.get(), time);
             //System.out.println(progress.distance().doubleValue(SI.METER));
             metersMoved += progress.distance().doubleValue(SI.METER);
@@ -184,22 +198,22 @@ public class Robot extends Vehicle implements MovingRoadUser, TickListener, Rand
     }
 
     private void toCustomerOrChargingStation() {
-        if (!this.currentPath.isPresent()) {
-            Queue<Point> path = new LinkedList<>(roadModel.get().getShortestPathTo(this, this.currentParcel.get().getDeliveryLocation()));
-            this.currentPath = Optional.of(path);
+        if (this.currentPath.isPresent()) {
+            //Queue<Point> path = new LinkedList<>(roadModel.get().getShortestPathTo(this, this.currentParcel.get().getDeliveryLocation()));
+            //this.currentPath = Optional.of(path);
 
-            rechargeIfNecessary(path, this.currentParcel.get().getDeliveryLocation());
+            rechargeIfNecessary(this.currentPath.get(), this.currentParcel.get().getDeliveryLocation());
         }
     }
 
     private void toPizzeriaOrChargingStation() {
         // Logic to decide if we have to go to the pizzeria or recharge our battery in a charging station
 
-        if (!this.currentPath.isPresent()) {
-            Queue<Point> path = new LinkedList<>(roadModel.get().getShortestPathTo(this, this.pizzeriaPos));
-            this.currentPath = Optional.of(path);
+        if (this.currentPath.isPresent()) {
+            //Queue<Point> path = new LinkedList<>(roadModel.get().getShortestPathTo(this, this.pizzeriaPos));
+            //this.currentPath = Optional.of(path);
 
-            rechargeIfNecessary(path, this.pizzeriaPos);
+            rechargeIfNecessary(this.currentPath.get(), this.pizzeriaPos);
         }
     }
 
@@ -259,6 +273,9 @@ public class Robot extends Vehicle implements MovingRoadUser, TickListener, Rand
     public void setTask(PizzaParcel task) {
         this.currentParcel = Optional.of(task);
         this.currentCapacity += task.getAmountPizzas();
+        List<Point> path = new LinkedList<>();
+        path.add(this.getPosition().get());
+        this.comm.get().broadcast(new ExplorationAnt(path,this.id, task.getDeliveryLocation()));
     }
 
     @Override
