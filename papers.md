@@ -84,8 +84,61 @@
 ### A Decentralized Approach for Anticipatory Vehicle Routing using Delegate Multi-Agent Systems
     Rutger Claes, Tom Holvoet and Danny Weyns Member, IEEE
     https://www.diva-portal.org/smash/get/diva2:477513/FULLTEXT01.pdf
-* ...
- 
+* Delegate MAS, ant-like agents
+* Direct vehicle routing by accounting for traffic forecast information
+* Large-scale dynamic environments
+* Challenges: (1) large scale of traffic, (2) dynamics (accidents, road blocks, demand peaks, etc.), (3) stability
+* agents are embedded, i.e., directly linked to the environment
+* Delegate MAS used for coordination model. Inspired by ant behavior where relevant information is dropped on locations.
+* Here, ant-like agents explore the traffic environment on behalf of vehicles, and drop relevant information in ICT infrastructure that is coupled with the road infrastructure elements.
+* Responsibility of the driver to make route choices
+* 3 main elements:
+  * A. Multi-agent based vehicle routing
+    * 3 basic types of entities: vehicle agent, infrastructure agent, virtual environment
+    * Vehicle and infrastructure agents are responsible for coordinating traffic
+    * Vehicle agents have 2 responsibilities: 
+      1) explore through the environment and search for viable routes (= assess quality of routes). 
+      2) inform other agents of intended route by informing all infrastructure agents representing elements that are part of its intention
+  * B. Delegate MSA for anticipatory vehicle routing
+    * Use ants to achieve both exploration and intention propagation functionality
+    1) Exploration ants:
+      * vehicle sends them out at regular time intervals
+      * ants explore various paths between agent location and destination
+      * at every road element, it asks infrastructure agent what the departure time from its element would be if the vehicle would arrive at a certain time.
+      * exploration ants assume basic, static routing information to be available
+      * at the destination, the ant has an estimate of how long it would take the vehicle to get there
+      * the ant follows its path reversely towards the vehicle agent 
+    2) Intention ants:
+      * vehicle selects an explored path to follow and intends to follow it
+      * intention ants propagate this intention over the intended route at regular intervals
+      * they inform the infrastructure agents that the vehicle agent intends to make use of the road element
+      * vehicle agents can change their intentions, notifications by old intention ants will evaporate over time
+  * C. Design decisions in the implementation
+    1) Vehicle agent architecture
+      * BDI architecture. 
+      * **SEE PAPER FOR ALGORITHM**
+      * Agent selects the route with the shorted trip duration based on the information sent back by the exploration ants.
+      * Sends out intention ant across its current intention
+    2) Infrastructure agents
+      * Collect notifications from intention ants and use them to provide predictive traffic intensity information
+      * Learning algorithm to learn to predict future traversal times based on number of notifications received
+      * No drawbacks of reservation schemes thanks to learning algorithm
+* Experiment setup:
+  * Alternative routing strategies:
+    * 3 alternative routing strategies based on the A* algorithm
+      1) optimistic fastest route
+      2) pessimistic fastest route
+      3) Based on real-world usage of Traffic Message Channel (TMC)
+    * **SEE PAPER FOR ALGORITHM DETAILS**
+* Experiment results:
+  * TODO ...
+* Related work:
+  1) Anticipatory vehicle routing:
+    * TODO ...
+  2) Propagation of information:
+    * TODO ...
+  3) Reservation based mechanisms:
+    * TODO ...
     
 ### An adaptive multi-agent routing algorithm inspired by ants behavior
     Gianni Di Caro and Marco Dorigo
