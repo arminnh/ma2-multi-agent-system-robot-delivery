@@ -130,6 +130,7 @@ public class PizzaDeliverySimulator {
 
         final GraphRoadModel graph = sim.getModelProvider().getModel(GraphRoadModel.class);
 
+
         final Pizzeria pizzeria = dtModel.openPizzeria();
 
         ChargingStation chargingStation = new ChargingStation(
@@ -149,7 +150,7 @@ public class PizzaDeliverySimulator {
             Battery battery = new Battery(BATTERY_CAPACITY);
 
             // Robots start at the pizzeria
-            sim.register(new Robot(vdto, battery, ROBOT_ID, pizzeria.getPosition()));
+            sim.register(new Robot(vdto, battery, ROBOT_ID, pizzeria.getPosition(), graph));
             ROBOT_ID += 1;
         }
 

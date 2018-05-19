@@ -9,13 +9,20 @@ import com.github.rinde.rinsim.core.model.pdp.Vehicle;
 import com.github.rinde.rinsim.core.model.pdp.VehicleDTO;
 import com.github.rinde.rinsim.core.model.rand.RandomProvider;
 import com.github.rinde.rinsim.core.model.rand.RandomUser;
+import com.github.rinde.rinsim.core.model.road.GraphRoadModel;
 import com.github.rinde.rinsim.core.model.road.MoveProgress;
 import com.github.rinde.rinsim.core.model.road.MovingRoadUser;
 import com.github.rinde.rinsim.core.model.road.RoadModel;
 import com.github.rinde.rinsim.core.model.time.TickListener;
 import com.github.rinde.rinsim.core.model.time.TimeLapse;
+import com.github.rinde.rinsim.geom.Connection;
+import com.github.rinde.rinsim.geom.ConnectionData;
 import com.github.rinde.rinsim.geom.Point;
 import com.google.common.base.Optional;
+import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.Table;
+import com.google.common.collect.TreeBasedTable;
+import mas.AStar;
 import mas.ants.ExplorationAnt;
 import mas.buildings.ChargingStation;
 import mas.models.PizzeriaModel;
@@ -26,10 +33,7 @@ import org.apache.commons.math3.random.RandomGenerator;
 import org.jetbrains.annotations.NotNull;
 
 import javax.measure.unit.SI;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Queue;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Implementation of a very simple delivery robot.
@@ -54,8 +58,9 @@ public class Robot extends Vehicle implements MovingRoadUser, TickListener, Rand
     private boolean isCharging;
     private ChargingStation isAtChargingStation;
     private boolean isMovingToDestination = false;
+    private GraphRoadModel graphModel;
 
-    public Robot(VehicleDTO vdto, Battery battery, int id, Point pizzeriaPos) {
+    public Robot(VehicleDTO vdto, Battery battery, int id, Point pizzeriaPos, GraphRoadModel graphModel) {
         super(vdto);
 
         this.id = id;
@@ -65,6 +70,7 @@ public class Robot extends Vehicle implements MovingRoadUser, TickListener, Rand
         this.currentParcel = Optional.absent();
         this.timestamp_idle = Optional.absent();
         this.isAtChargingStation = null;
+        this.graphModel = graphModel;
     }
 
     @Override
@@ -94,6 +100,53 @@ public class Robot extends Vehicle implements MovingRoadUser, TickListener, Rand
 
     private Set<ChargingStation> getChargeStations() {
         return this.roadModel.get().getObjectsOfType(ChargingStation.class);
+    }
+
+    private Queue<Queue<Point>> getAlternativePaths(int numberOfPaths, Point start, List<Point> dest){
+        Queue<Queue<Point>> S = new LinkedList<>();
+
+        int numFails = 0;
+        int maxFails = 3;
+        double penalty = 2.0;
+        double alpha = rnd.get().nextDouble();
+        Table<Point, Point, Double> weights = HashBasedTable.create();
+
+        while(S.size() < numberOfPaths && numFails < maxFails){
+            System.out.print("numFails " + numFails + " alpha " + alpha);
+
+            Queue<Point> p = AStar.getShortestPath(this.graphModel, weights , start, new LinkedList<>(dest));
+
+            if(S.contains(p)){
+                numFails += 1;
+            }else{
+                S.add(p);
+                numFails = 0;
+            }
+
+            for(Point v: p){
+                double beta = rnd.get().nextDouble();
+                if(beta < alpha){
+
+                    // Careful: there is also an getOutgoingConnections
+                    for(Point v2: this.graphModel.getGraph().getIncomingConnections(v)){
+                        if(weights.contains(v, v2)){
+                            weights.put(v, v2, weights.get(v, v2) + penalty);
+                        }else{
+                            weights.put(v, v2, penalty);
+                        }
+
+                        if(weights.contains(v2, v)) {
+                            weights.put(v2, v, weights.get(v2, v) + penalty);
+                        }else{
+                            weights.put(v2, v, penalty);
+
+                        }
+                    }
+                }
+            }
+        }
+
+        return S;
     }
 
     private boolean isAtChargeStationRecharging() {
@@ -294,7 +347,16 @@ public class Robot extends Vehicle implements MovingRoadUser, TickListener, Rand
     public void setTask(PizzaParcel task) {
         this.currentParcel = Optional.of(task);
         this.currentCapacity += task.getAmountPizzas();
-        sendExplorationAnt(task.getDeliveryLocation());
+
+        List<Point> dests = new LinkedList<>();
+        dests.add(task.getDeliveryLocation());
+        System.out.println(getAlternativePaths(3, task.getPickupLocation(),dests));
+        try{
+            throw new Exception();
+        }catch(Exception e){
+
+        }
+        //sendExplorationAnt(task.getDeliveryLocation());
     }
 
     private void sendExplorationAnt(Point destination) {

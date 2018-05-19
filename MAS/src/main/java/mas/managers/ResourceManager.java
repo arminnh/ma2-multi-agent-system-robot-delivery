@@ -162,6 +162,7 @@ public class ResourceManager implements CommUser, RoadUser, TickListener {
 
                     List<Point> return_path = new LinkedList<>(ant.getPath());
                     return_path = Lists.reverse(return_path);
+                    System.out.println(new_path);
                     ExplorationAnt new_ant = new ExplorationAnt(new_path, ant.getRobot_id(),
                             ant.getDestination(), ant.getId(), return_path, roadModel.getDistanceOfPath(new_path).getValue(),
                             ant.getRobotComm());
