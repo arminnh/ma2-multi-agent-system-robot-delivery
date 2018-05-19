@@ -102,8 +102,8 @@ public class Robot extends Vehicle implements MovingRoadUser, TickListener, Rand
         return this.roadModel.get().getObjectsOfType(ChargingStation.class);
     }
 
-    private Queue<Queue<Point>> getAlternativePaths(int numberOfPaths, Point start, List<Point> dest){
-        Queue<Queue<Point>> S = new LinkedList<>();
+    private List<List<Point>> getAlternativePaths(int numberOfPaths, Point start, List<Point> dest){
+        List<List<Point>> S = new LinkedList<>();
 
         int numFails = 0;
         int maxFails = 3;
@@ -114,7 +114,7 @@ public class Robot extends Vehicle implements MovingRoadUser, TickListener, Rand
         while(S.size() < numberOfPaths && numFails < maxFails){
             System.out.print("numFails " + numFails + " alpha " + alpha);
 
-            Queue<Point> p = AStar.getShortestPath(this.graphModel, weights , start, new LinkedList<>(dest));
+            List<Point> p = AStar.getShortestPath(this.graphModel, weights , start, new LinkedList<>(dest));
 
             if(S.contains(p)){
                 numFails += 1;
@@ -350,19 +350,16 @@ public class Robot extends Vehicle implements MovingRoadUser, TickListener, Rand
 
         List<Point> dests = new LinkedList<>();
         dests.add(task.getDeliveryLocation());
-        System.out.println(getAlternativePaths(3, task.getPickupLocation(),dests));
-        try{
-            throw new Exception();
-        }catch(Exception e){
 
-        }
-        //sendExplorationAnt(task.getDeliveryLocation());
+        List<List<Point>> paths = getAlternativePaths(3, task.getPickupLocation(),dests);
+        sendExplorationAnts(paths);
     }
 
-    private void sendExplorationAnt(Point destination) {
-        List<Point> path = new LinkedList<>();
-        path.add(this.getPosition().get());
-        this.comm.get().broadcast(new ExplorationAnt(path, this.id, destination, this.antId, this));
+    private void sendExplorationAnts(List<List<Point>> paths) {
+        // Send exploration ants over the found paths
+        for(List<Point> path: paths){
+            this.comm.get().broadcast(new ExplorationAnt(path, this.id, this.antId, this));
+        }
         this.antId += 1;
     }
 

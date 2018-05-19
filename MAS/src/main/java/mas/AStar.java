@@ -3,24 +3,24 @@ package mas;
 import com.github.rinde.rinsim.core.model.road.GraphRoadModel;
 import com.github.rinde.rinsim.geom.Point;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Queues;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Table;
 import org.apache.commons.collections4.CollectionUtils;
 
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Queue;
 
 public class AStar {
 
-    public AStar(){}
+    public AStar() {
+    }
 
-    static public Queue<Point> getShortestPath(GraphRoadModel graphModel, Table<Point, Point,
+    static public List<Point> getShortestPath(GraphRoadModel graphModel, Table<Point, Point,
             Double> weights, Point start, List<Point> dest) {
         System.out.println(dest);
         // Implementation of A* based on https://en.wikipedia.org/wiki/A*_search_algorithm#Pseudocode
-        Queue<Point> path = new LinkedList<>();
+        List<Point> path = new LinkedList<>();
 
         // Points already evaluated
         List<Point> closedSet = new LinkedList<>();
@@ -37,25 +37,25 @@ public class AStar {
 
         HashMap<Point, Double> fScore = getFScore(graphModel, start, dest.get(0), weights);
 
-        while(!openSet.isEmpty()){
+        while (!openSet.isEmpty()) {
             //current := the node in openSet having the lowest fScore[] value
             Point current = getLowestFScore(openSet, fScore);
 
-            if(current.equals(dest.get(0))){
+            if (current.equals(dest.get(0))) {
                 start = dest.remove(0);
                 System.out.print("Finishing path, ");
                 System.out.print(dest.size());
                 System.out.println(" dests remaining");
 
-                if(dest.size() > 0){
-                    Queue<Point> concat = new LinkedList<>();
-                    Queue<Point> l1 = reconstruct_path(cameFrom, current);
-                    Queue<Point> l2 = getShortestPath(graphModel, weights, start, dest);
+                if (dest.size() > 0) {
+                    List<Point> concat = new LinkedList<>();
+                    List<Point> l1 = reconstruct_path(cameFrom, current);
+                    List<Point> l2 = getShortestPath(graphModel, weights, start, dest);
 
                     concat.addAll(l1);
                     concat.addAll(l2);
                     return concat;
-                }else{
+                } else {
                     return reconstruct_path(cameFrom, current);
                 }
             }
@@ -63,24 +63,24 @@ public class AStar {
             openSet.remove(current);
             closedSet.add(current);
 
-            for(Point neighbor: graphModel.getGraph().getOutgoingConnections(current)){
-                if(closedSet.contains(neighbor)){
+            for (Point neighbor : graphModel.getGraph().getOutgoingConnections(current)) {
+                if (closedSet.contains(neighbor)) {
                     continue; // Ignore the neighbor which is already evaluated.
                 }
 
-                if(!openSet.contains(neighbor)){
+                if (!openSet.contains(neighbor)) {
                     openSet.add(neighbor); // Discover a new node
                 }
 
                 // The distance from current to a neighbor
                 //the "dist_between" function may vary as per the solution requirements.
                 double tentative_gScore = gScore.get(current) + heuristic_cost_estimate(current, neighbor, weights);
-                if(tentative_gScore >= gScore.get(neighbor)){
-                    continue;		// This is not a better path.
+                if (tentative_gScore >= gScore.get(neighbor)) {
+                    continue;        // This is not a better path.
                 }
 
                 // This path is the best until now. Record it!
-                cameFrom.put(neighbor,current);
+                cameFrom.put(neighbor, current);
                 gScore.put(neighbor, tentative_gScore);
 
                 fScore.put(neighbor, gScore.get(neighbor) + heuristic_cost_estimate(neighbor, dest.get(0), weights));
@@ -90,7 +90,7 @@ public class AStar {
         return null;
     }
 
-    private static Queue<Point> reconstruct_path(HashMap<Point, Point> cameFrom, Point current) {
+    private static List<Point> reconstruct_path(HashMap<Point, Point> cameFrom, Point current) {
         /*
          total_path := {current}
          while current in cameFrom.Keys:
@@ -100,7 +100,7 @@ public class AStar {
          */
         List<Point> total_path = new LinkedList<>();
         total_path.add(current);
-        while(cameFrom.keySet().contains(current)){
+        while (cameFrom.keySet().contains(current)) {
             current = cameFrom.get(current);
             total_path.add(current);
         }
@@ -108,12 +108,12 @@ public class AStar {
         return new LinkedList<>(Lists.reverse(total_path));
     }
 
-    private static Point getLowestFScore(List<Point> points, HashMap<Point, Double> fScore){
+    private static Point getLowestFScore(List<Point> points, HashMap<Point, Double> fScore) {
         Point minPoint = null;
         double minVal = Double.MAX_VALUE;
-        for(Point p: points){
+        for (Point p : points) {
             double fVal = fScore.get(p);
-            if(fVal < minVal){
+            if (fVal < minVal) {
                 minVal = fVal;
                 minPoint = p;
             }
@@ -125,11 +125,11 @@ public class AStar {
     private static HashMap<Point, Double> getGScore(GraphRoadModel graphModel, Point start) {
         // For each node, the cost of getting from the start node to that node.
         HashMap<Point, Double> gScore = new HashMap<>();
-        for(Point p: graphModel.getGraph().getNodes()){
-            if(p.equals(start)){
+        for (Point p : graphModel.getGraph().getNodes()) {
+            if (p.equals(start)) {
                 // The cost of going from start to start is zero.
                 gScore.put(start, 0.0);
-            }else{
+            } else {
                 gScore.put(p, Double.MAX_VALUE);
             }
         }
@@ -141,11 +141,11 @@ public class AStar {
         // For each node, the total cost of getting from the start node to the goal
         // by passing by that node. That value is partly known, partly heuristic.
         HashMap<Point, Double> gScore = new HashMap<>();
-        for(Point p: graphModel.getGraph().getNodes()){
-            if(p.equals(start)){
+        for (Point p : graphModel.getGraph().getNodes()) {
+            if (p.equals(start)) {
                 // For the first node, that value is completely heuristic.
                 gScore.put(start, heuristic_cost_estimate(start, dest, weights));
-            }else{
+            } else {
                 gScore.put(p, Double.MAX_VALUE);
             }
         }
@@ -154,7 +154,7 @@ public class AStar {
 
     private static Double heuristic_cost_estimate(Point start, Point dest, Table<Point, Point,
             Double> weights) {
-        if(weights.contains(start, dest)){
+        if (weights.contains(start, dest)) {
             return dist_between(start, dest) + weights.get(start, dest);
         }
         return dist_between(start, dest);

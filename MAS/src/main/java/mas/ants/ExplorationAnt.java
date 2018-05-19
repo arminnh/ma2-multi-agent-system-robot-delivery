@@ -20,23 +20,20 @@ public class ExplorationAnt implements MessageContents {
     private final List<Point> path;
     private List<Point> returning_path;
     private final int robot_id;
-    private final Point destination;
     private double distance;
     private final int id;
     private CommUser robotComm;
 
-    public ExplorationAnt(List<Point> path, Integer robot_id, Point destination, int id, CommUser robotComm){
+    public ExplorationAnt(List<Point> path, Integer robot_id, int id, CommUser robotComm){
         this.path = path;
         this.robot_id = robot_id;
-        this.destination = destination;
         this.id = id;
         this.robotComm = robotComm;
     }
 
-    public ExplorationAnt(List<Point> path, Integer robot_id, Point destination, int id, List<Point> returning_path, double distance, CommUser robotComm){
+    public ExplorationAnt(List<Point> path, Integer robot_id, int id, List<Point> returning_path, double distance, CommUser robotComm){
         this.path = path;
         this.robot_id = robot_id;
-        this.destination = destination;
         this.returning_path = returning_path;
         this.distance = distance;
         this.id = id;
@@ -49,10 +46,6 @@ public class ExplorationAnt implements MessageContents {
 
     public Integer getRobot_id() {
         return robot_id;
-    }
-
-    public Point getDestination() {
-        return destination;
     }
 
     public List<Point> getReturning_path() {
