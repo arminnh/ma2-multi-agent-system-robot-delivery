@@ -10,8 +10,6 @@ import com.github.rinde.rinsim.core.model.road.RoadModel;
 import com.github.rinde.rinsim.core.model.road.RoadModelBuilders;
 import com.github.rinde.rinsim.core.model.time.TickListener;
 import com.github.rinde.rinsim.core.model.time.TimeLapse;
-import com.github.rinde.rinsim.geom.LengthData;
-import com.github.rinde.rinsim.geom.ListenableGraph;
 import com.github.rinde.rinsim.geom.Point;
 import com.github.rinde.rinsim.pdptw.common.StatsPanel;
 import com.github.rinde.rinsim.ui.View;
@@ -20,7 +18,7 @@ import com.github.rinde.rinsim.ui.renderers.GraphRoadModelRenderer;
 import com.github.rinde.rinsim.ui.renderers.RoadUserRenderer;
 import mas.buildings.ChargingStation;
 import mas.buildings.Pizzeria;
-import mas.managers.ResourceManager;
+import mas.managers.ResourceAgent;
 import mas.maps.CityGraphCreator;
 import mas.models.PizzeriaModel;
 import mas.pizza.DeliveryTask;
@@ -170,7 +168,7 @@ public class PizzaDeliverySimulator {
         // At every node insert a resource manager
         for(Point node: graph.getGraph().getNodes()){
 
-            sim.register(new ResourceManager(node, sim.getRandomGenerator()));
+            sim.register(new ResourceAgent(node, sim.getRandomGenerator()));
         }
 
         sim.start();

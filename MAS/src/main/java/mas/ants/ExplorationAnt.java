@@ -1,15 +1,10 @@
 package mas.ants;
 
-import com.github.rinde.rinsim.core.model.comm.*;
-import com.github.rinde.rinsim.core.model.road.RoadModel;
-import com.github.rinde.rinsim.core.model.road.RoadUser;
+import com.github.rinde.rinsim.core.model.comm.CommUser;
+import com.github.rinde.rinsim.core.model.comm.MessageContents;
 import com.github.rinde.rinsim.geom.Point;
-import com.google.common.base.Optional;
-import com.google.common.collect.Lists;
-import org.apache.commons.collections4.CollectionUtils;
 
 import java.util.List;
-import java.util.Stack;
 
 /*
  * IMPORTANT: THE ANTS ARE MESSAGES THIS MEANS THEY SHOULD IMPLEMENT {@link MessageContents}
@@ -17,54 +12,31 @@ import java.util.Stack;
  *            YOU NEED TO COPY THE DATA OF THE OLD ANT AND CREATE A NEW ONE
  */
 public class ExplorationAnt implements MessageContents {
-    private final List<Point> path;
-    private List<Point> returning_path;
-    private final int robot_id;
-    private double distance;
-    private final int id;
-    private CommUser robotComm;
+    public final List<Point> path;
+    public final long estimatedTime;
+    public final int id;
+    public final int robotID;
+    public final CommUser robot;
+    public final boolean isReturning;
 
-    public ExplorationAnt(List<Point> path, Integer robot_id, int id, CommUser robotComm){
+    public ExplorationAnt(List<Point> path, long estimatedTime, boolean isReturning, int id, Integer robotID, CommUser robot) {
         this.path = path;
-        this.robot_id = robot_id;
+        this.estimatedTime = estimatedTime;
+        this.isReturning = isReturning;
         this.id = id;
-        this.robotComm = robotComm;
+        this.robotID = robotID;
+        this.robot = robot;
     }
 
-    public ExplorationAnt(List<Point> path, Integer robot_id, int id, List<Point> returning_path, double distance, CommUser robotComm){
-        this.path = path;
-        this.robot_id = robot_id;
-        this.returning_path = returning_path;
-        this.distance = distance;
-        this.id = id;
-        this.robotComm = robotComm;
+    public ExplorationAnt copy(List<Point> p, Long eTime, Boolean returning) {
+        p = (p != null) ? p : this.path;
+        eTime = (eTime != null) ? eTime : this.estimatedTime;
+        returning = (returning != null) ? returning : this.isReturning;
+
+        return new ExplorationAnt(p, eTime, returning, this.id, this.robotID, this.robot);
     }
 
-    public List<Point> getPath() {
-        return path;
-    }
-
-    public Integer getRobot_id() {
-        return robot_id;
-    }
-
-    public List<Point> getReturning_path() {
-        return this.returning_path;
-    }
-
-    public boolean hasReachedDestination(){
-        return this.returning_path != null;
-    }
-
-    public double getDistance() {
-        return distance;
-    }
-
-    public int getId() {
-        return id;
-    }
-
-    public CommUser getRobotComm() {
-        return robotComm;
+    public boolean hasReachedDestination(Point p) {
+        return this.path.get(this.path.size() - 1) == p;
     }
 }

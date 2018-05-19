@@ -18,7 +18,6 @@ public class AStar {
 
     static public List<Point> getShortestPath(GraphRoadModel graphModel, Table<Point, Point,
             Double> weights, Point start, List<Point> dest) {
-        System.out.println(dest);
         // Implementation of A* based on https://en.wikipedia.org/wiki/A*_search_algorithm#Pseudocode
         List<Point> path = new LinkedList<>();
 
@@ -43,9 +42,6 @@ public class AStar {
 
             if (current.equals(dest.get(0))) {
                 start = dest.remove(0);
-                System.out.print("Finishing path, ");
-                System.out.print(dest.size());
-                System.out.println(" dests remaining");
 
                 if (dest.size() > 0) {
                     List<Point> concat = new LinkedList<>();
@@ -72,7 +68,7 @@ public class AStar {
                     openSet.add(neighbor); // Discover a new node
                 }
 
-                // The distance from current to a neighbor
+                // The estimatedTime from current to a neighbor
                 //the "dist_between" function may vary as per the solution requirements.
                 double tentative_gScore = gScore.get(current) + heuristic_cost_estimate(current, neighbor, weights);
                 if (tentative_gScore >= gScore.get(neighbor)) {

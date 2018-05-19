@@ -15,25 +15,26 @@ import com.github.rinde.rinsim.core.model.road.MovingRoadUser;
 import com.github.rinde.rinsim.core.model.road.RoadModel;
 import com.github.rinde.rinsim.core.model.time.TickListener;
 import com.github.rinde.rinsim.core.model.time.TimeLapse;
-import com.github.rinde.rinsim.geom.Connection;
-import com.github.rinde.rinsim.geom.ConnectionData;
 import com.github.rinde.rinsim.geom.Point;
 import com.google.common.base.Optional;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
-import com.google.common.collect.TreeBasedTable;
 import mas.AStar;
 import mas.ants.ExplorationAnt;
+import mas.ants.IntentionAnt;
 import mas.buildings.ChargingStation;
 import mas.models.PizzeriaModel;
 import mas.models.PizzeriaUser;
-import mas.pizza.DeliveryTask;
 import mas.pizza.PizzaParcel;
+import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.math3.random.RandomGenerator;
 import org.jetbrains.annotations.NotNull;
 
 import javax.measure.unit.SI;
-import java.util.*;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
+import java.util.Set;
 
 /**
  * Implementation of a very simple delivery robot.
@@ -47,7 +48,6 @@ public class Robot extends Vehicle implements MovingRoadUser, TickListener, Rand
     private double metersMoved = 0;
     private Point pizzeriaPos;
     private int currentCapacity;
-    private Optional<Queue<Point>> currentPath;
     private Optional<PizzaParcel> currentParcel;
     private Optional<RandomGenerator> rnd;
     private Optional<RoadModel> roadModel;
@@ -57,8 +57,11 @@ public class Robot extends Vehicle implements MovingRoadUser, TickListener, Rand
     private boolean goingToCharge;
     private boolean isCharging;
     private ChargingStation isAtChargingStation;
-    private boolean isMovingToDestination = false;
     private GraphRoadModel graphModel;
+    private Optional<Queue<Point>> intention;
+    private long intentionTimeLeft;
+    private int waitingForExplorationAnts;
+    private List<ImmutablePair<List<Point>, Long>> exploredPaths;
 
     public Robot(VehicleDTO vdto, Battery battery, int id, Point pizzeriaPos, GraphRoadModel graphModel) {
         super(vdto);
@@ -66,11 +69,14 @@ public class Robot extends Vehicle implements MovingRoadUser, TickListener, Rand
         this.id = id;
         this.battery = battery;
         this.pizzeriaPos = pizzeriaPos;
-        this.currentPath = Optional.absent();
         this.currentParcel = Optional.absent();
         this.timestamp_idle = Optional.absent();
         this.isAtChargingStation = null;
         this.graphModel = graphModel;
+        this.intention = Optional.absent();
+        this.intentionTimeLeft = Long.MAX_VALUE;
+        this.waitingForExplorationAnts = 0;
+        this.exploredPaths = new LinkedList<>();
     }
 
     @Override
@@ -102,7 +108,7 @@ public class Robot extends Vehicle implements MovingRoadUser, TickListener, Rand
         return this.roadModel.get().getObjectsOfType(ChargingStation.class);
     }
 
-    private List<List<Point>> getAlternativePaths(int numberOfPaths, Point start, List<Point> dest){
+    private List<List<Point>> getAlternativePaths(int numberOfPaths, Point start, List<Point> dest) {
         List<List<Point>> S = new LinkedList<>();
 
         int numFails = 0;
@@ -111,33 +117,33 @@ public class Robot extends Vehicle implements MovingRoadUser, TickListener, Rand
         double alpha = rnd.get().nextDouble();
         Table<Point, Point, Double> weights = HashBasedTable.create();
 
-        while(S.size() < numberOfPaths && numFails < maxFails){
+        while (S.size() < numberOfPaths && numFails < maxFails) {
             System.out.print("numFails " + numFails + " alpha " + alpha);
 
-            List<Point> p = AStar.getShortestPath(this.graphModel, weights , start, new LinkedList<>(dest));
+            List<Point> p = AStar.getShortestPath(this.graphModel, weights, start, new LinkedList<>(dest));
 
-            if(S.contains(p)){
+            if (S.contains(p)) {
                 numFails += 1;
-            }else{
+            } else {
                 S.add(p);
                 numFails = 0;
             }
 
-            for(Point v: p){
+            for (Point v : p) {
                 double beta = rnd.get().nextDouble();
-                if(beta < alpha){
+                if (beta < alpha) {
 
                     // Careful: there is also an getOutgoingConnections
-                    for(Point v2: this.graphModel.getGraph().getIncomingConnections(v)){
-                        if(weights.contains(v, v2)){
+                    for (Point v2 : this.graphModel.getGraph().getIncomingConnections(v)) {
+                        if (weights.contains(v, v2)) {
                             weights.put(v, v2, weights.get(v, v2) + penalty);
-                        }else{
+                        } else {
                             weights.put(v, v2, penalty);
                         }
 
-                        if(weights.contains(v2, v)) {
+                        if (weights.contains(v2, v)) {
                             weights.put(v2, v, weights.get(v2, v) + penalty);
-                        }else{
+                        } else {
                             weights.put(v2, v, penalty);
 
                         }
@@ -162,8 +168,8 @@ public class Robot extends Vehicle implements MovingRoadUser, TickListener, Rand
 
                     // Remove current path as we don't need it anymore
                     // Current path is the path to the charging station
-                    if (this.currentPath.isPresent()) {
-                        this.currentPath = Optional.absent();
+                    if (this.intention.isPresent()) {
+                        this.intention = Optional.absent();
                     }
                     return true;
                 }
@@ -184,114 +190,164 @@ public class Robot extends Vehicle implements MovingRoadUser, TickListener, Rand
             return;
         }
 
-        for(Message m: this.comm.get().getUnreadMessages()){
-            if(m.getContents().getClass() == ExplorationAnt.class){
-                ExplorationAnt ant = (ExplorationAnt) m.getContents();
+        // Read all new messages
+        if (this.comm.isPresent()) {
+            for (Message m : this.comm.get().getUnreadMessages()) {
 
-                if(ant.hasReachedDestination() && ant.getRobot_id() == this.id){
-                    System.out.println("GOT PATH!!!!");
-                    // We have found a path for our current parcel
-                    //System.out.println(ant.getPath());
-                    //this.currentPath = Optional.of(new LinkedList<Point>(ant.getPath()));
-                    //System.out.println(this.getPosition().get());
-                    //this.isMovingToDestination = true;
+                // If an exploration ant has returned, store the explored path and its estimated cost.
+                if (m.getContents().getClass() == ExplorationAnt.class) {
+                    ExplorationAnt ant = (ExplorationAnt) m.getContents();
+
+                    this.exploredPaths.add(new ImmutablePair<>(ant.path, ant.estimatedTime));
+
+                    this.waitingForExplorationAnts--;
+
+                    System.out.println("GOT ExplorationAnt!!!!");
+                    System.out.println(ant.path + ", estimation: " + ant.estimatedTime);
+                }
+
+                // Intention ant
+                if (m.getContents().getClass() == IntentionAnt.class) {
+                    // TODO
                 }
             }
         }
 
-        // No parcel so move to pizzeria
-        if (!currentParcel.isPresent()) {
-            toPizzeriaOrChargingStation();
-        } else {
-            // We have a parcel
-            toCustomerOrChargingStation();
+        // If waiting for ExplorationAnts and they all have returned, evaluate the different paths
+        if (this.exploredPaths.size() > 0 && this.waitingForExplorationAnts == 0) {
+            // Select the best path.
+            Long bestTime = Long.MAX_VALUE;
+            Queue<Point> bestPath = null;
+
+            for (ImmutablePair<List<Point>, Long> p : this.exploredPaths) {
+                if (p.right < bestTime) {
+                    bestTime = p.right;
+                    bestPath = new LinkedList<>(p.left);
+                }
+            }
+            this.exploredPaths = new LinkedList<>();
+
+            // If the new best path is better than the current one, update the intention of the Robot.
+            if (!this.intention.isPresent() || bestTime < this.intentionTimeLeft) {
+                this.intention = Optional.of(bestPath);
+                this.intentionTimeLeft = bestTime;
+
+                // TODO: Send intention ant. If it turns out that the intention ant says that the path cannot be taken
+                // TODO: (e.g. because of new road works), then a new set of exploration ants should be sent.
+            }
         }
 
-        if (this.isMovingToDestination) {
+
+        if (this.intention.isPresent()) {
+            this.move(time);
+
+            // TODO: CHECK IF ARRIVED AT DESTINATION
+        } else {
+
+        }
+
+//        // No intention, so move to pizzeria
+//        if (!this.currentParcel.isPresent()) {
+//            toPizzeriaOrChargingStation();
+//
+//        } else {
+//            // Robot has a parcel
+//            toCustomerOrChargingStation();
+//
+//            if (intention.isEmpty()) {
+//            }
+//        }
+//
+//        RoadModel rModel = roadModel.get();
+//        PDPModel pModel = pdpModel.get();
+//        PizzeriaModel dtModel = this.dtModel.get();
+//
+//        if (currentParcel.isPresent()) {
+//            PizzaParcel currParcel = this.currentParcel.get();
+//            DeliveryTask currentTask = currParcel.getDeliveryTask();
+//
+//            if (rModel.equalPosition(this, currentTask)) {
+//                // Deliver the pizzas
+//                pModel.deliver(this, currParcel, time);
+//                dtModel.deliverPizzas(this, currParcel, time.getEndTime());
+//
+//                // Unload pizzas
+//                this.currentCapacity -= currParcel.getAmountPizzas();
+//
+//                if (currParcel.getDeliveryTask().isFinished()) {
+//                    // All pizzas have been delivered, now we have to delete the task.
+//                    rModel.removeObject(currParcel.getDeliveryTask());
+//                }
+//
+//                // Remove current task
+//                this.currentParcel = Optional.absent();
+//
+//                // Remove current path
+//                this.intention = Optional.absent();
+//
+//                this.isMovingToDestination = false;
+//
+//            }
+//        } else {
+//            if (rModel.getPosition(this) == this.pizzeriaPos) {
+//                this.intention = Optional.absent();
+//                this.isMovingToDestination = false;
+//
+//                if (!this.timestamp_idle.isPresent()) {
+//                    this.timestamp_idle = Optional.of(time.getEndTime());
+//                    System.out.println("SET TIMESTAMP IDLE: " + this.timestamp_idle);
+//                }
+//            }
+//        }
+    }
+
+    /**
+     * Moves the Robot along its intention.
+     */
+    private void move(@NotNull TimeLapse time) {
+        if (this.intention.isPresent() && this.roadModel.isPresent()) {
+            RoadModel rModel = roadModel.get();
+
             MoveProgress progress;
-            //System.out.println(this.currentPath.get());
-            //System.out.println(this.getPosition().get());
-            if(this.getPosition().get() != this.currentPath.get().peek()){
-                progress = roadModel.get().moveTo(this, this.currentPath.get().peek(), time);
-            }else{
-                progress = roadModel.get().moveTo(this, this.currentPath.get().remove(), time);
+
+            if (this.getPosition().get() != this.intention.get().peek()) {
+                progress = rModel.moveTo(this, this.intention.get().peek(), time);
+            } else {
+                progress = rModel.moveTo(this, this.intention.get().remove(), time);
             }
-            //MoveProgress
-            //progress = roadModel.get().followPath(this, this.currentPath.get(), time);
-            //System.out.println(progress.distance().doubleValue(SI.METER));
-            metersMoved += progress.distance().doubleValue(SI.METER);
-            if (metersMoved > 1.0) {
+
+            // progress = roadModel.get().followPath(this, this.intention.get(), time);
+
+            this.metersMoved += progress.distance().doubleValue(SI.METER);
+            if (this.metersMoved > 1.0) {
                 this.battery.decrementCapacity();
-                metersMoved -= 1.0;
-            }
-        }
-
-        RoadModel rModel = roadModel.get();
-        PDPModel pModel = pdpModel.get();
-        PizzeriaModel dtModel = this.dtModel.get();
-
-        if (currentParcel.isPresent()) {
-            PizzaParcel currParcel = this.currentParcel.get();
-            DeliveryTask currentTask = currParcel.getDeliveryTask();
-
-            if (rModel.equalPosition(this, currentTask)) {
-                // Deliver the pizzas
-                pModel.deliver(this, currParcel, time);
-                dtModel.deliverPizzas(this, currParcel, time.getEndTime());
-
-                // Unload pizzas
-                this.currentCapacity -= currParcel.getAmountPizzas();
-
-                if (currParcel.getDeliveryTask().isFinished()) {
-                    // All pizzas have been delivered, now we have to delete the task.
-                    rModel.removeObject(currParcel.getDeliveryTask());
-                }
-
-                // Remove current task
-                this.currentParcel = Optional.absent();
-
-                // Remove current path
-                this.currentPath = Optional.absent();
-
-                this.isMovingToDestination = false;
-                sendExplorationAnt(this.pizzeriaPos);
-
-            }
-        } else {
-            if (rModel.getPosition(this) == this.pizzeriaPos) {
-                this.currentPath = Optional.absent();
-                this.isMovingToDestination = false;
-
-                if (!this.timestamp_idle.isPresent()) {
-                    this.timestamp_idle = Optional.of(time.getEndTime());
-                    System.out.println("SET TIMESTAMP IDLE: " + this.timestamp_idle);
-                }
+                this.metersMoved -= 1.0;
             }
         }
     }
 
     private void toCustomerOrChargingStation() {
-        if (this.currentPath.isPresent()) {
+        if (this.intention.isPresent()) {
             //Queue<Point> path = new LinkedList<>(roadModel.get().getShortestPathTo(this, this.currentParcel.get().getDeliveryLocation()));
-            //this.currentPath = Optional.of(path);
+            //this.intention = Optional.of(path);
 
-            //rechargeIfNecessary(this.currentPath.get(), this.currentParcel.get().getDeliveryLocation());
+            //rechargeIfNecessary(this.intention.get(), this.currentParcel.get().getDeliveryLocation());
         }
     }
 
     private void toPizzeriaOrChargingStation() {
         // Logic to decide if we have to go to the pizzeria or recharge our battery in a charging station
 
-        if (this.currentPath.isPresent()) {
+        if (this.intention.isPresent()) {
             //Queue<Point> path = new LinkedList<>(roadModel.get().getShortestPathTo(this, this.pizzeriaPos));
-            //this.currentPath = Optional.of(path);
+            //this.intention = Optional.of(path);
 
-            //rechargeIfNecessary(this.currentPath.get(), this.pizzeriaPos);
+            //rechargeIfNecessary(this.intention.get(), this.pizzeriaPos);
         }
     }
 
     private void rechargeIfNecessary(Queue<Point> path, Point nextStartPos) {
-        // If distance of our path is more than our battery can take, recharge!
+        // If estimatedTime of our path is more than our battery can take, recharge!
         boolean canReachStation = false;
         Queue<Point> newPath = null;
 
@@ -304,7 +360,7 @@ public class Robot extends Vehicle implements MovingRoadUser, TickListener, Rand
             // Check the path between our destination and the charging station
             Queue<Point> fromDestToCharge = new LinkedList<>(roadModel.get().getShortestPathTo(nextStartPos, station.getPosition()));
 
-            // What is the total distance of our current path + moving from our current destination to the charging station?
+            // What is the total estimatedTime of our current path + moving from our current destination to the charging station?
             double distToDestThenToChargeStation = Math.ceil(getDistanceOfPathInMeters(path) + getDistanceOfPathInMeters(fromDestToCharge));
 
             // If our battery can handle this, then we can reach the station
@@ -320,7 +376,7 @@ public class Robot extends Vehicle implements MovingRoadUser, TickListener, Rand
         // If we cannot reach any station by first going to our destination and then going to a station
         // We first need to pass through a station
         if (!canReachStation) {
-            this.currentPath = Optional.of(newPath);
+            this.intention = Optional.of(newPath);
             this.goingToCharge = true;
 
         }
@@ -342,23 +398,39 @@ public class Robot extends Vehicle implements MovingRoadUser, TickListener, Rand
         return new Double(this.getCapacity()).intValue() - this.currentCapacity;
     }
 
-    public void setTask(PizzaParcel task) {
-        this.currentParcel = Optional.of(task);
-        this.currentCapacity += task.getAmountPizzas();
+    public void setTask(PizzaParcel parcel) {
+        this.currentParcel = Optional.of(parcel);
+        this.currentCapacity += parcel.getAmountPizzas();
 
+        // For now, Robots have only 1 destination at a time
         List<Point> dests = new LinkedList<>();
-        dests.add(task.getDeliveryLocation());
+        dests.add(parcel.getDeliveryLocation());
 
-        List<List<Point>> paths = getAlternativePaths(3, task.getPickupLocation(),dests);
-        sendExplorationAnts(paths);
+        this.explorePaths(dests);
+    }
+
+    private void explorePaths(List<Point> dests) {
+        if (this.currentParcel.isPresent()) {
+            PizzaParcel p = this.currentParcel.get();
+
+            // Generate 3 possible paths and send exploration ants to explore them
+            List<List<Point>> paths = getAlternativePaths(3, p.getPickupLocation(), dests);
+            sendExplorationAnts(paths);
+        } else {
+            System.out.println("Trying to explore paths while there is no currentParcel.");
+        }
     }
 
     private void sendExplorationAnts(List<List<Point>> paths) {
         // Send exploration ants over the found paths
-        for(List<Point> path: paths){
-            this.comm.get().broadcast(new ExplorationAnt(path, this.id, this.antId, this));
+        if (this.comm.isPresent()) {
+            for (List<Point> path : paths) {
+                this.comm.get().broadcast(new ExplorationAnt(path, 0, false, this.antId, this.id, this));
+                this.antId += 1;
+            }
+
+            this.waitingForExplorationAnts = paths.size();
         }
-        this.antId += 1;
     }
 
     @Override
