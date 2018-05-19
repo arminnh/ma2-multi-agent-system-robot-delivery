@@ -3,7 +3,7 @@ package mas.models;
 import com.github.rinde.rinsim.core.model.pdp.Parcel;
 import com.github.rinde.rinsim.core.model.pdp.Vehicle;
 import com.github.rinde.rinsim.event.Event;
-import mas.pizza.DeliveryTask;
+import mas.tasks.DeliveryTask;
 
 import javax.annotation.Nullable;
 

@@ -7,7 +7,6 @@ import com.github.rinde.rinsim.core.model.pdp.Vehicle;
 import com.github.rinde.rinsim.core.model.road.GenericRoadModel;
 import com.github.rinde.rinsim.core.model.road.MoveEvent;
 import com.github.rinde.rinsim.core.model.road.MovingRoadUser;
-import com.github.rinde.rinsim.core.model.road.RoadModel;
 import com.github.rinde.rinsim.core.model.time.Clock;
 import com.github.rinde.rinsim.event.Event;
 import com.github.rinde.rinsim.event.EventDispatcher;
@@ -20,10 +19,10 @@ import com.github.rinde.rinsim.scenario.ScenarioController;
 import com.github.rinde.rinsim.scenario.ScenarioController.ScenarioEvent;
 import com.github.rinde.rinsim.scenario.TimeOutEvent;
 import com.google.common.base.Optional;
+import mas.agents.RobotAgent;
 import mas.models.PizzeriaEvent;
 import mas.models.PizzeriaEventType;
-import mas.pizza.PizzaParcel;
-import mas.robot.Robot;
+import mas.tasks.PizzaParcel;
 
 import java.util.Map;
 
@@ -183,10 +182,10 @@ public class TheListener implements Listener {
             totalPickups++;
 
             final PDPModelEvent pme = (PDPModelEvent) e;
-            Robot r = (Robot) pme.vehicle;
-            if (r.timestamp_idle.isPresent()) {
-                totalIdleTime += pme.time - r.timestamp_idle.get();
-                r.timestamp_idle = Optional.absent();
+            RobotAgent r = (RobotAgent) pme.vehicle;
+            if (r.timestampIdle.isPresent()) {
+                totalIdleTime += pme.time - r.timestampIdle.get();
+                r.timestampIdle = Optional.absent();
             }
 
         } else if (e.getEventType() == PDPModelEventType.START_DELIVERY) {
@@ -209,7 +208,7 @@ public class TheListener implements Listener {
             final PizzaParcel p = (PizzaParcel) pme.parcel;
 
             totalPizzaTravelTime += clock.getCurrentTime() - p.start_time;
-            pizzas -= p.getAmountPizzas();
+            pizzas -= p.amountOfPizzas;
 
         } else if (e.getEventType() == ScenarioController.EventType.SCENARIO_EVENT) {
             final ScenarioEvent se = (ScenarioEvent) e;
@@ -227,7 +226,7 @@ public class TheListener implements Listener {
 
             PDPModelEvent pme = (PDPModelEvent) e;
             PizzaParcel p = (PizzaParcel) pme.parcel;
-            pizzas += p.getAmountPizzas();
+            pizzas += p.amountOfPizzas;
             totalPizzas += pizzas;
 
         } else if (e.getEventType() == PDPModelEventType.NEW_VEHICLE) {
@@ -253,11 +252,11 @@ public class TheListener implements Listener {
         } else if (e.getEventType() == PizzeriaEventType.CLOSE_PIZZERIA) {
             pizzerias--;
 
-        } else if (e.getEventType() == PizzeriaEventType.NEW_ROADWORK) {
+        } else if (e.getEventType() == PizzeriaEventType.NEW_ROADWORKS) {
             roadWorks++;
             totalRoadWorks++;
 
-        } else if (e.getEventType() == PizzeriaEventType.FINISH_ROADWORK) {
+        } else if (e.getEventType() == PizzeriaEventType.FINISHED_ROADWORKS) {
             roadWorks--;
 
         } else if (e.getEventType() == PizzeriaEventType.ROBOT_AT_CHARGING_STATION) {

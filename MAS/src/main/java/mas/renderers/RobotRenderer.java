@@ -8,7 +8,7 @@ import com.github.rinde.rinsim.ui.renderers.CanvasRenderer.AbstractCanvasRendere
 import com.github.rinde.rinsim.ui.renderers.ViewPort;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Maps;
-import mas.robot.Robot;
+import mas.agents.RobotAgent;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.GC;
 
@@ -23,11 +23,9 @@ public class RobotRenderer extends AbstractCanvasRenderer {
     private static final int Y_OFFSET = -30;
 
     private final RoadModel roadModel;
-    private final PDPModel pdpModel;
 
-    RobotRenderer(RoadModel r, PDPModel p) {
+    RobotRenderer(RoadModel r) {
         roadModel = r;
-        pdpModel = p;
     }
 
     public static RobotRendererBuilder builder() {
@@ -43,74 +41,45 @@ public class RobotRenderer extends AbstractCanvasRenderer {
         final Map<RoadUser, Point> map = Maps.filterEntries(roadModel.getObjectsAndPositions(), Filter.ROBOTS);
 
         for (final Entry<RoadUser, Point> robotEntry : map.entrySet()) {
-            final Robot robot = (Robot) robotEntry.getKey();
-            final Point p = robot.getPosition().get();
-            final int currentBattery = robot.getCurrentBatteryCapacity();
+            final RobotAgent robotAgent = (RobotAgent) robotEntry.getKey();
+            final Point p = robotAgent.getPosition().get();
+            final int currentBattery = robotAgent.getRemainingBatteryCapacity();
             final int x = vp.toCoordX(p.x) + X_OFFSET;
             final int y = vp.toCoordY(p.y) + Y_OFFSET;
 
             final org.eclipse.swt.graphics.Point extent = gc.textExtent(Integer.toString(100) + "%");
             gc.setBackground(gc.getDevice().getSystemColor(SWT.COLOR_BLACK));
 
-            gc.fillRoundRectangle(x - extent.x / 2, y - extent.y / 2,
-                    extent.x + 2, extent.y + 2, ROUND_RECT_ARC_HEIGHT,
-                    ROUND_RECT_ARC_HEIGHT);
+            gc.fillRoundRectangle(x - extent.x / 2, y - extent.y / 2, extent.x + 2, extent.y + 2,
+                    ROUND_RECT_ARC_HEIGHT, ROUND_RECT_ARC_HEIGHT);
+
             if (currentBattery > 80) {
                 gc.setBackground(gc.getDevice().getSystemColor(SWT.COLOR_GREEN));
 
             } else if (currentBattery > 30) {
                 gc.setBackground(gc.getDevice().getSystemColor(SWT.COLOR_YELLOW));
+
             } else {
                 gc.setBackground(gc.getDevice().getSystemColor(SWT.COLOR_RED));
             }
 
             gc.fillRoundRectangle(x - extent.x / 2, y - extent.y / 2,
-                    Math.max((extent.x + 2) * robot.getCurrentBatteryCapacity() / 100, 0), extent.y + 2, ROUND_RECT_ARC_HEIGHT,
-                    ROUND_RECT_ARC_HEIGHT);
+                    Math.max((extent.x + 2) * currentBattery / 100, 0), extent.y + 2,
+                    ROUND_RECT_ARC_HEIGHT, ROUND_RECT_ARC_HEIGHT);
+
             gc.setForeground(gc.getDevice().getSystemColor(SWT.COLOR_BLACK));
 
-            gc.drawText(Integer.toString(Math.max(currentBattery, 0)) + "%", x - extent.x / 2 + 1, y - extent.y / 2 + 1,
-                    true);
+            gc.drawText(Integer.toString(Math.max(currentBattery, 0)) + "%", x - extent.x / 2 + 1,
+                    y - extent.y / 2 + 1,true);
         }
 
-        /*for (final Entry<RoadUser, Point> entry : map.entrySet()) {
-            final mas.robot.Robot t = (mas.robot.Robot) entry.getKey();
-            final Point p = entry.getValue();
-            final int x = vp.toCoordX(p.x) + X_OFFSET;
-            final int y = vp.toCoordY(p.y) + Y_OFFSET;
-
-            final VehicleState vs = pdpModel.getVehicleState(t);
-            
-            String text = null;
-            final int size = (int) pdpModel.getContentsSize(t);
-            if (vs == VehicleState.DELIVERING) {
-                text = "test a";
-            } else if (vs == VehicleState.PICKING_UP) {
-                text = "test b";
-            } else if (size > 0) {
-                text = Integer.toString(size);
-            }
-
-            if (text != null) {
-                final org.eclipse.swt.graphics.Point extent = gc.textExtent(text);
-
-                gc.setBackground(gc.getDevice().getSystemColor(SWT.COLOR_DARK_BLUE));
-                gc.fillRoundRectangle(x - extent.x / 2, y - extent.y / 2,
-                        extent.x + 2, extent.y + 2, ROUND_RECT_ARC_HEIGHT,
-                        ROUND_RECT_ARC_HEIGHT);
-                gc.setForeground(gc.getDevice().getSystemColor(SWT.COLOR_WHITE));
-
-                gc.drawText(text, x - extent.x / 2 + 1, y - extent.y / 2 + 1,
-                        true);
-            }
-        }*/
     }
 
     private enum Filter implements Predicate<Entry<RoadUser, Point>> {
         ROBOTS {
             @Override
             public boolean apply(Entry<RoadUser, Point> input) {
-                return input.getKey() instanceof Robot;
+                return input.getKey() instanceof RobotAgent;
             }
 
         }

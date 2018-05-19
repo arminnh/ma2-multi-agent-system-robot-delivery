@@ -2,25 +2,22 @@ package mas.renderers;
 
 import com.github.rinde.rinsim.core.model.DependencyProvider;
 import com.github.rinde.rinsim.core.model.ModelBuilder;
-import com.github.rinde.rinsim.core.model.pdp.PDPModel;
 import com.github.rinde.rinsim.core.model.road.RoadModel;
+import org.jetbrains.annotations.NotNull;
 
 public class DeliveryTaskRendererBuilder extends ModelBuilder.AbstractModelBuilder<DeliveryTaskRenderer, Void> {
 
     private static final long serialVersionUID = -1772420262312399129L;
 
     DeliveryTaskRendererBuilder() {
-        setDependencies(RoadModel.class, PDPModel.class);
+        setDependencies(RoadModel.class);
     }
-
 
     @Override
-    public DeliveryTaskRenderer build(DependencyProvider dependencyProvider) {
+    public DeliveryTaskRenderer build(@NotNull DependencyProvider dependencyProvider) {
         final RoadModel rm = dependencyProvider.get(RoadModel.class);
-        final PDPModel pm = dependencyProvider.get(PDPModel.class);
-        return new DeliveryTaskRenderer(rm, pm);
+        return new DeliveryTaskRenderer(rm);
     }
-
 
     public boolean equals(Object o) {
         if (o == this) {
@@ -30,7 +27,6 @@ public class DeliveryTaskRendererBuilder extends ModelBuilder.AbstractModelBuild
             return o instanceof DeliveryTaskRendererBuilder;
         }
     }
-
 
     public int hashCode() {
         int h = 1;

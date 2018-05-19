@@ -1,18 +1,15 @@
 package mas.buildings;
 
-import com.github.rinde.rinsim.core.Simulator;
 import com.github.rinde.rinsim.core.model.road.RoadModel;
 import com.github.rinde.rinsim.core.model.road.RoadUser;
 import com.github.rinde.rinsim.core.model.time.TickListener;
 import com.github.rinde.rinsim.core.model.time.TimeLapse;
 import com.github.rinde.rinsim.geom.Point;
-import com.google.common.base.Optional;
+import mas.agents.RobotAgent;
 import mas.models.PizzeriaModel;
 import mas.models.PizzeriaUser;
-import mas.pizza.DeliveryTask;
-import mas.robot.Robot;
+import mas.tasks.DeliveryTask;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.collections4.Predicate;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedList;
@@ -28,80 +25,18 @@ public class Pizzeria implements RoadUser, TickListener, PizzeriaUser {
      * For isRegistered implementation, see PDPObjectImpl
      */
     private Point position;
-    private Optional<RoadModel> roadModel;
-    private Optional<PizzeriaModel> dtModel;
+    private RoadModel roadModel;
+    private PizzeriaModel pizzeriaModel;
 
-    public Pizzeria(Point position, Simulator sim) {
+    public Pizzeria(Point position) {
         this.position = position;
     }
 
     @Override
     public void initRoadUser(@NotNull RoadModel model) {
-        this.roadModel = Optional.of(model);
+        this.roadModel = model;
 
         model.addObjectAt(this, position);
-    }
-
-
-    private List<Robot> getWaitingRobots() {
-        List<Robot> robots = new LinkedList<>(this.roadModel.get().getObjectsAt(this, Robot.class));
-
-        // Filter out any totalVehicles that are in the pizzeria but have a task...
-        CollectionUtils.filter(robots, new Predicate<Robot>() {
-            @Override
-            public boolean evaluate(Robot o) {
-                return !o.hasTask() && o.getCapacityLeft() > 0;
-            }
-        });
-
-        return robots;
-    }
-
-    private List<DeliveryTask> getAvailableDeliveryTasks() {
-        List<DeliveryTask> tasks = new LinkedList<>(this.roadModel.get().getObjectsOfType(DeliveryTask.class));
-
-        // Filter out any tasks that are not fully served yet.
-        // Served here meaning we sent out the required amount of pizzas
-        CollectionUtils.filter(tasks, new Predicate<DeliveryTask>() {
-            @Override
-            public boolean evaluate(DeliveryTask o) {
-                return o.getPizzasLeft() > 0;
-            }
-        });
-
-        return tasks;
-    }
-
-
-    @Override
-    public void tick(@NotNull TimeLapse time) {
-        if (!time.hasTimeLeft()) {
-            return;
-        }
-
-        List<Robot> waitingRobots = getWaitingRobots();
-        List<DeliveryTask> waitingTasks = getAvailableDeliveryTasks();
-
-        for (final DeliveryTask task : waitingTasks) {
-            // Task allocation
-            for (final Robot robot : waitingRobots) {
-                if (task.getPizzasLeft() == 0) {
-                    break;
-                }
-
-                if (robot.hasTask()) {
-                    continue;
-                }
-                int pizzaAmount = Math.min(task.getPizzasLeft(), robot.getCapacityLeft());
-
-                dtModel.get().newParcelForRobot(robot, task, this.position, pizzaAmount, time);
-            }
-
-        }
-    }
-
-    @Override
-    public void afterTick(@NotNull TimeLapse timeLapse) {
     }
 
     public Point getPosition() {
@@ -110,6 +45,55 @@ public class Pizzeria implements RoadUser, TickListener, PizzeriaUser {
 
     @Override
     public void initPizzaUser(PizzeriaModel model) {
-        this.dtModel = Optional.of(model);
+        this.pizzeriaModel = model;
+    }
+
+    private List<RobotAgent> getWaitingRobots() {
+        List<RobotAgent> robotAgents = new LinkedList<>(this.roadModel.getObjectsAt(this, RobotAgent.class));
+
+        // Filter out any totalVehicles that are in the pizzeria but have a deliveryTask...
+        CollectionUtils.filter(robotAgents, o -> !o.hasPizzaParcel() && o.getCapacityLeft() > 0);
+
+        return robotAgents;
+    }
+
+    private List<DeliveryTask> getAvailableDeliveryTasks() {
+        List<DeliveryTask> tasks = new LinkedList<>(this.roadModel.getObjectsOfType(DeliveryTask.class));
+
+        // Filter out any tasks that need more pizzas to be created and delivered.
+        CollectionUtils.filter(tasks, o -> o.getPizzasLeft() > 0);
+
+        return tasks;
+    }
+
+    @Override
+    public void tick(@NotNull TimeLapse time) {
+        if (!time.hasTimeLeft()) {
+            return;
+        }
+
+        List<RobotAgent> waitingRobotAgents = getWaitingRobots();
+        List<DeliveryTask> waitingTasks = getAvailableDeliveryTasks();
+
+        for (final DeliveryTask task : waitingTasks) {
+            // Task allocation
+            for (final RobotAgent robotAgent : waitingRobotAgents) {
+                if (task.getPizzasLeft() == 0) {
+                    break;
+                }
+
+                if (robotAgent.hasPizzaParcel()) {
+                    continue;
+                }
+                int pizzaAmount = Math.min(task.getPizzasLeft(), robotAgent.getCapacityLeft());
+
+                pizzeriaModel.newPizzaParcelForRobot(robotAgent, task, this.position, pizzaAmount, time);
+            }
+
+        }
+    }
+
+    @Override
+    public void afterTick(@NotNull TimeLapse timeLapse) {
     }
 }

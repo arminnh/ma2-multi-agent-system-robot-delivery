@@ -8,7 +8,7 @@ import com.github.rinde.rinsim.ui.renderers.CanvasRenderer.AbstractCanvasRendere
 import com.github.rinde.rinsim.ui.renderers.ViewPort;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Maps;
-import mas.pizza.DeliveryTask;
+import mas.tasks.DeliveryTask;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.GC;
 
@@ -23,11 +23,9 @@ public class DeliveryTaskRenderer extends AbstractCanvasRenderer {
     private static final int Y_OFFSET = -30;
 
     private final RoadModel roadModel;
-    private final PDPModel pdpModel;
 
-    DeliveryTaskRenderer(RoadModel r, PDPModel p) {
+    DeliveryTaskRenderer(RoadModel r) {
         roadModel = r;
-        pdpModel = p;
     }
 
     public static DeliveryTaskRendererBuilder builder() {
@@ -60,38 +58,6 @@ public class DeliveryTaskRenderer extends AbstractCanvasRenderer {
             gc.drawText(Double.toString(pizzaAmount), x - extent.x / 2 + 1, y - extent.y / 2 + 1,
                     true);
         }
-
-        /*for (final Entry<RoadUser, Point> entry : map.entrySet()) {
-            final mas.robot.Robot t = (mas.robot.Robot) entry.getKey();
-            final Point p = entry.getValue();
-            final int x = vp.toCoordX(p.x) + X_OFFSET;
-            final int y = vp.toCoordY(p.y) + Y_OFFSET;
-
-            final VehicleState vs = pdpModel.getVehicleState(t);
-            
-            String text = null;
-            final int size = (int) pdpModel.getContentsSize(t);
-            if (vs == VehicleState.DELIVERING) {
-                text = "test a";
-            } else if (vs == VehicleState.PICKING_UP) {
-                text = "test b";
-            } else if (size > 0) {
-                text = Integer.toString(size);
-            }
-
-            if (text != null) {
-                final org.eclipse.swt.graphics.Point extent = gc.textExtent(text);
-
-                gc.setBackground(gc.getDevice().getSystemColor(SWT.COLOR_DARK_BLUE));
-                gc.fillRoundRectangle(x - extent.x / 2, y - extent.y / 2,
-                        extent.x + 2, extent.y + 2, ROUND_RECT_ARC_HEIGHT,
-                        ROUND_RECT_ARC_HEIGHT);
-                gc.setForeground(gc.getDevice().getSystemColor(SWT.COLOR_WHITE));
-
-                gc.drawText(text, x - extent.x / 2 + 1, y - extent.y / 2 + 1,
-                        true);
-            }
-        }*/
     }
 
     private enum Filter implements Predicate<Entry<RoadUser, Point>> {

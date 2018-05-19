@@ -1,11 +1,9 @@
-package mas;
+package mas.graphs;
 
 import com.github.rinde.rinsim.core.model.road.GraphRoadModel;
 import com.github.rinde.rinsim.geom.Point;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Table;
-import org.apache.commons.collections4.CollectionUtils;
 
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -16,8 +14,8 @@ public class AStar {
     public AStar() {
     }
 
-    static public List<Point> getShortestPath(GraphRoadModel graphModel, Table<Point, Point,
-            Double> weights, Point start, List<Point> dest) {
+    static public List<Point> getShortestPath(GraphRoadModel graphModel, Table<Point, Point, Double> weights,
+                                              Point start, List<Point> dest) {
         // Implementation of A* based on https://en.wikipedia.org/wiki/A*_search_algorithm#Pseudocode
         List<Point> path = new LinkedList<>();
 

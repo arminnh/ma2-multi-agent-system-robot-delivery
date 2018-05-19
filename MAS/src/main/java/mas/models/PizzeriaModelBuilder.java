@@ -7,9 +7,9 @@ import com.github.rinde.rinsim.core.model.road.RoadModel;
 import org.jetbrains.annotations.NotNull;
 
 
-public class DeliveryTaskModelBuilder extends ModelBuilder.AbstractModelBuilder<PizzeriaModel, Object> {
+public class PizzeriaModelBuilder extends ModelBuilder.AbstractModelBuilder<PizzeriaModel, Object> {
 
-    DeliveryTaskModelBuilder() {
+    PizzeriaModelBuilder() {
         setDependencies(RoadModel.class, PDPModel.class);
     }
 

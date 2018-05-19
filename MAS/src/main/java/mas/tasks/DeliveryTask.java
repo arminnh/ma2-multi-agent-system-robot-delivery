@@ -1,4 +1,4 @@
-package mas.pizza;
+package mas.tasks;
 
 import com.github.rinde.rinsim.core.model.comm.CommDevice;
 import com.github.rinde.rinsim.core.model.comm.CommDeviceBuilder;
@@ -12,10 +12,11 @@ import org.jetbrains.annotations.NotNull;
 
 public class DeliveryTask implements RoadUser, CommUser {
 
+    private RoadModel roadModel;
+    private CommDevice commDevice;
+
     // the time at which the DeliveryTask was created
     public final long start_time;
-    private Optional<RoadModel> roadModel;
-    private Optional<CommDevice> comm;
     private Point position;
     private int pizzasRequested;
     private int pizzasReady;
@@ -31,9 +32,9 @@ public class DeliveryTask implements RoadUser, CommUser {
 
     @Override
     public void initRoadUser(@NotNull RoadModel model) {
-        this.roadModel = Optional.of(model);
+        this.roadModel = model;
 
-        this.roadModel.get().addObjectAt(this, position);
+        this.roadModel.addObjectAt(this, position);
     }
 
     public Optional<Point> getPosition() {
@@ -42,7 +43,7 @@ public class DeliveryTask implements RoadUser, CommUser {
 
     @Override
     public void setCommDevice(@NotNull CommDeviceBuilder builder) {
-        comm = Optional.of(builder.build());
+        commDevice = builder.build();
     }
 
     public int getPizzasRequested() {

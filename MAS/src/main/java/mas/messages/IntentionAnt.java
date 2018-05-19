@@ -1,4 +1,4 @@
-package mas.ants;
+package mas.messages;
 
 import com.github.rinde.rinsim.core.model.comm.MessageContents;
 

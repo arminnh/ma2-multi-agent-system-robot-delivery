@@ -1,7 +1,8 @@
 package mas.models;
 
 
-import mas.pizza.PizzaParcel;
+import mas.agents.RobotAgent;
+import mas.tasks.PizzaParcel;
 
 public enum PizzeriaEventType {
     /**
@@ -10,7 +11,7 @@ public enum PizzeriaEventType {
     NEW_TASK,
 
     /**
-     * Indicates that enough {@link PizzaParcel}s have been delivered for the task and that the task is thus done.
+     * Indicates that enough {@link PizzaParcel}s have been delivered for the deliveryTask and that the deliveryTask is thus done.
      */
     END_TASK,
 
@@ -27,20 +28,20 @@ public enum PizzeriaEventType {
     /**
      * Indicates that a new {@link} has opened
      */
-    NEW_ROADWORK,
+    NEW_ROADWORKS,
 
     /**
      * Indicates that a {@link} has finished
      */
-    FINISH_ROADWORK,
+    FINISHED_ROADWORKS,
 
     /**
-     * Indicates that a {@link mas.robot.Robot} has entered a {@link mas.buildings.ChargingStation}
+     * Indicates that a {@link RobotAgent} has entered a {@link mas.buildings.ChargingStation}
      */
     ROBOT_AT_CHARGING_STATION,
 
     /**
-     * Indicates that a {@link mas.robot.Robot} is leaving a {@link mas.buildings.ChargingStation}
+     * Indicates that a {@link RobotAgent} is leaving a {@link mas.buildings.ChargingStation}
      */
     ROBOT_LEAVING_CHARGING_STATION
 

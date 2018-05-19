@@ -10,11 +10,11 @@ import com.github.rinde.rinsim.core.model.time.TimeLapse;
 import com.github.rinde.rinsim.event.EventAPI;
 import com.github.rinde.rinsim.event.EventDispatcher;
 import com.github.rinde.rinsim.geom.Point;
+import mas.agents.RobotAgent;
 import mas.buildings.ChargingStation;
 import mas.buildings.Pizzeria;
-import mas.pizza.DeliveryTask;
-import mas.pizza.PizzaParcel;
-import mas.robot.Robot;
+import mas.tasks.DeliveryTask;
+import mas.tasks.PizzaParcel;
 import org.apache.commons.math3.random.RandomGenerator;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,12 +22,12 @@ public class PizzeriaModel extends Model.AbstractModel<PizzeriaUser> {
 
     private final EventDispatcher eventDispatcher;
     private Simulator sim;
-    private RoadModel rModel;
+    private RoadModel roadModel;
     private PDPModel pdpModel;
     private RandomGenerator rng;
 
-    public PizzeriaModel(RoadModel rModel, PDPModel pdpModel) {
-        this.rModel = rModel;
+    public PizzeriaModel(RoadModel roadModel, PDPModel pdpModel) {
+        this.roadModel = roadModel;
         this.pdpModel = pdpModel;
         eventDispatcher = new EventDispatcher(PizzeriaEventType.values());
     }
@@ -37,8 +37,8 @@ public class PizzeriaModel extends Model.AbstractModel<PizzeriaUser> {
         this.rng = rng;
     }
 
-    public static DeliveryTaskModelBuilder builder() {
-        return new DeliveryTaskModelBuilder();
+    public static PizzeriaModelBuilder builder() {
+        return new PizzeriaModelBuilder();
     }
 
     public EventAPI getEventAPI() {
@@ -57,7 +57,7 @@ public class PizzeriaModel extends Model.AbstractModel<PizzeriaUser> {
     }
 
     public Pizzeria openPizzeria() {
-        Pizzeria pizzeria = new Pizzeria(this.rModel.getRandomPosition(rng), sim);
+        Pizzeria pizzeria = new Pizzeria(this.roadModel.getRandomPosition(rng));
         sim.register(pizzeria);
 
         eventDispatcher.dispatchEvent(new PizzeriaEvent(
@@ -76,7 +76,7 @@ public class PizzeriaModel extends Model.AbstractModel<PizzeriaUser> {
     public void createNewDeliveryTask(RandomGenerator rng, double pizzaMean, double pizzaStd, long time) {
         int pizzaAmount = (int) (rng.nextGaussian() * pizzaStd + pizzaMean);
 
-        DeliveryTask task = new DeliveryTask(rModel.getRandomPosition(rng), pizzaAmount, time);
+        DeliveryTask task = new DeliveryTask(roadModel.getRandomPosition(rng), pizzaAmount, time);
         sim.register(task);
 
         eventDispatcher.dispatchEvent(new PizzeriaEvent(
@@ -84,7 +84,7 @@ public class PizzeriaModel extends Model.AbstractModel<PizzeriaUser> {
         ));
     }
 
-    public PizzaParcel newParcel(DeliveryTask task, Point position, int pizzaAmount, long time) {
+    public PizzaParcel newPizzaParcel(DeliveryTask task, Point position, int pizzaAmount, long time) {
         ParcelDTO pdto = Parcel.builder(position, task.getPosition().get())
                 .neededCapacity(pizzaAmount)
                 .buildDTO();
@@ -95,19 +95,19 @@ public class PizzeriaModel extends Model.AbstractModel<PizzeriaUser> {
         return parcel;
     }
 
-    public void newParcelForRobot(Robot robot, DeliveryTask task, Point position, int pizzaAmount, TimeLapse time) {
-        PizzaParcel parcel = this.newParcel(task, position, pizzaAmount, time.getStartTime());
+    public void newPizzaParcelForRobot(RobotAgent robotAgent, DeliveryTask task, Point position, int pizzaAmount, TimeLapse time) {
+        PizzaParcel parcel = this.newPizzaParcel(task, position, pizzaAmount, time.getStartTime());
 
-        robot.setTask(parcel);
+        robotAgent.setPizzaParcel(parcel);
         task.addReadyPizzas(pizzaAmount);
 
-        this.pdpModel.pickup(robot, parcel, time);
+        this.pdpModel.pickup(robotAgent, parcel, time);
     }
 
-    public void deliverPizzas(Robot vehicle, PizzaParcel parcel, long time) {
-        DeliveryTask task = parcel.getDeliveryTask();
+    public void deliverPizzas(RobotAgent vehicle, PizzaParcel parcel, long time) {
+        DeliveryTask task = parcel.deliveryTask;
 
-        task.deliverPizzas(parcel.getAmountPizzas());
+        task.deliverPizzas(parcel.amountOfPizzas);
 
         if (task.isFinished()) {
             eventDispatcher.dispatchEvent(new PizzeriaEvent(
@@ -116,7 +116,7 @@ public class PizzeriaModel extends Model.AbstractModel<PizzeriaUser> {
         }
     }
 
-    public void robotAtChargingStation(Robot r, ChargingStation cs) {
+    public void robotArrivedAtChargingStation(RobotAgent r, ChargingStation cs) {
         if (cs.addRobot(r)) {
             eventDispatcher.dispatchEvent(new PizzeriaEvent(
                     PizzeriaEventType.ROBOT_AT_CHARGING_STATION, 0, null, null, null
@@ -124,7 +124,7 @@ public class PizzeriaModel extends Model.AbstractModel<PizzeriaUser> {
         }
     }
 
-    public void robotLeavingChargingStation(Robot r, ChargingStation cs) {
+    public void robotLeftChargingStation(RobotAgent r, ChargingStation cs) {
         cs.removeRobot(r);
 
         eventDispatcher.dispatchEvent(new PizzeriaEvent(
@@ -133,16 +133,16 @@ public class PizzeriaModel extends Model.AbstractModel<PizzeriaUser> {
 
     }
 
-    public void newRoadWork() {
+    public void newRoadWorks() {
         eventDispatcher.dispatchEvent(new PizzeriaEvent(
-                PizzeriaEventType.NEW_ROADWORK, 0, null, null, null
+                PizzeriaEventType.NEW_ROADWORKS, 0, null, null, null
         ));
 
     }
 
-    public void finishRoadWork() {
+    public void finishRoadWorks() {
         eventDispatcher.dispatchEvent(new PizzeriaEvent(
-                PizzeriaEventType.FINISH_ROADWORK, 0, null,  null, null
+                PizzeriaEventType.FINISHED_ROADWORKS, 0, null,  null, null
         ));
     }
 }

@@ -9,10 +9,7 @@ import com.github.rinde.rinsim.event.EventDispatcher;
 import com.github.rinde.rinsim.pdptw.common.StatsProvider;
 import com.github.rinde.rinsim.scenario.ScenarioController;
 import mas.models.PizzeriaModel;
-import mas.pizza.DeliveryTask;
-import org.apache.commons.collections4.CollectionUtils;
-
-import java.util.stream.Collectors;
+import mas.tasks.DeliveryTask;
 
 import static com.github.rinde.rinsim.core.model.pdp.PDPModel.PDPModelEventType.*;
 import static com.github.rinde.rinsim.core.model.road.GenericRoadModel.RoadEventType.MOVE;
@@ -53,9 +50,9 @@ public final class StatsTracker extends AbstractModelVoid implements StatsProvid
         return new StatsTrackerBuilder();
     }
 
-    public void addDeliveryTaskModelListener(PizzeriaModel dtModel) {
-        dtModel.getEventAPI().addListener(theListener, ROBOT_AT_CHARGING_STATION, ROBOT_LEAVING_CHARGING_STATION,
-                NEW_PIZZERIA, NEW_ROADWORK, NEW_TASK, END_TASK, CLOSE_PIZZERIA, FINISH_ROADWORK);
+    public void addDeliveryTaskModelListener(PizzeriaModel pizzeriaModel) {
+        pizzeriaModel.getEventAPI().addListener(theListener, ROBOT_AT_CHARGING_STATION, ROBOT_LEAVING_CHARGING_STATION,
+                NEW_PIZZERIA, NEW_ROADWORKS, NEW_TASK, END_TASK, CLOSE_PIZZERIA, FINISHED_ROADWORKS);
     }
 
     @Override

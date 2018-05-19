@@ -6,11 +6,13 @@ import com.github.rinde.rinsim.core.model.pdp.PDPModel;
 import com.github.rinde.rinsim.core.model.road.RoadModel;
 import com.github.rinde.rinsim.core.model.time.Clock;
 import com.github.rinde.rinsim.pdptw.common.StatsProvider;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * StatsTrackerBuilder for creating {@link StatsTrackerBuilder} instance.
  */
 public class StatsTrackerBuilder extends AbstractModelBuilder<StatsTracker, Object> {
+
     private static final long serialVersionUID = -4339759920383479477L;
 
     StatsTrackerBuilder() {
@@ -21,7 +23,7 @@ public class StatsTrackerBuilder extends AbstractModelBuilder<StatsTracker, Obje
     }
 
     @Override
-    public StatsTracker build(DependencyProvider dependencyProvider) {
+    public StatsTracker build(@NotNull DependencyProvider dependencyProvider) {
         // final ScenarioController ctrl = dependencyProvider.get(ScenarioController.class);
         final Clock clck = dependencyProvider.get(Clock.class);
         final RoadModel rm = dependencyProvider.get(RoadModel.class);

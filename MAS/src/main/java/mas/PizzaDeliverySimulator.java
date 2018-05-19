@@ -16,17 +16,17 @@ import com.github.rinde.rinsim.ui.View;
 import com.github.rinde.rinsim.ui.renderers.CommRenderer;
 import com.github.rinde.rinsim.ui.renderers.GraphRoadModelRenderer;
 import com.github.rinde.rinsim.ui.renderers.RoadUserRenderer;
+import mas.agents.Battery;
+import mas.agents.ResourceAgent;
+import mas.agents.RobotAgent;
 import mas.buildings.ChargingStation;
 import mas.buildings.Pizzeria;
-import mas.managers.ResourceAgent;
-import mas.maps.CityGraphCreator;
+import mas.graphs.CityGraphCreator;
 import mas.models.PizzeriaModel;
-import mas.pizza.DeliveryTask;
 import mas.renderers.DeliveryTaskRenderer;
 import mas.renderers.RobotRenderer;
-import mas.robot.Battery;
-import mas.robot.Robot;
 import mas.statistics.StatsTracker;
+import mas.tasks.DeliveryTask;
 import org.apache.commons.math3.random.RandomGenerator;
 import org.jetbrains.annotations.NotNull;
 
@@ -51,9 +51,10 @@ public class PizzaDeliverySimulator {
     private static final double PROB_ROAD_WORKS_END = .005;
     private static final double PIZZA_AMOUNT_STD = 0.75;
     private static final double PIZZA_AMOUNT_MEAN = 4;
+    private static final int ALTERNATIVE_PATHS_TO_EXPLORE = 5;
 
-    private static int ROBOT_ID = 1;
-    private static int PIZZAPARCEL_ID = 1;
+    private static int robotID = 1;
+    private static int pizzaParcelID = 1;
 
 
     /**
@@ -80,7 +81,7 @@ public class PizzaDeliverySimulator {
                         .withMargin(VEHICLE_LENGTH)
                 )
                 .with(RoadUserRenderer.builder()
-                        .withImageAssociation(Robot.class, "/robot.png")
+                        .withImageAssociation(RobotAgent.class, "/robot.png")
                         .withImageAssociation(Pizzeria.class, "/pizzeria.png")
                         .withImageAssociation(ChargingStation.class, "/charging_station.png")
                         .withImageAssociation(DeliveryTask.class, "/graphics/flat/person-black-32.png")
@@ -121,15 +122,20 @@ public class PizzaDeliverySimulator {
         final RandomGenerator rng = sim.getRandomGenerator();
         final RoadModel roadModel = sim.getModelProvider().getModel(RoadModel.class);
         final PDPModel pdpModel = sim.getModelProvider().getModel(PDPModel.class);
-        final PizzeriaModel dtModel = sim.getModelProvider().getModel(PizzeriaModel.class);
-        dtModel.setSimulator(sim, rng);
+        final PizzeriaModel pizzeriaModel = sim.getModelProvider().getModel(PizzeriaModel.class);
+        pizzeriaModel.setSimulator(sim, rng);
         final StatsTracker statsTracker = sim.getModelProvider().getModel(StatsTracker.class);
-        statsTracker.addDeliveryTaskModelListener(dtModel);
+        statsTracker.addDeliveryTaskModelListener(pizzeriaModel);
 
         final GraphRoadModel graph = sim.getModelProvider().getModel(GraphRoadModel.class);
 
+        System.out.println("CHECK ROADMODEL == GRAPHROADMODEL: " + graph.equals((GraphRoadModel) roadModel));
+        System.out.println("CHECK ROADMODEL == GRAPHROADMODEL: " + graph.equals((GraphRoadModel) roadModel));
+        System.out.println("CHECK ROADMODEL == GRAPHROADMODEL: " + graph.equals((GraphRoadModel) roadModel));
+        System.out.println("CHECK ROADMODEL == GRAPHROADMODEL: " + graph.equals((GraphRoadModel) roadModel));
+        System.out.println("CHECK ROADMODEL == GRAPHROADMODEL: " + graph.equals((GraphRoadModel) roadModel));
 
-        final Pizzeria pizzeria = dtModel.openPizzeria();
+        final Pizzeria pizzeria = pizzeriaModel.openPizzeria();
 
         ChargingStation chargingStation = new ChargingStation(
                 roadModel.getRandomPosition(sim.getRandomGenerator()),
@@ -148,15 +154,14 @@ public class PizzaDeliverySimulator {
             Battery battery = new Battery(BATTERY_CAPACITY);
 
             // Robots start at the pizzeria
-            sim.register(new Robot(vdto, battery, ROBOT_ID, pizzeria.getPosition(), graph));
-            ROBOT_ID += 1;
+            sim.register(new RobotAgent(vdto, battery, getNextRobotID(), pizzeria.getPosition(), graph, ALTERNATIVE_PATHS_TO_EXPLORE));
         }
 
         sim.addTickListener(new TickListener() {
             @Override
             public void tick(@NotNull TimeLapse time) {
                 if (rng.nextDouble() < PROB_NEW_PARCEL) {
-                    dtModel.createNewDeliveryTask(rng, PIZZA_AMOUNT_MEAN, PIZZA_AMOUNT_STD, time.getStartTime());
+                    pizzeriaModel.createNewDeliveryTask(rng, PIZZA_AMOUNT_MEAN, PIZZA_AMOUNT_STD, time.getStartTime());
                 }
             }
 
@@ -166,11 +171,15 @@ public class PizzaDeliverySimulator {
         });
 
         // At every node insert a resource manager
-        for(Point node: graph.getGraph().getNodes()){
+        for (Point node : graph.getGraph().getNodes()) {
 
             sim.register(new ResourceAgent(node, sim.getRandomGenerator()));
         }
 
         sim.start();
+    }
+
+    public static int getNextRobotID() {
+        return robotID++;
     }
 }
