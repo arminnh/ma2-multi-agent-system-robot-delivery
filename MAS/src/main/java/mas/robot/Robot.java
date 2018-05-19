@@ -149,16 +149,19 @@ public class Robot extends Vehicle implements MovingRoadUser, TickListener, Rand
         } else {
             // Choose a new intention. Either towards a Pizzeria or a ChargingStation.
 
-            // Only explore new paths if not already at pizzeria, not charging, and not waiting for other ants
-            if (!this.isAtPizzeria && !this.isCharging && this.waitingForExplorationAnts == 0) {
-
+            // Only choose a new intention if not waiting for exploration ants.
+            if (this.waitingForExplorationAnts == 0) {
                 // Check if the Robot should go to a charging station
-                if (this.getCurrentBatteryCapacity() <= 90) {
+                if (this.getCurrentBatteryCapacity() <= 35) {
+                    // TODO: maybe use the robot's idle timer to see if they have to recharge
                     this.goingToCharge = true;
                     ChargingStation station = this.roadModel.getObjectsOfType(ChargingStation.class).iterator().next();
 
                     explorePaths(station.getPosition());
-                } else {
+                }
+
+                // Only explore new paths if not already at pizzeria and not charging
+                if (!this.isAtPizzeria && !this.isCharging) {
                     explorePaths(this.pizzeriaPos);
                 }
             }
