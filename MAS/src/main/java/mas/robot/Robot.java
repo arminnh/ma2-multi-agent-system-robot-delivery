@@ -32,7 +32,10 @@ import org.apache.commons.math3.random.RandomGenerator;
 import org.jetbrains.annotations.NotNull;
 
 import javax.measure.unit.SI;
-import java.util.*;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
+import java.util.Set;
 
 /**
  * Implementation of a very simple delivery robot.
@@ -146,11 +149,18 @@ public class Robot extends Vehicle implements MovingRoadUser, TickListener, Rand
         } else {
             // Choose a new intention. Either towards a Pizzeria or a ChargingStation.
 
-            // TODO: check whether to recharge or go to pizzeria. For now, we only go to pizzeria
-
-            // Only explore paths towards pizzeria if not already at pizzeria, not charging, and not waiting for other ants
+            // Only explore new paths if not already at pizzeria, not charging, and not waiting for other ants
             if (!this.isAtPizzeria && !this.isCharging && this.waitingForExplorationAnts == 0) {
-                explorePaths(this.pizzeriaPos);
+
+                // Check if the Robot should go to a charging station
+                if (this.getCurrentBatteryCapacity() <= 90) {
+                    this.goingToCharge = true;
+                    ChargingStation station = this.roadModel.getObjectsOfType(ChargingStation.class).iterator().next();
+
+                    explorePaths(station.getPosition());
+                } else {
+                    explorePaths(this.pizzeriaPos);
+                }
             }
         }
     }
@@ -251,6 +261,8 @@ public class Robot extends Vehicle implements MovingRoadUser, TickListener, Rand
     private void arriveAtChargingStation() {
         this.goingToCharge = false;
         this.isCharging = true;
+
+        System.out.println("arriveAtChargingStation");
 
         // Find the charging station the Robot arrived at
         Set<ChargingStation> stations = this.roadModel.getObjectsAt(this, ChargingStation.class);

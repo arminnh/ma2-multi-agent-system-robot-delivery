@@ -97,6 +97,10 @@ public class ResourceAgent implements CommUser, RoadUser, TickListener {
     }
 
     private void sendAntToNextHop(ExplorationAnt ant) {
+        if (ant.path.size() == 0) {
+            System.out.println("CANNOT SEND ANT TO NEXT HOP FOR EMPTY PATH");
+        }
+
         int nextPositionIndex = ant.path.indexOf(this.position) + 1;
         Point nextPosition = ant.path.get(nextPositionIndex);
 
