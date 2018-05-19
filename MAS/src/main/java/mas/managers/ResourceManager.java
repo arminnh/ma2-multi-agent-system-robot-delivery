@@ -8,7 +8,6 @@ import com.github.rinde.rinsim.core.model.time.TimeLapse;
 import com.github.rinde.rinsim.geom.Point;
 import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
-import mas.RoutingTable;
 import mas.ants.ExplorationAnt;
 import org.apache.commons.math3.random.RandomGenerator;
 
@@ -24,7 +23,6 @@ public class ResourceManager implements CommUser, RoadUser, TickListener {
     private boolean first_tick = true;
     Optional<CommDevice> device;
     private List<CommUser> neighbors;
-    private RoutingTable rTable;
     private Map<Integer, Map<Integer, Boolean>> passedAnt;
     private RandomGenerator rng;
 
@@ -33,7 +31,6 @@ public class ResourceManager implements CommUser, RoadUser, TickListener {
         this.position = position;
         this.device = Optional.absent();
         neighbors = new LinkedList<>();
-        rTable = new RoutingTable(1000);
         passedAnt = new HashMap<>();
         this.rng = rng;
     }

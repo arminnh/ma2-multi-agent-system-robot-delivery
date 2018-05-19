@@ -184,19 +184,17 @@ public class Robot extends Vehicle implements MovingRoadUser, TickListener, Rand
             return;
         }
 
-        if(!this.currentPath.isPresent()){
-            for(Message m: this.comm.get().getUnreadMessages()){
-                if(m.getContents().getClass() == ExplorationAnt.class){
-                    ExplorationAnt ant = (ExplorationAnt) m.getContents();
+        for(Message m: this.comm.get().getUnreadMessages()){
+            if(m.getContents().getClass() == ExplorationAnt.class){
+                ExplorationAnt ant = (ExplorationAnt) m.getContents();
 
-                    if(ant.hasReachedDestination() && ant.getRobot_id() == this.id){
-                        System.out.println("GOT PATH!!!!");
-                        // We have found a path for our current parcel
-                        //System.out.println(ant.getPath());
-                        //this.currentPath = Optional.of(new LinkedList<Point>(ant.getPath()));
-                        //System.out.println(this.getPosition().get());
-                        //this.isMovingToDestination = true;
-                    }
+                if(ant.hasReachedDestination() && ant.getRobot_id() == this.id){
+                    System.out.println("GOT PATH!!!!");
+                    // We have found a path for our current parcel
+                    //System.out.println(ant.getPath());
+                    //this.currentPath = Optional.of(new LinkedList<Point>(ant.getPath()));
+                    //System.out.println(this.getPosition().get());
+                    //this.isMovingToDestination = true;
                 }
             }
         }
