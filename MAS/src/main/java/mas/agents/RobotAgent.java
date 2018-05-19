@@ -147,22 +147,30 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
                 }
             }
         } else {
-            // Choose a new intention. Either towards a Pizzeria or a ChargingStation.
+            // No intention is present. Choose a new one.
 
             // Only choose a new intention if not waiting for exploration ants.
             if (this.waitingForExplorationAnts == 0) {
-                // Check if the robot should go to a charging station
-                if (this.getRemainingBatteryCapacity() <= 35) {
-                    // TODO: maybe use the robot's idle timer to see if they have to recharge
-                    this.goingToCharge = true;
-                    ChargingStation station = this.roadModel.getObjectsOfType(ChargingStation.class).iterator().next();
 
-                    explorePaths(station.getPosition());
-                }
+                // If a new parcel has been set on the robot, explore paths towards the destination of the parcel.
+                if (this.currentParcel.isPresent()) {
+                    this.explorePaths(this.currentParcel.get().getDeliveryLocation());
 
-                // Only explore new paths if not already at pizzeria and not charging
-                if (!this.isAtPizzeria && !this.isCharging) {
-                    explorePaths(this.pizzeriaPosition);
+                    // Otherwise, either go to a charging station to charge or a pizzeria to pick up a new parcel.
+                } else {
+                    // Check if the robot should go to a charging station
+                    if (this.getRemainingBatteryCapacity() <= 35) {
+                        // TODO: maybe use the robot's idle timer to see if they have to recharge
+                        this.goingToCharge = true;
+                        ChargingStation station = this.roadModel.getObjectsOfType(ChargingStation.class).iterator().next();
+
+                        explorePaths(station.getPosition());
+                    }
+
+                    // Only explore new paths towards pizzeria if not already at pizzeria and not charging
+                    if (!this.isAtPizzeria && !this.isCharging && !this.goingToCharge) {
+                        explorePaths(this.pizzeriaPosition);
+                    }
                 }
             }
         }
@@ -330,9 +338,6 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
         this.currentParcel = Optional.of(parcel);
         this.currentCapacity += parcel.amountOfPizzas;
         this.isAtPizzeria = false;
-
-        // TODO: move this to tick logic.
-        this.explorePaths(parcel.getDeliveryLocation());
     }
 
     /**
