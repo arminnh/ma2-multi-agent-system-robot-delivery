@@ -67,14 +67,12 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
     private Optional<ChargingStation> currentChargingStation = Optional.absent();
     private List<ImmutablePair<List<Point>, Long>> exploredPaths = new LinkedList<>();
 
-    public RobotAgent(VehicleDTO vdto, Battery battery, int id, Point pizzeriaPosition, GraphRoadModel graphRoadModel,
-                      int alternativePathsToExplore) {
+    public RobotAgent(VehicleDTO vdto, Battery battery, int id, Point pizzeriaPosition, int alternativePathsToExplore) {
         super(vdto);
 
         this.id = id;
         this.battery = battery;
         this.pizzeriaPosition = pizzeriaPosition;
-        this.graphRoadModel = graphRoadModel;
         this.alternativePathsToExplore = alternativePathsToExplore;
     }
 
@@ -82,7 +80,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
     public void initRoadPDP(RoadModel pRoadModel, PDPModel pPdpModel) {
         this.pdpModel = pPdpModel;
         this.roadModel = pRoadModel;
-//        this.graphRoadModel = (GraphRoadModel) pRoadModel;
+        this.graphRoadModel = (GraphRoadModel) pRoadModel;
     }
 
     @Override

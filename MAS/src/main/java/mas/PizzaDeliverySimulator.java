@@ -121,28 +121,24 @@ public class PizzaDeliverySimulator {
 
         final RandomGenerator rng = sim.getRandomGenerator();
         final RoadModel roadModel = sim.getModelProvider().getModel(RoadModel.class);
-        final PDPModel pdpModel = sim.getModelProvider().getModel(PDPModel.class);
+        final GraphRoadModel graph = sim.getModelProvider().getModel(GraphRoadModel.class);
         final PizzeriaModel pizzeriaModel = sim.getModelProvider().getModel(PizzeriaModel.class);
         pizzeriaModel.setSimulator(sim, rng);
+
         final StatsTracker statsTracker = sim.getModelProvider().getModel(StatsTracker.class);
         statsTracker.addDeliveryTaskModelListener(pizzeriaModel);
 
-        final GraphRoadModel graph = sim.getModelProvider().getModel(GraphRoadModel.class);
-
-        System.out.println("CHECK ROADMODEL == GRAPHROADMODEL: " + graph.equals((GraphRoadModel) roadModel));
-        System.out.println("CHECK ROADMODEL == GRAPHROADMODEL: " + graph.equals((GraphRoadModel) roadModel));
-        System.out.println("CHECK ROADMODEL == GRAPHROADMODEL: " + graph.equals((GraphRoadModel) roadModel));
-        System.out.println("CHECK ROADMODEL == GRAPHROADMODEL: " + graph.equals((GraphRoadModel) roadModel));
-        System.out.println("CHECK ROADMODEL == GRAPHROADMODEL: " + graph.equals((GraphRoadModel) roadModel));
-
+        // Create pizzeria
         final Pizzeria pizzeria = pizzeriaModel.openPizzeria();
 
+        // Create charging station
         ChargingStation chargingStation = new ChargingStation(
                 roadModel.getRandomPosition(sim.getRandomGenerator()),
                 new Double(NUM_ROBOTS * 0.3).intValue()
         );
         sim.register(chargingStation);
 
+        // Create robots
         for (int i = 0; i < NUM_ROBOTS; i++) {
             VehicleDTO vdto = VehicleDTO.builder()
                     .capacity(ROBOT_CAPACITY)
@@ -154,9 +150,12 @@ public class PizzaDeliverySimulator {
             Battery battery = new Battery(BATTERY_CAPACITY);
 
             // Robots start at the pizzeria
-            sim.register(new RobotAgent(vdto, battery, getNextRobotID(), pizzeria.getPosition(), graph, ALTERNATIVE_PATHS_TO_EXPLORE));
+            sim.register(new RobotAgent(
+                    vdto, battery, getNextRobotID(), pizzeria.getPosition(), ALTERNATIVE_PATHS_TO_EXPLORE
+            ));
         }
 
+        // TickListener for creation of new delivery tasks
         sim.addTickListener(new TickListener() {
             @Override
             public void tick(@NotNull TimeLapse time) {
@@ -170,12 +169,12 @@ public class PizzaDeliverySimulator {
             }
         });
 
-        // At every node insert a resource manager
+        // At every node, insert a ResourceAgent
         for (Point node : graph.getGraph().getNodes()) {
-
             sim.register(new ResourceAgent(node, sim.getRandomGenerator()));
         }
 
+        // Start the simulation.
         sim.start();
     }
 
