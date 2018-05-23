@@ -17,9 +17,12 @@ import mas.buildings.ChargingStation;
 import mas.buildings.Pizzeria;
 import mas.tasks.DeliveryTask;
 import mas.tasks.PizzaParcel;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.math3.random.RandomGenerator;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
 
 public class PizzeriaModel extends Model.AbstractModel<PizzeriaUser> {
@@ -77,6 +80,15 @@ public class PizzeriaModel extends Model.AbstractModel<PizzeriaUser> {
         eventDispatcher.dispatchEvent(new PizzeriaEvent(
                 PizzeriaEventType.CLOSE_PIZZERIA, 0, null, null, null
         ));
+    }
+
+    public List<DeliveryTask> getDeliveryTasks() {
+        List<DeliveryTask> tasks = new LinkedList<>(this.roadModel.getObjectsOfType(DeliveryTask.class));
+
+        // Filter out any tasks that need more pizzas to be created and delivered.
+        CollectionUtils.filter(tasks, o -> !o.isFinished());
+
+        return tasks;
     }
 
     public void createNewDeliveryTask(RandomGenerator rng, double pizzaMean, double pizzaStd, long time) {

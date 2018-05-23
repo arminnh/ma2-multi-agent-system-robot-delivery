@@ -9,10 +9,10 @@ American style city
 Optional: AGVs cannot pass each other in one street. This means that once an AGV moves in one direction, other AGVs will have to move in the same direction as well.
 
 #### AGVs with their capabilities
-AGVs can move from and to any location in the city. They can carry up to 5 pizzas at once. AGVs have maps and can compute paths between locations by themselves.
+AGVs can move from and to any position in the city. They can carry up to 5 pizzas at once. AGVs have maps and can compute paths between locations by themselves.
 
 #### Characteristics of tasks
-A task consists of picking up an amount of pizzas at RoboPizza before a certain time point and delivering it to a location before another time point.  
+A task consists of picking up an amount of pizzas at RoboPizza before a certain time point and delivering it to a position before another time point.  
 If there are more than 5 pizzas for a task, the task will have to be split up.
 
 #### Scale
@@ -33,10 +33,10 @@ Efficiency of the multi-agent system will be measured by the waiting time for cu
 
 #### Random generation of requests
 Tasks will be created at every time step with a low probability. The amount of pizzas for the tasks will be determined randomly using a Gaussian distribution. The time window for the delivery will be determined by the distance from the customer to RoboPizza multiplied by a constant factor and added to a random number.
-The location of the request could be generated uniformly in the whole city, or located near a certain area.
+The position of the request could be generated uniformly in the whole city, or located near a certain area.
 
 #### Battery charging
-Charging happens on one location. Only a limited amount of AGVs can charge at the charging station at the same time. (Maximum capacity of 30% of the AGVs?)
+Charging happens on one position. Only a limited amount of AGVs can charge at the charging station at the same time. (Maximum pizzas of 30% of the AGVs?)
 
 ## Algorithms
 - BDI

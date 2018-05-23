@@ -11,7 +11,7 @@
 
 \begin{frame}{Problem definition - Robots}
     \begin{itemize}
-        \item Can move from and to any location in the city
+        \item Can move from and to any position in the city
         \item Have maps and can compute paths between locations
         \item Can carry up to 5 pizzas at once
         \item Can only communicate with entities that are close to them
@@ -20,14 +20,14 @@
 
 \begin{frame}{Problem definition - Tasks}
     \begin{itemize}
-        \item Consist of picking up (multiple) pizzas and delivering them to a location before a certain timepoint
+        \item Consist of picking up (multiple) pizzas and delivering them to a position before a certain timepoint
         \item If there are more than 5 pizzas in a task, it will have to be split up
         \item Pizzas have no preparation time / can be picked up instantly
         \item Will be created every time step with low probability:
             \begin{itemize}
                 \item Delivery time window based on distance from pizzeria + randomness
                 \item Amount of pizzas from Gaussian distribution
-                \item Delivery location uniformly random in city
+                \item Delivery position uniformly random in city
             \end{itemize}
     \end{itemize}
 \end{frame}
@@ -52,7 +52,7 @@
 
     Charging
     \begin{itemize}
-        \item Happens on one location
+        \item Happens on one position
         \item Only limited amount of robots can charge at once
     \end{itemize}
 \end{frame}

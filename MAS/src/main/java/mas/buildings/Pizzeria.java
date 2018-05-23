@@ -48,56 +48,14 @@ public class Pizzeria implements RoadUser, TickListener, PizzeriaUser {
         this.pizzeriaModel = model;
     }
 
-    private List<RobotAgent> getWaitingRobots() {
-        List<RobotAgent> robotAgents = new LinkedList<>(this.roadModel.getObjectsAt(this, RobotAgent.class));
-
-        // Filter out any totalVehicles that are in the pizzeria but have a deliveryTask...
-        CollectionUtils.filter(robotAgents, o -> !o.hasPizzaParcel() && o.getCapacityLeft() > 0);
-
-        return robotAgents;
-    }
-
-    private List<DeliveryTask> getAvailableDeliveryTasks() {
-        List<DeliveryTask> tasks = new LinkedList<>(this.roadModel.getObjectsOfType(DeliveryTask.class));
-
-        // Filter out any tasks that need more pizzas to be created and delivered.
-        CollectionUtils.filter(tasks, o -> o.getPizzasLeft() > 0);
-
-        return tasks;
-    }
-
     @Override
     public void tick(@NotNull TimeLapse time) {
         if (!time.hasTimeLeft()) {
             return;
         }
-
-        List<RobotAgent> waitingRobotAgents = getWaitingRobots();
-        List<DeliveryTask> waitingTasks = getAvailableDeliveryTasks();
-
-        for (final DeliveryTask task : waitingTasks) {
-            // Task allocation
-            for (final RobotAgent robotAgent : waitingRobotAgents) {
-                if (task.getPizzasLeft() == 0) {
-                    break;
-                }
-
-                if (robotAgent.hasPizzaParcel()) {
-                    continue;
-                }
-                int pizzaAmount = Math.min(task.getPizzasLeft(), robotAgent.getCapacityLeft());
-
-                pizzeriaModel.newPizzaParcelForRobot(robotAgent, task, this.position, pizzaAmount, time);
-            }
-
-        }
     }
 
     @Override
     public void afterTick(@NotNull TimeLapse timeLapse) {
-    }
-
-    public List<DeliveryTask> getTasks() {
-        return this.getAvailableDeliveryTasks();
     }
 }

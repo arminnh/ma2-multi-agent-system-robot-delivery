@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class ResourceAgent implements CommUser, RoadUser, TickListener {
@@ -57,6 +58,11 @@ public class ResourceAgent implements CommUser, RoadUser, TickListener {
     public void initRoadUser(@NotNull RoadModel model) {
         roadModel = model;
         roadModel.addObjectAt(this, this.position);
+
+        Set<ChargingStation> stations = roadModel.getObjectsAt(this, ChargingStation.class);
+        if (stations.size() > 0) {
+            this.chargingStation = Optional.of(stations.iterator().next());
+        }
     }
 
     @Override

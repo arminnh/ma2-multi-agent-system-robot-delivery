@@ -34,7 +34,7 @@
 * Multi-stage routing: agent has a sequence of destinations
 * Context-aware routing: agent finds optimal plan that does not create a conflict with existing plans of other agents on a free time window graph using an A*-like algorithm.
 * Infrastructure is bidirectional graph G = (V, E)
-* Edges have some capacity C(e)
+* Edges have some pizzas C(e)
 * If multiple agents occupy an edge at the same time, they must all travel in the same direction
 * 2 types of agents: resource agents and vehicle agents
 * Resource agents:
@@ -51,7 +51,7 @@
   * continually explores alternative routes and reserves its intended route
   * a route is a path with a schedule
   * **BEHAVIOR DESCRIBED IN ALGORITHM 1**
-    * generates set of feasible paths from current location to destination using STATIC INFRASTRUCTURE GRAPH
+    * generates set of feasible paths from current position to destination using STATIC INFRASTRUCTURE GRAPH
     * evaluates quality of each path by asking relevant resource agents about the existing schedules
     * selects the most preferable path
     * decides whether to deviate from current plan to new route
@@ -103,7 +103,7 @@
     * Use ants to achieve both exploration and intention propagation functionality
     1) Exploration ants:
       * vehicle sends them out at regular time intervals
-      * ants explore various paths between agent location and destination
+      * ants explore various paths between agent position and destination
       * at every road element, it asks infrastructure agent what the departure time from its element would be if the vehicle would arrive at a certain time.
       * exploration ants assume basic, static routing information to be available
       * at the destination, the ant has an estimate of how long it would take the vehicle to get there
