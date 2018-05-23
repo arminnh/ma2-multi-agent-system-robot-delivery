@@ -20,6 +20,7 @@ import com.google.common.base.Optional;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Table;
+import mas.DeliveryTaskData;
 import mas.buildings.ChargingStation;
 import mas.buildings.Pizzeria;
 import mas.graphs.AStar;
@@ -31,6 +32,7 @@ import mas.models.PizzeriaUser;
 import mas.tasks.DeliveryTask;
 import mas.tasks.PizzaParcel;
 import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.math3.random.RandomGenerator;
 import org.jetbrains.annotations.NotNull;
 
@@ -69,7 +71,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
     private Optional<ChargingStation> currentChargingStation = Optional.absent();
     private List<ImmutablePair<List<Point>, Long>> exploredPaths = new LinkedList<>();
     private int waitingForDesireAnts = 0;
-    private HashMap<Integer, Integer> desires = new HashMap<>();
+    private HashMap<DesireAnt, Long> desires = new HashMap<>();
 
     public RobotAgent(VehicleDTO vdto, Battery battery, int id, Point pizzeriaPosition, int alternativePathsToExplore) {
         super(vdto);
@@ -111,13 +113,13 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
     }
 
 
-    private static List<Map.Entry<Integer,Integer>> sortMapDescending(HashMap map) {
+    private static List<Map.Entry<DesireAnt,Integer>> sortMapDescending(HashMap map) {
         // From: https://beginnersbook.com/2013/12/how-to-sort-hashmap-in-java-by-keys-and-values/
 
-        List<Map.Entry<Integer,Integer>> list = new LinkedList(map.entrySet());
+        List<Map.Entry<DesireAnt,Integer>> list = new LinkedList(map.entrySet());
 
         // Defined Custom Comparator here
-        Collections.sort(list, new Comparator<Map.Entry<Integer,Integer>>() {
+        Collections.sort(list, new Comparator<Map.Entry<DesireAnt,Integer>>() {
             public int compare(Map.Entry o1, Map.Entry o2) {
                 return ((Comparable) o1.getValue())
                         .compareTo(o2.getValue());
@@ -127,12 +129,14 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
         return Lists.reverse(list);
     }
 
-    private List<Integer> getHighestDesires() {
-        List<Integer> bestTasks = new LinkedList<>();
+    private List<DesireAnt> getHighestDesires() {
+        System.out.println(this.desires);
+
+        List<DesireAnt> bestTasks = new LinkedList<>();
         int remainingCapacity = this.getCapacityLeft();
 
         // Get all tasks with highest score sorted in descending
-        for(Map.Entry<Integer, Integer> entry: sortMapDescending(this.desires)){
+        for(Map.Entry<DesireAnt, Integer> entry: sortMapDescending(this.desires)){
             int capacity =  Math.min(remainingCapacity, entry.getValue());
 
             if(capacity > 0){
@@ -142,8 +146,6 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
                 break;
             }
         }
-
-
         return bestTasks;
     }
 
@@ -167,10 +169,24 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
 
         if(this.desires.size() > 0 && this.waitingForDesireAnts == 0){
             // Decide on desire
-            List<Integer> bestTasks = getHighestDesires();
 
+            List<DesireAnt> bestTasks = getHighestDesires();
+
+            List<Point> dests = new LinkedList<>();
+            List<DeliveryTaskData> pairs = new LinkedList<>();
+
+            int remainingCapacity = this.getCapacityLeft();
+            for(DesireAnt ant: bestTasks){
+                Point dest = ant.path.get(ant.path.size() - 1);
+                dests.add(dest);
+                int capacity =  Math.min(remainingCapacity, ant.capacity);
+                remainingCapacity -= capacity;
+                pairs.add(new DeliveryTaskData(dest, ant.deliveryID, capacity));
+            }
             // TODO: send out exploration ants???
-
+            explorePaths(dests, pairs);
+            explorePaths(Lists.reverse(dests), Lists.reverse(pairs));
+            this.desires.clear();
         }
 
         // TODO: something for intention messages here ??
@@ -240,7 +256,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
         for(DeliveryTask task: tasks){
             List<Point> path = this.roadModel.getShortestPathTo(this, task.getPosition().get());
             DesireAnt desireAnt = new DesireAnt(path, 0,
-                    false, this.antID, this.id, this, 0, task.getDeliveryID(), 0);
+                    false, this.antID, this.id, this, null, task.getDeliveryID(), 0);
             this.antID++;
             this.commDevice.broadcast(desireAnt);
             this.waitingForDesireAnts++;
@@ -277,7 +293,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
             if(m.getContents().getClass() == DesireAnt.class){
                 DesireAnt ant = (DesireAnt) m.getContents();
 
-                this.desires.put(ant.deliveryID, ant.score);
+                this.desires.put(ant, ant.score);
                 this.waitingForDesireAnts--;
             }
         }
@@ -431,16 +447,16 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
         List<Point> destinations = new LinkedList<Point>();
         destinations.add(destination);
 
-        explorePaths(destinations);
+        explorePaths(destinations, null);
     }
 
     /**
      * Explores different paths towards multiple destinations to be followed sequentially.
      */
-    private void explorePaths(List<Point> dests) {
+    private void explorePaths(List<Point> dests, List<DeliveryTaskData> pairs) {
         // Generate a couple of possible paths towards the destination(s) and send exploration messages to explore them.
         List<List<Point>> paths = getAlternativePaths(this.alternativePathsToExplore, this.getPosition().get(), dests);
-        sendExplorationAnts(paths);
+        sendExplorationAnts(paths, pairs);
     }
 
     /**
@@ -463,14 +479,15 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
     /**
      * Sends out ExplorationAnts to explore each of the given paths.
      */
-    private void sendExplorationAnts(List<List<Point>> paths) {
+    private void sendExplorationAnts(List<List<Point>> paths, List<DeliveryTaskData> pairs) {
         // Send exploration messages over the found paths
         for (List<Point> path : paths) {
-            this.commDevice.broadcast(new ExplorationAnt(path, 0, false, this.antID, this.id, this));
+            this.commDevice.broadcast(
+                    new ExplorationAnt(path, 0, false, this.antID, this.id, this, pairs)
+            );
             this.antID += 1;
+            this.waitingForExplorationAnts++;
         }
-
-        this.waitingForExplorationAnts = paths.size();
     }
 
     /**

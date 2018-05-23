@@ -5,6 +5,7 @@ import com.github.rinde.rinsim.core.model.comm.CommDeviceBuilder;
 import com.github.rinde.rinsim.core.model.comm.CommUser;
 import com.github.rinde.rinsim.core.model.road.RoadModel;
 import com.github.rinde.rinsim.core.model.road.RoadUser;
+import com.github.rinde.rinsim.core.model.time.Clock;
 import com.github.rinde.rinsim.geom.Point;
 import com.google.common.base.Optional;
 import org.jetbrains.annotations.NotNull;
@@ -23,8 +24,9 @@ public class DeliveryTask implements RoadUser, CommUser {
     private int pizzasDelivered;
     private int deliveryID;
     private static int idCounter = 0;
+    private Clock clock;
 
-    public DeliveryTask(Point position, int pizzasRequested, long time) {
+    public DeliveryTask(Point position, int pizzasRequested, long time, Clock clock) {
         this.position = position;
         this.pizzasRequested = pizzasRequested;
         this.pizzasDelivered = 0;
@@ -86,5 +88,17 @@ public class DeliveryTask implements RoadUser, CommUser {
 
     public int getDeliveryID() {
         return deliveryID;
+    }
+
+    public Long getScore() {
+        // TODO: implement a good scoring function
+        // Suggestions:
+        // - Use waiting time (OK)
+        // - Estimated delivery time
+        return getWaitingTime(clock.getCurrentTime());
+    }
+
+    public int getDeliveryAm(Integer pizzaDeliveryAmount) {
+        return Math.min(this.getPizzasLeft(), pizzaDeliveryAmount);
     }
 }

@@ -32,26 +32,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.measure.unit.SI;
 
-public class PizzaDeliverySimulator {
-
-    private static final long TICK_LENGTH = 1000L;
-    private static final long RANDOM_SEED = 123L;
-    private static final int SIM_SPEEDUP = 1;
-
-    private static final int NUM_ROBOTS = 1;
-    private static final int ROBOT_CAPACITY = 5;
-    private static final int BATTERY_CAPACITY = 100;
-    private static final int VEHICLE_LENGTH = 1;
-    private static final double VEHICLE_SPEED_KMH = 1;
-
-    private static final double PROB_NEW_PARCEL = .02;
-    private static final double PROB_PIZZERIA_OPEN = .002;
-    private static final double PROB_PIZZERIA_CLOSE = .002;
-    private static final double PROB_ROAD_WORKS_START = .005;
-    private static final double PROB_ROAD_WORKS_END = .005;
-    private static final double PIZZA_AMOUNT_STD = 0.75;
-    private static final double PIZZA_AMOUNT_MEAN = 4;
-    private static final int ALTERNATIVE_PATHS_TO_EXPLORE = 5;
+public class PizzaDeliverySimulator{
 
     private static int robotID = 1;
     private static int pizzaParcelID = 1;
@@ -76,9 +57,9 @@ public class PizzaDeliverySimulator {
         View.Builder viewBuilder = View.builder()
                 .withTitleAppendix("Pizza delivery multi agent system simulator")
                 .withAutoPlay()
-                .withSpeedUp(SIM_SPEEDUP)
+                .withSpeedUp(SimulatorSettings.SIM_SPEEDUP)
                 .with(GraphRoadModelRenderer.builder()
-                        .withMargin(VEHICLE_LENGTH)
+                        .withMargin(SimulatorSettings.VEHICLE_LENGTH)
                 )
                 .with(RoadUserRenderer.builder()
                         .withImageAssociation(RobotAgent.class, "/robot.png")
@@ -105,10 +86,10 @@ public class PizzaDeliverySimulator {
         // initialize a new Simulator instance
         final Simulator sim = Simulator.builder()
                 // set the length of a simulation 'tick'
-                .setTickLength(TICK_LENGTH)
+                .setTickLength(SimulatorSettings.TICK_LENGTH)
                 // set the random seed we use in this 'experiment'
                 //.setRandomSeed(RANDOM_SEED)
-                .addModel(RoadModelBuilders.dynamicGraph(CityGraphCreator.createGraph(10, VEHICLE_LENGTH))
+                .addModel(RoadModelBuilders.dynamicGraph(CityGraphCreator.createGraph(10, SimulatorSettings.VEHICLE_LENGTH))
                         .withDistanceUnit(SI.METER)
                         .withModificationCheck(true))
                 .addModel(DefaultPDPModel.builder())
@@ -134,24 +115,24 @@ public class PizzaDeliverySimulator {
         // Create charging station
         ChargingStation chargingStation = new ChargingStation(
                 roadModel.getRandomPosition(sim.getRandomGenerator()),
-                new Double(NUM_ROBOTS * 0.3).intValue()
+                new Double(SimulatorSettings.NUM_ROBOTS * 0.3).intValue()
         );
         sim.register(chargingStation);
 
         // Create robots
-        for (int i = 0; i < NUM_ROBOTS; i++) {
+        for (int i = 0; i < SimulatorSettings.NUM_ROBOTS; i++) {
             VehicleDTO vdto = VehicleDTO.builder()
-                    .capacity(ROBOT_CAPACITY)
+                    .capacity(SimulatorSettings.ROBOT_CAPACITY)
                     //.startPosition(pizzeria.getPosition())
                     .startPosition(pizzeria.getPosition())//roadModel.getRandomPosition(rng))
-                    .speed(VEHICLE_SPEED_KMH)
+                    .speed(SimulatorSettings.VEHICLE_SPEED_KMH)
                     .build();
 
-            Battery battery = new Battery(BATTERY_CAPACITY);
+            Battery battery = new Battery(SimulatorSettings.BATTERY_CAPACITY);
 
             // Robots start at the pizzeria
             sim.register(new RobotAgent(
-                    vdto, battery, getNextRobotID(), pizzeria.getPosition(), ALTERNATIVE_PATHS_TO_EXPLORE
+                    vdto, battery, getNextRobotID(), pizzeria.getPosition(), SimulatorSettings.ALTERNATIVE_PATHS_TO_EXPLORE
             ));
         }
 
@@ -159,8 +140,8 @@ public class PizzaDeliverySimulator {
         sim.addTickListener(new TickListener() {
             @Override
             public void tick(@NotNull TimeLapse time) {
-                if (rng.nextDouble() < PROB_NEW_PARCEL) {
-                    pizzeriaModel.createNewDeliveryTask(rng, PIZZA_AMOUNT_MEAN, PIZZA_AMOUNT_STD, time.getStartTime());
+                if (rng.nextDouble() < SimulatorSettings.PROB_NEW_PARCEL) {
+                    pizzeriaModel.createNewDeliveryTask(rng, SimulatorSettings.PIZZA_AMOUNT_MEAN, SimulatorSettings.PIZZA_AMOUNT_STD, time.getStartTime());
                 }
             }
 

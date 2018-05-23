@@ -8,6 +8,8 @@ import com.github.rinde.rinsim.core.model.time.TimeLapse;
 import com.github.rinde.rinsim.geom.Point;
 import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
+import mas.DeliveryTaskData;
+import mas.SimulatorSettings;
 import mas.buildings.ChargingStation;
 import mas.messages.*;
 import mas.tasks.DeliveryTask;
@@ -27,7 +29,7 @@ public class ResourceAgent implements CommUser, RoadUser, TickListener {
     private Point position;
     private boolean first_tick = true;
     private List<CommUser> neighbors = new LinkedList<>();
-
+    private
 
     public ResourceAgent(Point position, RandomGenerator rng) {
         this.position = position;
@@ -79,40 +81,29 @@ public class ResourceAgent implements CommUser, RoadUser, TickListener {
         DesireAnt ant = (DesireAnt) m.getContents();
         System.out.println("Desire ant at " + this.position);
 
-        /*
-        Desire ant has:
-        - list path
-        - long estimatedTime
-        - boolean isReturning,
-        - int id
-        - Integer robotID
-        - CommUser robot
-        - int score
-        - int deliveryID,
-        - int capacity
-         */
-
         if(ant.hasReachedDestination(this.position)){
             // Get delivery parcel
             if(!ant.isReturning){
                 // We are looking for deliveryTasks
                 Set<DeliveryTask> deliveryTasks = this.roadModel.getObjectsAt(this, DeliveryTask.class);
 
-                
-            }
-            /*
-            if(deliveryTasks.size() > 0){
                 for(DeliveryTask task: deliveryTasks){
-                    // Find the task with the right id
                     if(task.getDeliveryID() == ant.deliveryID){
-                        // Check if the task has resources left
 
+                        // Calculate distance
+
+                        DesireAnt newAnt = ant.copy(Lists.reverse(ant.path), null, true,
+                                task.getScore(), task.getPizzasLeft());
+
+                        sendAntToNextHop(newAnt);
                     }
                 }
             }else{
-                // Get charging station
-                Set<ChargingStation> chargingStation = this.roadModel.getObjectsAt(this, ChargingStation.class);
-            }*/
+
+                this.commDevice.send(ant.copy(
+                        Lists.reverse(ant.path),null, true, null, null
+                        ), ant.robot);
+            }
         }else{
             sendAntToNextHop(ant);
         }
@@ -154,11 +145,32 @@ public class ResourceAgent implements CommUser, RoadUser, TickListener {
         if (ant.hasReachedDestination(this.position)) {
             if (ant.isReturning) {
                 // The ant reached the RobotAgent.
-                this.commDevice.send(ant.copy(Lists.reverse(ant.path), null, null), ant.robot);
-
+                this.commDevice.send(ant.copy(Lists.reverse(ant.path), null, null, null), ant.robot);
             } else {
-                // The ant reached the deliveryTask's delivery location.
-                sendAntToNextHop(ant.copy(Lists.reverse(ant.path), null, true));
+
+                Set<DeliveryTask> deliveryTasks = this.roadModel.getObjectsAt(this, DeliveryTask.class);
+                DeliveryTaskData data = ant.getDeliveryDataForLoc(this.position);
+                for (DeliveryTask task : deliveryTasks) {
+                    // Find the task with the right id
+                    if (task.getDeliveryID() == data.id) {
+                        // Check if the task has resources left
+                        List<DeliveryTaskData> newData = new LinkedList<>();
+                        for(DeliveryTaskData t : ant.deliveries){
+                            if(t.location != this.position){
+                                newData.add(t);
+                            }
+                        }
+
+                        newData.add(new DeliveryTaskData(data.location, data.id,
+                                Math.min(task.getPizzasLeft(), data.capacity)));
+
+                        if(ant.hasReachedFinalDestination(this.position)){
+                            sendAntToNextHop(ant.copy(Lists.reverse(ant.path), null, true, newData));
+                        }else{
+                            sendAntToNextHop(ant.copy(ant.path, null, false, newData));
+                        }
+                    }
+                }
             }
 
         } else {
@@ -168,7 +180,7 @@ public class ResourceAgent implements CommUser, RoadUser, TickListener {
                 // TODO: calculate new estimated time based on this_location -> next_location
             }
 
-            sendAntToNextHop(ant.copy(null, estimatedTime, null));
+            sendAntToNextHop(ant.copy(null, estimatedTime, null, null));
         }
     }
 

@@ -6,6 +6,7 @@ import com.github.rinde.rinsim.core.model.pdp.PDPModel;
 import com.github.rinde.rinsim.core.model.pdp.Parcel;
 import com.github.rinde.rinsim.core.model.pdp.ParcelDTO;
 import com.github.rinde.rinsim.core.model.road.RoadModel;
+import com.github.rinde.rinsim.core.model.time.Clock;
 import com.github.rinde.rinsim.core.model.time.TimeLapse;
 import com.github.rinde.rinsim.event.EventAPI;
 import com.github.rinde.rinsim.event.EventDispatcher;
@@ -25,11 +26,13 @@ public class PizzeriaModel extends Model.AbstractModel<PizzeriaUser> {
     private RoadModel roadModel;
     private PDPModel pdpModel;
     private RandomGenerator rng;
+    private Clock clock;
 
-    public PizzeriaModel(RoadModel roadModel, PDPModel pdpModel) {
+    public PizzeriaModel(RoadModel roadModel, PDPModel pdpModel, Clock clock) {
         this.roadModel = roadModel;
         this.pdpModel = pdpModel;
         eventDispatcher = new EventDispatcher(PizzeriaEventType.values());
+        this.clock = clock;
     }
 
     public void setSimulator(Simulator sim, RandomGenerator rng) {
@@ -76,7 +79,7 @@ public class PizzeriaModel extends Model.AbstractModel<PizzeriaUser> {
     public void createNewDeliveryTask(RandomGenerator rng, double pizzaMean, double pizzaStd, long time) {
         int pizzaAmount = (int) (rng.nextGaussian() * pizzaStd + pizzaMean);
 
-        DeliveryTask task = new DeliveryTask(roadModel.getRandomPosition(rng), pizzaAmount, time);
+        DeliveryTask task = new DeliveryTask(roadModel.getRandomPosition(rng), pizzaAmount, time, clock);
         sim.register(task);
 
         eventDispatcher.dispatchEvent(new PizzeriaEvent(
@@ -144,5 +147,9 @@ public class PizzeriaModel extends Model.AbstractModel<PizzeriaUser> {
         eventDispatcher.dispatchEvent(new PizzeriaEvent(
                 PizzeriaEventType.FINISHED_ROADWORKS, 0, null,  null, null
         ));
+    }
+
+    public Long getCurrentTime(){
+        return clock.getCurrentTime();
     }
 }
