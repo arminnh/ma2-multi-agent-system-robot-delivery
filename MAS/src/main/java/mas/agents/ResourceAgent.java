@@ -100,8 +100,15 @@ public class ResourceAgent implements CommUser, RoadUser, TickListener {
                 DeliveryTask task = this.deliveryTasks.get(ant.deliveryTaskID);
 
                 // Calculate distance
-                DesireAnt newAnt = ant.copy(Lists.reverse(ant.path), true, task.getScore(), this.getPizzasLeftForDeliveryTask(task.id));
+                int amount = 0;
+                Long score = 0L;
+                if(task != null){
+                    amount = this.getPizzasLeftForDeliveryTask(task.id);
+                    score = task.getScore();
+                }
 
+                DesireAnt newAnt = ant.copy(Lists.reverse(ant.path),
+                        true, score, amount);
                 sendAntToNextHop(newAnt);
             }
         } else {
@@ -164,26 +171,32 @@ public class ResourceAgent implements CommUser, RoadUser, TickListener {
                 DeliveryTask task = this.deliveryTasks.get(deliveryData.deliveryTaskID);
 
                 // Check if a reservation can be updated or can be made (= if the task has pizzas to be delivered)
-                boolean updated = this.updateReservation(task, deliveryData, timeLapse);
+                boolean updated = false;
+                if(task != null){
+                    updated = this.updateReservation(task, deliveryData, timeLapse);
 
-                if (updated) {
-                    // The reservation has been updated, set 'confirmed' to true in the delivery data.
-                    newDeliveriesData.add(deliveryData.copy(true));
-
-                } else {
-                    if (deliveryData.pizzas <= this.getPizzasLeftForDeliveryTask(task.id)) {
-                        createReservation(timeLapse, deliveryData, task);
-
-                        // A reservation has been created, set 'confirmed' to true in the delivery data.
+                    if (updated) {
+                        // The reservation has been updated, set 'confirmed' to true in the delivery data.
                         newDeliveriesData.add(deliveryData.copy(true));
 
                     } else {
-                        // A reservation could not be created, set 'confirmed' to true in the delivery data.
-                        newDeliveriesData.add(deliveryData.copy(false));
+                        if(deliveryData.pizzas <= this.getPizzasLeftForDeliveryTask(task.id) &&
+                                this.getPizzasLeftForDeliveryTask(task.id) > 0) {
+
+                            createReservation(timeLapse, deliveryData, task);
+
+                            // A reservation has been created, set 'confirmed' to true in the delivery data.
+                            newDeliveriesData.add(deliveryData.copy(true));
+
+                        } else {
+                            // A reservation could not be created, set 'confirmed' to true in the delivery data.
+                            newDeliveriesData.add(deliveryData.copy(false));
+                        }
                     }
-
+                }else{
+                    // Task has already been handled by other robot.
+                    newDeliveriesData.add(deliveryData.copy(false));
                 }
-
             } else {
                 // Nothing to be done for this delivery data.
                 newDeliveriesData.add(deliveryData);
@@ -218,10 +231,16 @@ public class ResourceAgent implements CommUser, RoadUser, TickListener {
                 DeliveryTask task = this.deliveryTasks.get(deliveryData.deliveryTaskID);
 
                 // Calculate the (possibly new) amount of pizzas that the robot can send for this task
-                int newPizzaAmount = Math.min(this.getPizzasLeftForDeliveryTask(task.id), deliveryData.pizzas);
+                System.out.println("updateExplorationAntDeliveryData: " + task + " " + deliveryData);
+                Integer newPizzaAmount = 0;
+
+                if(this.deliveryTasks.containsKey(deliveryData.deliveryTaskID)){
+                    newPizzaAmount = Math.min(this.getPizzasLeftForDeliveryTask(task.id), deliveryData.pizzas);
+                }
 
                 newDeliveriesData.add(new DeliveryTaskData(deliveryData.position, deliveryData.robotID,
                         deliveryData.deliveryTaskID, newPizzaAmount, false));
+
             } else {
                 // Nothing to be done for this delivery data.
                 newDeliveriesData.add(deliveryData);
@@ -239,11 +258,13 @@ public class ResourceAgent implements CommUser, RoadUser, TickListener {
                 task.id, deliveryData.pizzas, evaporationTimestamp
         );
 
+        System.out.println("Reservation " + task.id + " "+  deliveryData.robotID+" "+ deliveryData.pizzas);
         this.reservations.get(task.id).add(reservation);
     }
 
     private boolean updateReservation(DeliveryTask task, DeliveryTaskData deliveryData, TimeLapse timeLapse) {
         // If the reservation has already been made, update it.
+
         List<DeliveryTaskReservation> reservations = this.reservations.get(task.id).stream()
                 .filter(r -> r.deliveryTaskID == deliveryData.deliveryTaskID && r.robotID == deliveryData.robotID)
                 .collect(Collectors.toList());

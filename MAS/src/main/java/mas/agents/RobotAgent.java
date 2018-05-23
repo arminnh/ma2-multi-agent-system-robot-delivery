@@ -23,10 +23,7 @@ import com.google.common.collect.Table;
 import mas.DeliveryTaskData;
 import mas.buildings.ChargingStation;
 import mas.graphs.AStar;
-import mas.messages.DesireAnt;
-import mas.messages.ExplorationAnt;
-import mas.messages.IntentionAnt;
-import mas.messages.MultiDestinationAnt;
+import mas.messages.*;
 import mas.models.PizzeriaModel;
 import mas.models.PizzeriaUser;
 import mas.tasks.DeliveryTask;
@@ -151,9 +148,11 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
         }
 
         if (!this.desires.isEmpty() && this.waitingForDesireAnts == 0) {
+            System.out.println(this.desires);
             // Decide on desire
             List<DesireAnt> bestTasks = getHighestDesires();
             List<DeliveryTaskData> deliveries = new LinkedList<>();
+            System.out.println("BestTasks " + bestTasks);
 
             int remainingCapacity = this.getCapacityLeft();
             for (DesireAnt ant : bestTasks) {
@@ -182,6 +181,8 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
             // Make the robot follow its intention. If the robot arrives at the next position it its
             // intention, that position will be removed from the Queue.
             this.move(time);
+
+            //intentionReconsideration();
 
             if (!this.currentParcels.isEmpty() &&
                     this.currentParcels.peek().getDeliveryLocation() == this.getPosition().get()) {
@@ -274,52 +275,80 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
     private void readMessages(TimeLapse time) {
         for (Message m : this.commDevice.getUnreadMessages()) {
 
+            if(Ant.class.isInstance(m.getContents())){
+                Ant ant = (Ant) m.getContents();
+                if(ant.robotID != this.id){
+                    continue;
+                }
+            }
+
             // If an exploration ant has returned, store the explored path and its estimated cost.
             if (m.getContents().getClass() == ExplorationAnt.class) {
-                ExplorationAnt ant = (ExplorationAnt) m.getContents();
-
-                this.explorationAnts.add(ant);
-                this.waitingForExplorationAnts--;
-
-                System.out.println("Robot " + this.id + " got ExplorationAnt for robotID " + ant.robotID);
-                System.out.println(ant.path + ", estimation: " + ant.estimatedTime);
+                handleExplorationAntMessage(m);
             }
 
             // Intention ant
             if (m.getContents().getClass() == IntentionAnt.class) {
-                IntentionAnt ant = (IntentionAnt) m.getContents();
-                System.out.println("MHHH");
-
-                if (ant.toChargingStation) {
-                    // TODO: Charging logic
-                    //System.out.println("CHARGING");
-                    this.intention = Optional.of(new LinkedList<>(ant.path));
-                } else {
-                    for (DeliveryTaskData deliveryTaskData: ant.deliveries) {
-                        if (deliveryTaskData.reservationConfirmed) {
-                            PizzaParcel parcel = this.pizzeriaModel.newPizzaParcel(deliveryTaskData.deliveryTaskID,
-                                    this.getPosition().get(), deliveryTaskData.pizzas, time.getStartTime());
-
-                            this.pdpModel.pickup(this, parcel, time);
-
-                            this.addPizzaParcel(parcel);
-                        }
-                    }
-
-                    if(this.hasPizzaParcel()){
-                        this.intention = Optional.of(new LinkedList<>(ant.path));
-                    }
-                }
-                this.waitingForIntentionAnt--;
+                handleIntentionAntMessage(time, m);
             }
 
             if (m.getContents().getClass() == DesireAnt.class) {
-                DesireAnt ant = (DesireAnt) m.getContents();
-
-                this.desires.put(ant, ant.score);
-                this.waitingForDesireAnts--;
+                handleDesireAntMessage(m);
             }
         }
+    }
+
+    private void handleExplorationAntMessage(Message m) {
+        ExplorationAnt ant = (ExplorationAnt) m.getContents();
+
+        this.explorationAnts.add(ant);
+        this.waitingForExplorationAnts--;
+
+        System.out.println("Robot " + this.id + " got ExplorationAnt for robotID " + ant.robotID);
+        System.out.println(ant.path + ", estimation: " + ant.estimatedTime);
+    }
+
+    private void handleDesireAntMessage(Message m) {
+        System.out.println("Got desire ant");
+        DesireAnt ant = (DesireAnt) m.getContents();
+        if(ant.pizzas > 0){
+            this.desires.put(ant, ant.score);
+            System.out.println( this.desires);
+        }
+
+        this.waitingForDesireAnts--;
+    }
+
+    private void handleIntentionAntMessage(TimeLapse time, Message m) {
+        IntentionAnt ant = (IntentionAnt) m.getContents();
+        System.out.println("MHHH");
+
+        if (ant.toChargingStation) {
+            // TODO: Charging logic
+            //System.out.println("CHARGING");
+            this.intention = Optional.of(new LinkedList<>(ant.path));
+        } else {
+            for (DeliveryTaskData deliveryTaskData: ant.deliveries) {
+                if (deliveryTaskData.reservationConfirmed) {
+                    PizzaParcel parcel = this.pizzeriaModel.newPizzaParcel(deliveryTaskData.deliveryTaskID,
+                            this.getPosition().get(), deliveryTaskData.pizzas, time.getStartTime());
+
+                    this.pdpModel.pickup(this, parcel, time);
+
+                    this.addPizzaParcel(parcel);
+                }else{
+                    System.out.println("Reservation denied");
+                }
+            }
+
+            if(this.hasPizzaParcel()){
+                this.intention = Optional.of(new LinkedList<>(ant.path));
+            }else{
+                System.out.println("d");
+
+            }
+        }
+        this.waitingForIntentionAnt--;
     }
 
     /**
