@@ -22,7 +22,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Table;
 import mas.DeliveryTaskData;
 import mas.buildings.ChargingStation;
-import mas.buildings.Pizzeria;
 import mas.graphs.AStar;
 import mas.messages.DesireAnt;
 import mas.messages.ExplorationAnt;
@@ -33,13 +32,12 @@ import mas.models.PizzeriaUser;
 import mas.tasks.DeliveryTask;
 import mas.tasks.PizzaParcel;
 import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.math3.analysis.function.Exp;
 import org.apache.commons.math3.random.RandomGenerator;
 import org.jetbrains.annotations.NotNull;
 
 import javax.measure.unit.SI;
 import java.util.*;
-
-import static java.lang.Math.min;
 
 /**
  * Implementation of a delivery robot.
@@ -56,7 +54,6 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
     private GraphRoadModel graphRoadModel;
 
     private int id = -1;
-    private int antID = 0;
     private Battery battery;
     private int currentCapacity = -1;
     private double metersMoved = 0;
@@ -67,9 +64,9 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
     private int waitingForExplorationAnts = 0;
     private long intentionTimeLeft = Long.MAX_VALUE;
     private Optional<Queue<Point>> intention = Optional.absent();
-    private Optional<PizzaParcel> currentParcel = Optional.absent();
+    private Queue<PizzaParcel> currentParcels = new LinkedList<>();
     private Optional<ChargingStation> currentChargingStation = Optional.absent();
-    private List<ImmutablePair<List<Point>, Long>> exploredPaths = new LinkedList<>();
+    private List<ExplorationAnt> explorationAnts = new LinkedList<>();
     private int waitingForDesireAnts = 0;
     private HashMap<DesireAnt, Long> desires = new HashMap<>();
 
@@ -112,23 +109,6 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
         pizzeriaModel = model;
     }
 
-
-    private static List<Map.Entry<DesireAnt,Integer>> sortMapDescending(HashMap map) {
-        // From: https://beginnersbook.com/2013/12/how-to-sort-hashmap-in-java-by-keys-and-values/
-
-        List<Map.Entry<DesireAnt,Integer>> list = new LinkedList(map.entrySet());
-
-        // Defined Custom Comparator here
-        Collections.sort(list, new Comparator<Map.Entry<DesireAnt,Integer>>() {
-            public int compare(Map.Entry o1, Map.Entry o2) {
-                return ((Comparable) o1.getValue())
-                        .compareTo(o2.getValue());
-            }
-        });
-
-        return Lists.reverse(list);
-    }
-
     private List<DesireAnt> getHighestDesires() {
         System.out.println(this.desires);
 
@@ -136,13 +116,13 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
         int remainingCapacity = this.getCapacityLeft();
 
         // Get all tasks with highest score sorted in descending
-        for(Map.Entry<DesireAnt, Integer> entry: sortMapDescending(this.desires)){
-            int capacity =  Math.min(remainingCapacity, entry.getValue());
+        for (Map.Entry<DesireAnt, Integer> entry : sortMapDescending(this.desires)) {
+            int capacity = Math.min(remainingCapacity, entry.getValue());
 
-            if(capacity > 0){
+            if (capacity > 0) {
                 bestTasks.add(entry.getKey());
                 remainingCapacity -= capacity;
-            }else{
+            } else {
                 break;
             }
         }
@@ -160,39 +140,39 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
         }
 
         // Read all new messages
-        this.readMessages();
+        this.readMessages(time);
 
         // If waiting for ExplorationAnts and they all have returned, evaluate the different paths
-        if (this.exploredPaths.size() > 0 && this.waitingForExplorationAnts == 0) {
+        if (this.explorationAnts.size() > 0 && this.waitingForExplorationAnts == 0) {
             this.evaluateExploredPathsAndReviseIntentions();
         }
 
-        if(this.desires.size() > 0 && this.waitingForDesireAnts == 0){
+        if (this.desires.size() > 0 && this.waitingForDesireAnts == 0) {
             // Decide on desire
-
             List<DesireAnt> bestTasks = getHighestDesires();
-
-            List<Point> dests = new LinkedList<>();
-            List<DeliveryTaskData> pairs = new LinkedList<>();
+            List<DeliveryTaskData> deliveries = new LinkedList<>();
 
             int remainingCapacity = this.getCapacityLeft();
-            for(DesireAnt ant: bestTasks){
-                Point dest = ant.path.get(ant.path.size() - 1);
-                dests.add(dest);
-                int capacity =  Math.min(remainingCapacity, ant.pizzas);
-                remainingCapacity -= capacity;
-                pairs.add(new DeliveryTaskData(dest, ant.deliveryTaskID, capacity));
+            for (DesireAnt ant : bestTasks) {
+                Point destination = ant.path.get(ant.path.size() - 1);
+
+                int pizzas = Math.min(remainingCapacity, ant.pizzas);
+                remainingCapacity -= pizzas;
+
+                deliveries.add(new DeliveryTaskData(destination, this.id, ant.deliveryTaskID, pizzas, false));
             }
-            // TODO: send out exploration ants???
-            explorePaths(dests, pairs);
-            explorePaths(Lists.reverse(dests), Lists.reverse(pairs));
+
+            explorePaths(deliveries);
+            explorePaths(Lists.reverse(deliveries));
+
             this.desires.clear();
         }
 
         // TODO: something for intention messages here ??
-        if(this.currentParcel.isPresent() && !this.intention.isPresent()){
+        if (!this.currentParcels.isEmpty() && !this.intention.isPresent()) {
             // Exploration or wait on ants
-        }else if (this.intention.isPresent()) {
+
+        } else if (this.intention.isPresent()) {
             // Make the robot follow its intention. If the robot arrives at the next position it its
             // intention, that position will be removed from the Queue.
             this.move(time);
@@ -202,7 +182,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
                 this.intention = Optional.absent();
 
                 // If the robot was delivering a PizzaParcel
-                if (this.currentParcel.isPresent()) {
+                if (!this.currentParcels.isEmpty()) {
                     this.deliverPizzaParcel(time);
 
                     // If the robot was going towards a charging station
@@ -218,19 +198,26 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
             // No intention is present and no desire. First choose a new desire.
 
             // If at pizzeria ask for tasks
-            if(this.isAtPizzeria && waitingForDesireAnts == 0){
-                List<DeliveryTask> tasks = this.askPizzeriaForTasks();
+            if (this.isAtPizzeria && waitingForDesireAnts == 0) {
+                List<DeliveryTask> tasks = pizzeriaModel.getDeliveryTasks();
 
                 sendDesireAntsForTasks(tasks);
             }
-            
-            
+
+
             // Only choose a new intention if not waiting for exploration ants.
             if (this.waitingForExplorationAnts == 0) {
 
                 // If a new parcel has been set on the robot, explore paths towards the destination of the parcel.
-                if (this.currentParcel.isPresent()) {
-                    this.explorePaths(this.currentParcel.get().getDeliveryLocation());
+                if (!this.currentParcels.isEmpty()) {
+                    List<DeliveryTaskData> deliveries = new LinkedList<>();
+
+                    for (PizzaParcel parcel: this.currentParcels) {
+                        deliveries.add(new DeliveryTaskData(parcel.getDeliveryLocation(), this.id,
+                                parcel.deliveryTaskID, parcel.amountOfPizzas, false));
+                    }
+
+                    this.explorePaths(deliveries);
 
                     // Otherwise, either go to a charging station to charge or a pizzeria to pick up a new parcel.
                 } else {
@@ -253,11 +240,10 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
     }
 
     private void sendDesireAntsForTasks(List<DeliveryTask> tasks) {
-        for(DeliveryTask task: tasks){
+        for (DeliveryTask task : tasks) {
             List<Point> path = this.roadModel.getShortestPathTo(this, task.getPosition().get());
             DesireAnt desireAnt = new DesireAnt(path, 0,
-                    false, this.antID, this.id, this, null, task.getID(), 0);
-            this.antID++;
+                    false, this.id, this, null, task.id, 0);
             this.commDevice.broadcast(desireAnt);
             this.waitingForDesireAnts++;
         }
@@ -270,15 +256,14 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
     /**
      * Read all unread messages and take appropriate actions for each message.
      */
-    private void readMessages() {
+    private void readMessages(TimeLapse time) {
         for (Message m : this.commDevice.getUnreadMessages()) {
 
             // If an exploration ant has returned, store the explored path and its estimated cost.
             if (m.getContents().getClass() == ExplorationAnt.class) {
-                MultiDestinationAnt ant = (MultiDestinationAnt) m.getContents();
+                ExplorationAnt ant = (ExplorationAnt) m.getContents();
 
-                this.exploredPaths.add(new ImmutablePair<>(ant.path, ant.estimatedTime));
-
+                this.explorationAnts.add(ant);
                 this.waitingForExplorationAnts--;
 
                 System.out.println("Robot " + this.id + " got ExplorationAnt for robotID " + ant.robotID);
@@ -287,10 +272,25 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
 
             // Intention ant
             if (m.getContents().getClass() == IntentionAnt.class) {
-                // TODO
+                IntentionAnt ant = (IntentionAnt) m.getContents();
+
+                if (ant.toChargingStation) {
+                    // TODO: Charging logic
+                } else {
+                    for (DeliveryTaskData deliveryTaskData: ant.deliveries) {
+                        if (deliveryTaskData.reservationConfirmed) {
+                            PizzaParcel parcel = this.pizzeriaModel.newPizzaParcel(deliveryTaskData.deliveryTaskID,
+                                    this.getPosition().get(), deliveryTaskData.pizzas, time.getStartTime());
+
+                            this.pdpModel.pickup(this, parcel, time);
+
+                            this.addPizzaParcel(parcel);
+                        }
+                    }
+                }
             }
 
-            if(m.getContents().getClass() == DesireAnt.class){
+            if (m.getContents().getClass() == DesireAnt.class) {
                 DesireAnt ant = (DesireAnt) m.getContents();
 
                 this.desires.put(ant, ant.score);
@@ -305,28 +305,29 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
      */
     private void evaluateExploredPathsAndReviseIntentions() {
         Long bestTime = Long.MAX_VALUE;
-        Queue<Point> bestPath = null;
+        ExplorationAnt bestAnt = null;
 
-        for (ImmutablePair<List<Point>, Long> p : this.exploredPaths) {
-            if (p.right < bestTime) {
-                bestTime = p.right;
-                bestPath = new LinkedList<>(p.left);
+        for (ExplorationAnt ant : this.explorationAnts) {
+            if (ant.estimatedTime < bestTime) {
+                bestTime = ant.estimatedTime;
+                bestAnt = ant;
+
             }
         }
-        this.exploredPaths = new LinkedList<>();
+        this.explorationAnts.clear();
 
         // If the new best path is better than the current one, update the intention of the robot.
         if (!this.intention.isPresent() || bestTime < this.intentionTimeLeft) {
-            if (bestPath == null) {
-                System.err.println("EVALUATED EXPLORED PATHS BUT NO PATH WAS SELECTED AFTER EVALUATION.");
+            if (bestAnt == null) {
+                System.err.println("EVALUATED EXPLORATION ANTS BUT NO ANT WAS SELECTED AFTER EVALUATION.");
             } else {
-                this.intention = Optional.of(bestPath);
+                this.intention = Optional.of(new LinkedList<>(bestAnt.path));
                 this.intentionTimeLeft = bestTime;
             }
 
             // TODO: Send intention ant. If it turns out that the intention ant says that the path cannot be taken
             // TODO: (e.g. because of new road works), then a new set of exploration messages should be sent.
-            this.sendIntentionAnt(bestPath);
+            this.sendIntentionAnt(bestAnt);
         }
     }
 
@@ -359,27 +360,22 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
      * amount of pizzas for the DeliveryTask in the PizzeriaModel, and decrease the robot's currentCapacity.
      */
     private void deliverPizzaParcel(@NotNull TimeLapse time) {
-        if (this.currentParcel.isPresent()) {
-            PizzaParcel currParcel = this.currentParcel.get();
-            DeliveryTask deliveryTask = currParcel.deliveryTask;
+        PizzaParcel parcel = this.currentParcels.peek();
+        DeliveryTask deliveryTask = parcel.deliveryTask;
 
-            // If the robot is at the delivery position of the deliveryTask
-            if (this.roadModel.equalPosition(this, deliveryTask)) {
-                // Deliver the pizzas
-                this.pdpModel.deliver(this, currParcel, time);
-                this.pizzeriaModel.deliverPizzas(this, currParcel, time.getEndTime());
+        // If the robot is at the delivery position of the deliveryTask
+        if (this.roadModel.equalPosition(this, deliveryTask)) {
+            // Deliver the pizzas
+            this.pdpModel.deliver(this, parcel, time);
+            this.pizzeriaModel.deliverPizzas(this, parcel, time.getEndTime());
 
-                // Unload pizzas
-                this.currentCapacity -= currParcel.amountOfPizzas;
+            // Unload pizzas
+            this.currentCapacity -= parcel.amountOfPizzas;
 
-                // If all pizzas for a deliveryTask have been delivered, the deliveryTask can be removed from the RoadModel.
-                if (deliveryTask.isFinished()) {
-                    this.roadModel.removeObject(deliveryTask);
-                }
-
-                // Remove current PizzaParcel
-                this.currentParcel = Optional.absent();
-            }
+            // Remove current PizzaParcel
+            this.currentParcels.remove();
+        } else {
+            System.err.println("TRYING TO DELIVER FROM WRONG POSITION");
         }
     }
 
@@ -423,57 +419,62 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
     }
 
     public boolean hasPizzaParcel() {
-        return currentParcel.isPresent();
+        return this.currentParcels.size() > 0;
     }
 
     /**
      * Sets a new PizzaParcel to be delivered by the robot.
      */
-    public void setPizzaParcel(PizzaParcel parcel) {
-        this.currentParcel = Optional.of(parcel);
+    public void addPizzaParcel(PizzaParcel parcel) {
+        this.currentParcels.add(parcel);
         this.currentCapacity += parcel.amountOfPizzas;
         this.isAtPizzeria = false;
-    }
-
-    public List<DeliveryTask> askPizzeriaForTasks(){
-        Set<Pizzeria> pizzerias = this.roadModel.getObjectsAt(this, Pizzeria.class);
-        return pizzerias.iterator().next().getTasks();
     }
 
     /**
      * Explores different paths towards a single destination.
      */
     private void explorePaths(Point destination) {
-        List<Point> destinations = new LinkedList<Point>();
-        destinations.add(destination);
+        List<DeliveryTaskData> deliveries = new LinkedList<>();
+        deliveries.add(new DeliveryTaskData(destination, this.id, null, null, false));
 
-        explorePaths(destinations, null);
+        this.explorePaths(deliveries);
     }
 
     /**
      * Explores different paths towards multiple destinations to be followed sequentially.
      */
-    private void explorePaths(List<Point> dests, List<DeliveryTaskData> pairs) {
+    private void explorePaths(List<DeliveryTaskData> deliveries) {
+        List<Point> destinations = new LinkedList<>();
+
+        for (DeliveryTaskData data: deliveries) {
+            destinations.add(data.position);
+        }
+
         // Generate a couple of possible paths towards the destination(s) and send exploration messages to explore them.
-        List<List<Point>> paths = getAlternativePaths(this.alternativePathsToExplore, this.getPosition().get(), dests);
-        sendExplorationAnts(paths, pairs);
+        List<List<Point>> paths = this.getAlternativePaths(this.alternativePathsToExplore, this.getPosition().get(), destinations);
+
+        this.sendExplorationAnts(paths, deliveries);
     }
 
     /**
-     * Sends out IntentionAnt to reserve the destination
-     * @param path
+     * Sends out IntentionAnt to perform the deliveries explored by an exploration ant.
      */
-    private void sendIntentionAnt(Queue<Point> path){
-        IntentionAnt intAnt = null;
-        if(this.currentParcel.isPresent()){
-            intAnt = new IntentionAnt(new LinkedList<>(path),0,false,
-                    this.antID, this.id, this, this.currentParcel.get());
-        }else{
-            intAnt = new IntentionAnt(new LinkedList<>(path),0,false,
-                    this.antID, this.id, this, null);
-        }
-        this.commDevice.broadcast(intAnt);
-        this.antID += 1;
+    private void sendIntentionAnt(ExplorationAnt explorationAnt) {
+        IntentionAnt ant = new IntentionAnt(explorationAnt.path, 0, false, this.id,this,
+                explorationAnt.deliveries);
+
+        this.commDevice.broadcast(ant);
+    }
+
+    /**
+     * Sends out IntentionAnt to reserve the destination for a path.
+     */
+    private void sendIntentionAnt(Queue<Point> path) {
+        IntentionAnt ant = new IntentionAnt(new LinkedList<>(path), 0, false,
+                this.id, this, null);
+
+        this.commDevice.broadcast(ant);
     }
 
     /**
@@ -483,9 +484,8 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
         // Send exploration messages over the found paths
         for (List<Point> path : paths) {
             this.commDevice.broadcast(
-                    new ExplorationAnt(path, 0, false, this.antID, this.id, this, pairs)
+                    new ExplorationAnt(path, 0, false, this.id, this, pairs)
             );
-            this.antID += 1;
             this.waitingForExplorationAnts++;
         }
     }
@@ -556,6 +556,22 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
         }
 
         return alternativePaths;
+    }
+
+    private static List<Map.Entry<DesireAnt, Integer>> sortMapDescending(HashMap map) {
+        // From: https://beginnersbook.com/2013/12/how-to-sort-hashmap-in-java-by-keys-and-values/
+
+        List<Map.Entry<DesireAnt, Integer>> list = new LinkedList(map.entrySet());
+
+        // Defined Custom Comparator here
+        Collections.sort(list, new Comparator<Map.Entry<DesireAnt, Integer>>() {
+            public int compare(Map.Entry o1, Map.Entry o2) {
+                return ((Comparable) o1.getValue())
+                        .compareTo(o2.getValue());
+            }
+        });
+
+        return Lists.reverse(list);
     }
 
     /**

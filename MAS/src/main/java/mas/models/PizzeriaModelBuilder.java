@@ -12,15 +12,14 @@ import org.jetbrains.annotations.NotNull;
 public class PizzeriaModelBuilder extends ModelBuilder.AbstractModelBuilder<PizzeriaModel, Object> {
 
     PizzeriaModelBuilder() {
-        setDependencies(RoadModel.class, PDPModel.class, Clock.class);
+        setDependencies(RoadModel.class, Clock.class);
     }
 
     @Override
     public PizzeriaModel build(@NotNull DependencyProvider dependencyProvider) {
         final RoadModel rmModel = dependencyProvider.get(RoadModel.class);
-        final PDPModel pdpModel = dependencyProvider.get(PDPModel.class);
         final Clock clock = dependencyProvider.get(Clock.class);
 
-        return new PizzeriaModel(rmModel, pdpModel, clock);
+        return new PizzeriaModel(rmModel, clock);
     }
 }

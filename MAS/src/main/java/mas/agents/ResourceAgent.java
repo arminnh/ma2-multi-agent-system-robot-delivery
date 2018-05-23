@@ -101,7 +101,7 @@ public class ResourceAgent implements CommUser, RoadUser, TickListener {
                 DeliveryTask task = this.deliveryTasks.get(ant.deliveryTaskID);
 
                 // Calculate distance
-                DesireAnt newAnt = ant.copy(Lists.reverse(ant.path), true, task.getScore(), this.getPizzasLeftForDeliveryTask(task.getID()));
+                DesireAnt newAnt = ant.copy(Lists.reverse(ant.path), true, task.getScore(), this.getPizzasLeftForDeliveryTask(task.id));
 
                 sendAntToNextHop(newAnt);
             }
@@ -173,7 +173,7 @@ public class ResourceAgent implements CommUser, RoadUser, TickListener {
                     newDeliveriesData.add(deliveryData.copy(true));
 
                 } else {
-                    if (deliveryData.pizzas <= this.getPizzasLeftForDeliveryTask(task.getID())) {
+                    if (deliveryData.pizzas <= this.getPizzasLeftForDeliveryTask(task.id)) {
                         createReservation(timeLapse, deliveryData, task);
 
                         // A reservation has been created, set 'confirmed' to true in the delivery data.
@@ -219,7 +219,7 @@ public class ResourceAgent implements CommUser, RoadUser, TickListener {
                 DeliveryTask task = this.deliveryTasks.get(deliveryData.deliveryTaskID);
 
                 // Calculate the (possibly new) amount of pizzas that the robot can send for this task
-                int newPizzaAmount = Math.min(this.getPizzasLeftForDeliveryTask(task.getID()), deliveryData.pizzas);
+                int newPizzaAmount = Math.min(this.getPizzasLeftForDeliveryTask(task.id), deliveryData.pizzas);
 
                 newDeliveriesData.add(new DeliveryTaskData(deliveryData.position, deliveryData.robotID,
                         deliveryData.deliveryTaskID, newPizzaAmount, false));
@@ -237,15 +237,15 @@ public class ResourceAgent implements CommUser, RoadUser, TickListener {
         long evaporationTimestamp = timeLapse.getEndTime() + SimulatorSettings.INTENTION_RESERVATION_LIFETIME;
 
         DeliveryTaskReservation reservation = new DeliveryTaskReservation(deliveryData.robotID,
-                task.getID(), deliveryData.pizzas, evaporationTimestamp
+                task.id, deliveryData.pizzas, evaporationTimestamp
         );
 
-        this.reservations.get(task.getID()).add(reservation);
+        this.reservations.get(task.id).add(reservation);
     }
 
     private boolean updateReservation(DeliveryTask task, DeliveryTaskData deliveryData, TimeLapse timeLapse) {
         // If the reservation has already been made, update it.
-        List<DeliveryTaskReservation> reservations = this.reservations.get(task.getID()).stream()
+        List<DeliveryTaskReservation> reservations = this.reservations.get(task.id).stream()
                 .filter(r -> r.deliveryTaskID == deliveryData.deliveryTaskID && r.robotID == deliveryData.robotID)
                 .collect(Collectors.toList());
 
@@ -254,8 +254,8 @@ public class ResourceAgent implements CommUser, RoadUser, TickListener {
             DeliveryTaskReservation r = reservations.get(0);
             DeliveryTaskReservation new_reservation = r.copy(timeLapse.getEndTime() + SimulatorSettings.INTENTION_RESERVATION_LIFETIME);
 
-            this.reservations.get(task.getID()).remove(r);
-            this.reservations.get(task.getID()).add(new_reservation);
+            this.reservations.get(task.id).remove(r);
+            this.reservations.get(task.id).add(new_reservation);
             return true;
         }
 
@@ -301,12 +301,12 @@ public class ResourceAgent implements CommUser, RoadUser, TickListener {
     }
 
     public void addDeliveryTask(DeliveryTask task) {
-        this.deliveryTasks.put(task.getID(), task);
-        this.reservations.put(task.getID(), new LinkedList<>());
+        this.deliveryTasks.put(task.id, task);
+        this.reservations.put(task.id, new LinkedList<>());
     }
 
     public void removeDeliveryTask(DeliveryTask task) {
-        this.deliveryTasks.remove(task.getID());
-        this.reservations.remove(task.getID());
+        this.deliveryTasks.remove(task.id);
+        this.reservations.remove(task.id);
     }
 }

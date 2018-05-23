@@ -11,8 +11,15 @@ public class DesireAnt extends Ant {
     public final int pizzas;
     public Long score;
 
-    public DesireAnt(List<Point> path, long estimatedTime, boolean isReturning, int id, Integer robotID, CommUser robot, Long score, int deliveryTaskID, int pizzas) {
-        super(path, estimatedTime, isReturning, id, robotID, robot);
+    public DesireAnt(int id, List<Point> path, long estimatedTime, boolean isReturning, Integer robotID, CommUser robot, Long score, int deliveryTaskID, int pizzas) {
+        super(id, path, estimatedTime, isReturning, robotID, robot);
+        this.score = score;
+        this.deliveryTaskID = deliveryTaskID;
+        this.pizzas = pizzas;
+    }
+
+    public DesireAnt(List<Point> path, long estimatedTime, boolean isReturning, Integer robotID, CommUser robot, Long score, int deliveryTaskID, int pizzas) {
+        super(path, estimatedTime, isReturning, robotID, robot);
         this.score = score;
         this.deliveryTaskID = deliveryTaskID;
         this.pizzas = pizzas;
@@ -24,10 +31,10 @@ public class DesireAnt extends Ant {
         score = (score != null) ? score : this.score;
         capacity = (capacity != null) ? capacity : this.pizzas;
 
-        return new DesireAnt(p, this.estimatedTime, returning, this.antID, this.robotID, this.robot, score, this.deliveryTaskID, capacity);
+        return new DesireAnt(this.id, p, this.estimatedTime, returning, this.robotID, this.robot, score, this.deliveryTaskID, capacity);
     }
 
     public DesireAnt copy(long estimatedTime) {
-        return new DesireAnt(this.path, estimatedTime, this.isReturning, this.antID, this.robotID, this.robot, this.score, this.deliveryTaskID, this.pizzas);
+        return new DesireAnt(this.id, this.path, estimatedTime, this.isReturning, this.robotID, this.robot, this.score, this.deliveryTaskID, this.pizzas);
     }
 }

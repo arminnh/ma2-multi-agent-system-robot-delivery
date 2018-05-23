@@ -21,8 +21,8 @@ public class DeliveryTask implements RoadUser, CommUser {
     private Point position;
     private int pizzasRequested;
     private int pizzasDelivered;
-    private int deliveryID;
-    private static int idCounter = 0;
+    public final int id;
+    private static int idCounter = 1;
     private Clock clock;
 
     public DeliveryTask(Point position, int pizzasRequested, long time, Clock clock) {
@@ -30,7 +30,7 @@ public class DeliveryTask implements RoadUser, CommUser {
         this.pizzasRequested = pizzasRequested;
         this.pizzasDelivered = 0;
         this.start_time = time;
-        this.deliveryID = this.getNextID();
+        this.id = this.getNextID();
     }
 
     private int getNextID(){
@@ -75,10 +75,6 @@ public class DeliveryTask implements RoadUser, CommUser {
 
     public long getWaitingTime(long currentTime) {
         return currentTime - start_time;
-    }
-
-    public int getID() {
-        return deliveryID;
     }
 
     public Long getScore() {

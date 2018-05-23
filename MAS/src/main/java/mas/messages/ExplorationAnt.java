@@ -13,8 +13,12 @@ import java.util.List;
  */
 public class ExplorationAnt extends MultiDestinationAnt {
 
-    public ExplorationAnt(List<Point> path, long estimatedTime, boolean isReturning, int antID, Integer robotID, CommUser robot, List<DeliveryTaskData> deliveries) {
-        super(path, estimatedTime, isReturning, antID, robotID, robot, deliveries);
+    public ExplorationAnt(int id, List<Point> path, long estimatedTime, boolean isReturning, Integer robotID, CommUser robot, List<DeliveryTaskData> deliveries) {
+        super(id, path, estimatedTime, isReturning, robotID, robot, deliveries);
+    }
+
+    public ExplorationAnt(List<Point> path, long estimatedTime, boolean isReturning, Integer robotID, CommUser robot, List<DeliveryTaskData> deliveries) {
+        super(path, estimatedTime, isReturning, robotID, robot, deliveries);
     }
 
     public ExplorationAnt copy(List<Point> p, Boolean returning, List<DeliveryTaskData> deliveries) {
@@ -22,10 +26,10 @@ public class ExplorationAnt extends MultiDestinationAnt {
         returning = (returning != null) ? returning : this.isReturning;
         deliveries = (deliveries != null) ? deliveries : this.deliveries;
 
-        return new ExplorationAnt(p, this.estimatedTime, returning, this.antID, this.robotID, this.robot, deliveries);
+        return new ExplorationAnt(this.id, p, this.estimatedTime, returning, this.robotID, this.robot, deliveries);
     }
 
     public ExplorationAnt copy(long estimatedTime) {
-        return new ExplorationAnt(this.path, estimatedTime, this.isReturning, this.antID, this.robotID, this.robot, this.deliveries);
+        return new ExplorationAnt(this.id, this.path, estimatedTime, this.isReturning, this.robotID, this.robot, this.deliveries);
     }
 }
