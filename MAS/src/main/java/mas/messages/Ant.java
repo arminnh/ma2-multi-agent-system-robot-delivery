@@ -14,7 +14,7 @@ public class Ant implements MessageContents {
     public final CommUser robot;
     public final boolean isReturning;
 
-    private int IDCounter = 1;
+    private static int IDCounter = 1;
 
     public Ant(int id, List<Point> path, long estimatedTime, boolean isReturning, Integer robotID, CommUser robot) {
         this.id = id;

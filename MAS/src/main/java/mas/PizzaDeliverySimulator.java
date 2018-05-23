@@ -75,7 +75,7 @@ public class PizzaDeliverySimulator{
                 .with(DeliveryTaskRenderer.builder())
                 .with(RobotRenderer.builder())
                 .with(StatsPanel.builder())
-                .withResolution(1920, 1080);
+                .withResolution(800, 600);
         /*
          * Image sources:
          * https://www.shutterstock.com/image-vector/line-pixel-style-classic-robot-rectangle-488817829

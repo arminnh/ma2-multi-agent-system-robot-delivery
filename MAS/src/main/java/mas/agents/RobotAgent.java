@@ -37,6 +37,7 @@ import org.apache.commons.math3.random.RandomGenerator;
 import org.jetbrains.annotations.NotNull;
 
 import javax.measure.unit.SI;
+import javax.swing.text.html.Option;
 import java.util.*;
 
 /**
@@ -69,6 +70,8 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
     private List<ExplorationAnt> explorationAnts = new LinkedList<>();
     private int waitingForDesireAnts = 0;
     private HashMap<DesireAnt, Long> desires = new HashMap<>();
+    private boolean goingToPizzeria = false;
+    private int waitingForIntentionAnt = 0;
 
     public RobotAgent(VehicleDTO vdto, Battery battery, int id, Point pizzeriaPosition, int alternativePathsToExplore) {
         super(vdto);
@@ -116,8 +119,8 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
         int remainingCapacity = this.getCapacityLeft();
 
         // Get all tasks with highest score sorted in descending
-        for (Map.Entry<DesireAnt, Integer> entry : sortMapDescending(this.desires)) {
-            int capacity = Math.min(remainingCapacity, entry.getValue());
+        for (Map.Entry<DesireAnt, Long> entry : sortMapDescending(this.desires)) {
+            int capacity = Math.min(remainingCapacity, entry.getValue().intValue());
 
             if (capacity > 0) {
                 bestTasks.add(entry.getKey());
@@ -147,7 +150,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
             this.evaluateExploredPathsAndReviseIntentions();
         }
 
-        if (this.desires.size() > 0 && this.waitingForDesireAnts == 0) {
+        if (!this.desires.isEmpty() && this.waitingForDesireAnts == 0) {
             // Decide on desire
             List<DesireAnt> bestTasks = getHighestDesires();
             List<DeliveryTaskData> deliveries = new LinkedList<>();
@@ -163,52 +166,61 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
             }
 
             explorePaths(deliveries);
-            explorePaths(Lists.reverse(deliveries));
-
+            if(deliveries.size() > 1){
+                explorePaths(Lists.reverse(deliveries));
+            }
             this.desires.clear();
         }
 
         // TODO: something for intention messages here ??
         if (!this.currentParcels.isEmpty() && !this.intention.isPresent()) {
             // Exploration or wait on ants
+            System.out.println("Nothing to see here");
+
 
         } else if (this.intention.isPresent()) {
             // Make the robot follow its intention. If the robot arrives at the next position it its
             // intention, that position will be removed from the Queue.
             this.move(time);
 
+            if (!this.currentParcels.isEmpty() &&
+                    this.currentParcels.peek().getDeliveryLocation() == this.getPosition().get()) {
+                System.out.println("Pizza delivery");
+
+                this.deliverPizzaParcel(time);
+            }
+
             // If robot arrived at the destination of the intention, the intention will be empty
             if (this.intention.get().isEmpty()) {
+                System.out.println("intention is empty");
+
                 this.intention = Optional.absent();
 
                 // If the robot was delivering a PizzaParcel
-                if (!this.currentParcels.isEmpty()) {
-                    this.deliverPizzaParcel(time);
-
-                    // If the robot was going towards a charging station
-                } else if (this.goingToCharge) {
+                if (this.goingToCharge) {
                     this.arriveAtChargingStation();
-
                     // If the robot was going towards a pizzeria
-                } else {
+                } else if(this.goingToPizzeria) {
                     this.arriveAtPizzeria(time);
                 }
             }
         } else {
             // No intention is present and no desire. First choose a new desire.
 
-            // If at pizzeria ask for tasks
-            if (this.isAtPizzeria && waitingForDesireAnts == 0) {
-                List<DeliveryTask> tasks = pizzeriaModel.getDeliveryTasks();
-
-                sendDesireAntsForTasks(tasks);
-            }
-
 
             // Only choose a new intention if not waiting for exploration ants.
-            if (this.waitingForExplorationAnts == 0) {
+            if (this.waitingForExplorationAnts == 0 && this.waitingForIntentionAnt == 0 && waitingForDesireAnts == 0) {
+                // If at pizzeria ask for tasks
+                if (this.isAtPizzeria) {
+                    List<DeliveryTask> tasks = pizzeriaModel.getDeliveryTasks();
+                    if(!tasks.isEmpty()){
+                        sendDesireAntsForTasks(tasks);
+                        return;
+                    }
+                }
 
                 // If a new parcel has been set on the robot, explore paths towards the destination of the parcel.
+                // Search new intentions
                 if (!this.currentParcels.isEmpty()) {
                     List<DeliveryTaskData> deliveries = new LinkedList<>();
 
@@ -223,6 +235,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
                 } else {
                     // Check if the robot should go to a charging station
                     if (this.getRemainingBatteryCapacity() <= 35) {
+                        System.out.println("GoingToCharge");
                         // TODO: maybe use the robot's idle timer to see if they have to recharge
                         this.goingToCharge = true;
                         ChargingStation station = this.roadModel.getObjectsOfType(ChargingStation.class).iterator().next();
@@ -233,6 +246,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
                     // Only explore new paths towards pizzeria if not already at pizzeria and not charging
                     if (!this.isAtPizzeria && !this.isCharging && !this.goingToCharge) {
                         explorePaths(this.pizzeriaPosition);
+                        this.goingToPizzeria = true;
                     }
                 }
             }
@@ -240,6 +254,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
     }
 
     private void sendDesireAntsForTasks(List<DeliveryTask> tasks) {
+        System.out.println("sendDesireAntsForTasks");
         for (DeliveryTask task : tasks) {
             List<Point> path = this.roadModel.getShortestPathTo(this, task.getPosition().get());
             DesireAnt desireAnt = new DesireAnt(path, 0,
@@ -273,9 +288,12 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
             // Intention ant
             if (m.getContents().getClass() == IntentionAnt.class) {
                 IntentionAnt ant = (IntentionAnt) m.getContents();
+                System.out.println("MHHH");
 
                 if (ant.toChargingStation) {
                     // TODO: Charging logic
+                    //System.out.println("CHARGING");
+                    this.intention = Optional.of(new LinkedList<>(ant.path));
                 } else {
                     for (DeliveryTaskData deliveryTaskData: ant.deliveries) {
                         if (deliveryTaskData.reservationConfirmed) {
@@ -287,7 +305,12 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
                             this.addPizzaParcel(parcel);
                         }
                     }
+
+                    if(this.hasPizzaParcel()){
+                        this.intention = Optional.of(new LinkedList<>(ant.path));
+                    }
                 }
+                this.waitingForIntentionAnt--;
             }
 
             if (m.getContents().getClass() == DesireAnt.class) {
@@ -318,16 +341,11 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
 
         // If the new best path is better than the current one, update the intention of the robot.
         if (!this.intention.isPresent() || bestTime < this.intentionTimeLeft) {
-            if (bestAnt == null) {
-                System.err.println("EVALUATED EXPLORATION ANTS BUT NO ANT WAS SELECTED AFTER EVALUATION.");
-            } else {
+            if(this.goingToPizzeria){
                 this.intention = Optional.of(new LinkedList<>(bestAnt.path));
-                this.intentionTimeLeft = bestTime;
+            }else{
+                this.sendIntentionAnt(bestAnt);
             }
-
-            // TODO: Send intention ant. If it turns out that the intention ant says that the path cannot be taken
-            // TODO: (e.g. because of new road works), then a new set of exploration messages should be sent.
-            this.sendIntentionAnt(bestAnt);
         }
     }
 
@@ -374,6 +392,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
 
             // Remove current PizzaParcel
             this.currentParcels.remove();
+
         } else {
             System.err.println("TRYING TO DELIVER FROM WRONG POSITION");
         }
@@ -401,7 +420,9 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
      */
     private void arriveAtPizzeria(@NotNull TimeLapse time) {
         if (this.roadModel.getPosition(this) == this.pizzeriaPosition) {
+            System.out.println("User at pizzeria!");
             this.isAtPizzeria = true;
+            this.goingToPizzeria = false;
 
             if (!this.timestampIdle.isPresent()) {
                 this.timestampIdle = Optional.of(time.getEndTime());
@@ -429,6 +450,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
         this.currentParcels.add(parcel);
         this.currentCapacity += parcel.amountOfPizzas;
         this.isAtPizzeria = false;
+        System.out.println("Current parcels: " + this.currentParcels.size());
     }
 
     /**
@@ -461,8 +483,10 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
      * Sends out IntentionAnt to perform the deliveries explored by an exploration ant.
      */
     private void sendIntentionAnt(ExplorationAnt explorationAnt) {
+
         IntentionAnt ant = new IntentionAnt(explorationAnt.path, 0, false, this.id,this,
                 explorationAnt.deliveries);
+        this.waitingForIntentionAnt++;
 
         this.commDevice.broadcast(ant);
     }
@@ -558,13 +582,13 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
         return alternativePaths;
     }
 
-    private static List<Map.Entry<DesireAnt, Integer>> sortMapDescending(HashMap map) {
+    private static List<Map.Entry<DesireAnt, Long>> sortMapDescending(HashMap map) {
         // From: https://beginnersbook.com/2013/12/how-to-sort-hashmap-in-java-by-keys-and-values/
 
-        List<Map.Entry<DesireAnt, Integer>> list = new LinkedList(map.entrySet());
+        List<Map.Entry<DesireAnt, Long>> list = new LinkedList(map.entrySet());
 
         // Defined Custom Comparator here
-        Collections.sort(list, new Comparator<Map.Entry<DesireAnt, Integer>>() {
+        Collections.sort(list, new Comparator<Map.Entry<DesireAnt, Long>>() {
             public int compare(Map.Entry o1, Map.Entry o2) {
                 return ((Comparable) o1.getValue())
                         .compareTo(o2.getValue());

@@ -123,13 +123,11 @@ public class PizzeriaModel extends Model.AbstractModel<PizzeriaUser> {
 
         if (task.isFinished()) {
             // If all pizzas for a deliveryTask have been delivered, the deliveryTask can be removed from the RoadModel.
-            this.roadModel.removeObject(task);
-
             Set<ResourceAgent> agents = this.roadModel.getObjectsAt(task, ResourceAgent.class);
             agents.iterator().next().removeDeliveryTask(task);
 
             eventDispatcher.dispatchEvent(new PizzeriaEvent(PizzeriaEventType.END_TASK, time, task, parcel, vehicle));
-
+            this.roadModel.removeObject(task);
             this.deliveryTasks.remove(task.id);
         }
     }

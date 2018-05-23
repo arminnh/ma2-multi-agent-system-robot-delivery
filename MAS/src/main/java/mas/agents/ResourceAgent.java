@@ -91,8 +91,7 @@ public class ResourceAgent implements CommUser, RoadUser, TickListener {
 
     private void handleDesireAnt(Message m) {
         DesireAnt ant = (DesireAnt) m.getContents();
-
-        System.out.println("Desire ant at " + this.position);
+        System.out.println("Desire ant at " + this.position + " id: " + ant.id);
 
         if (ant.hasReachedDestination(this.position)) {
             if (ant.isReturning) {
@@ -112,8 +111,7 @@ public class ResourceAgent implements CommUser, RoadUser, TickListener {
 
     private void handleExplorationAnt(Message m) {
         ExplorationAnt ant = (ExplorationAnt) m.getContents();
-
-        System.out.println("Exploration ant at " + this.position);
+        System.out.println("Exploration ant at " + this.position + " id: " + ant.id);
 
         // Check if the ant reached its current destination. Once the ant reached the original destination, the
         // destination and path are reversed towards the RobotAgent that sent the ant.
@@ -139,14 +137,14 @@ public class ResourceAgent implements CommUser, RoadUser, TickListener {
 
     private void handleIntentionAnt(Message m, TimeLapse timeLapse) {
         IntentionAnt ant = (IntentionAnt) m.getContents();
-        System.out.println("Intention ant at " + this.position);
+        System.out.println("Intention ant at " + this.position + " id: " + ant.id);
 
         if (ant.hasReachedDestination(this.position)) {
             if (ant.isReturning) {
                 this.commDevice.send(ant.copy(Lists.reverse(ant.path), true, ant.deliveries), ant.robot);
             } else {
                 if (ant.toChargingStation) {
-                    handleIntentionAntForChargingStation();
+                    handleIntentionAntForChargingStation(ant);
                 } else {
                     handleIntentionAntForDeliveryTask(timeLapse, ant);
                 }
@@ -161,7 +159,7 @@ public class ResourceAgent implements CommUser, RoadUser, TickListener {
         List<DeliveryTaskData> newDeliveriesData = new LinkedList<>();
 
         for (DeliveryTaskData deliveryData : ant.deliveries) {
-            if (deliveryData.position == this.position) {
+            if (deliveryData.position == this.position && deliveryData.deliveryTaskID != null) {
                 // Fetch the relevant DeliveryTask
                 DeliveryTask task = this.deliveryTasks.get(deliveryData.deliveryTaskID);
 
@@ -200,9 +198,10 @@ public class ResourceAgent implements CommUser, RoadUser, TickListener {
         }
     }
 
-    private void handleIntentionAntForChargingStation() {
+    private void handleIntentionAntForChargingStation(IntentionAnt ant) {
         if (this.chargingStation.isPresent()) {
             System.out.println(this.chargingStation.get());
+            this.sendAntToNextHop(ant.copy(Lists.reverse(ant.path), true, ant.deliveries));
             // TODO: charging logic
         } else {
             System.err.println("ANT ARRIVED AT DESTINATION WHILE GOING TO CHARGING STATION, BUT THERE WAS NO CHARGING STATION");
@@ -214,7 +213,7 @@ public class ResourceAgent implements CommUser, RoadUser, TickListener {
         List<DeliveryTaskData> newDeliveriesData = new LinkedList<>();
 
         for (DeliveryTaskData deliveryData : ant.deliveries) {
-            if (deliveryData.position == this.position) {
+            if (deliveryData.position == this.position && deliveryData.deliveryTaskID != null) {
                 // Get the task with the correct deliveryTaskID
                 DeliveryTask task = this.deliveryTasks.get(deliveryData.deliveryTaskID);
 

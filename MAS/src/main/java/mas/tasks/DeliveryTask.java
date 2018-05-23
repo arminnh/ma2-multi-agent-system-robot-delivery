@@ -31,6 +31,7 @@ public class DeliveryTask implements RoadUser, CommUser {
         this.pizzasDelivered = 0;
         this.start_time = time;
         this.id = this.getNextID();
+        this.clock = clock;
     }
 
     private int getNextID(){
