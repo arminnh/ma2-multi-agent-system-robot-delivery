@@ -18,9 +18,12 @@ import com.github.rinde.rinsim.core.model.time.TimeLapse;
 import com.github.rinde.rinsim.geom.Point;
 import com.google.common.base.Optional;
 import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Table;
 import mas.buildings.ChargingStation;
+import mas.buildings.Pizzeria;
 import mas.graphs.AStar;
+import mas.messages.DesireAnt;
 import mas.messages.ExplorationAnt;
 import mas.messages.IntentionAnt;
 import mas.models.PizzeriaModel;
@@ -32,10 +35,9 @@ import org.apache.commons.math3.random.RandomGenerator;
 import org.jetbrains.annotations.NotNull;
 
 import javax.measure.unit.SI;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Queue;
-import java.util.Set;
+import java.util.*;
+
+import static java.lang.Math.min;
 
 /**
  * Implementation of a delivery robot.
@@ -66,6 +68,8 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
     private Optional<PizzaParcel> currentParcel = Optional.absent();
     private Optional<ChargingStation> currentChargingStation = Optional.absent();
     private List<ImmutablePair<List<Point>, Long>> exploredPaths = new LinkedList<>();
+    private int waitingForDesireAnts = 0;
+    private HashMap<Integer, Integer> desires = new HashMap<>();
 
     public RobotAgent(VehicleDTO vdto, Battery battery, int id, Point pizzeriaPosition, int alternativePathsToExplore) {
         super(vdto);
@@ -80,6 +84,8 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
     public void initRoadPDP(RoadModel pRoadModel, PDPModel pPdpModel) {
         this.pdpModel = pPdpModel;
         this.roadModel = pRoadModel;
+        // TODO: Make sure that the static map never changes when we add a roadwork!!
+        // Maybe need to do a copy!
         this.graphRoadModel = (GraphRoadModel) pRoadModel;
     }
 
@@ -104,6 +110,43 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
         pizzeriaModel = model;
     }
 
+
+    private static List<Map.Entry<Integer,Integer>> sortMapDescending(HashMap map) {
+        // From: https://beginnersbook.com/2013/12/how-to-sort-hashmap-in-java-by-keys-and-values/
+
+        List<Map.Entry<Integer,Integer>> list = new LinkedList(map.entrySet());
+
+        // Defined Custom Comparator here
+        Collections.sort(list, new Comparator<Map.Entry<Integer,Integer>>() {
+            public int compare(Map.Entry o1, Map.Entry o2) {
+                return ((Comparable) o1.getValue())
+                        .compareTo(o2.getValue());
+            }
+        });
+
+        return Lists.reverse(list);
+    }
+
+    private List<Integer> getHighestDesires() {
+        List<Integer> bestTasks = new LinkedList<>();
+        int remainingCapacity = this.getCapacityLeft();
+
+        // Get all tasks with highest score sorted in descending
+        for(Map.Entry<Integer, Integer> entry: sortMapDescending(this.desires)){
+            int capacity =  Math.min(remainingCapacity, entry.getValue());
+
+            if(capacity > 0){
+                bestTasks.add(entry.getKey());
+                remainingCapacity -= capacity;
+            }else{
+                break;
+            }
+        }
+
+
+        return bestTasks;
+    }
+
     /**
      * The main logic of the robot. Handles messages, (re)evaluates paths and intentions, and moves the robot around
      * the virtual environment.
@@ -122,9 +165,18 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
             this.evaluateExploredPathsAndReviseIntentions();
         }
 
-        // TODO: something for intention messages here ??
+        if(this.desires.size() > 0 && this.waitingForDesireAnts == 0){
+            // Decide on desire
+            List<Integer> bestTasks = getHighestDesires();
 
-        if (this.intention.isPresent()) {
+            // TODO: send out exploration ants???
+
+        }
+
+        // TODO: something for intention messages here ??
+        if(this.currentParcel.isPresent() && !this.intention.isPresent()){
+            // Exploration or wait on ants
+        }else if (this.intention.isPresent()) {
             // Make the robot follow its intention. If the robot arrives at the next position it its
             // intention, that position will be removed from the Queue.
             this.move(time);
@@ -147,8 +199,16 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
                 }
             }
         } else {
-            // No intention is present. Choose a new one.
+            // No intention is present and no desire. First choose a new desire.
 
+            // If at pizzeria ask for tasks
+            if(this.isAtPizzeria && waitingForDesireAnts == 0){
+                List<DeliveryTask> tasks = this.askPizzeriaForTasks();
+
+                sendDesireAntsForTasks(tasks);
+            }
+            
+            
             // Only choose a new intention if not waiting for exploration ants.
             if (this.waitingForExplorationAnts == 0) {
 
@@ -173,6 +233,17 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
                     }
                 }
             }
+        }
+    }
+
+    private void sendDesireAntsForTasks(List<DeliveryTask> tasks) {
+        for(DeliveryTask task: tasks){
+            List<Point> path = this.roadModel.getShortestPathTo(this, task.getPosition().get());
+            DesireAnt desireAnt = new DesireAnt(path, 0,
+                    false, this.antID, this.id, this, 0, task.getDeliveryID(), 0);
+            this.antID++;
+            this.commDevice.broadcast(desireAnt);
+            this.waitingForDesireAnts++;
         }
     }
 
@@ -201,6 +272,13 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
             // Intention ant
             if (m.getContents().getClass() == IntentionAnt.class) {
                 // TODO
+            }
+
+            if(m.getContents().getClass() == DesireAnt.class){
+                DesireAnt ant = (DesireAnt) m.getContents();
+
+                this.desires.put(ant.deliveryID, ant.score);
+                this.waitingForDesireAnts--;
             }
         }
     }
@@ -232,6 +310,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
 
             // TODO: Send intention ant. If it turns out that the intention ant says that the path cannot be taken
             // TODO: (e.g. because of new road works), then a new set of exploration messages should be sent.
+            this.sendIntentionAnt(bestPath);
         }
     }
 
@@ -340,6 +419,11 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
         this.isAtPizzeria = false;
     }
 
+    public List<DeliveryTask> askPizzeriaForTasks(){
+        Set<Pizzeria> pizzerias = this.roadModel.getObjectsAt(this, Pizzeria.class);
+        return pizzerias.iterator().next().getTasks();
+    }
+
     /**
      * Explores different paths towards a single destination.
      */
@@ -357,6 +441,23 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
         // Generate a couple of possible paths towards the destination(s) and send exploration messages to explore them.
         List<List<Point>> paths = getAlternativePaths(this.alternativePathsToExplore, this.getPosition().get(), dests);
         sendExplorationAnts(paths);
+    }
+
+    /**
+     * Sends out IntentionAnt to reserve the destination
+     * @param path
+     */
+    private void sendIntentionAnt(Queue<Point> path){
+        IntentionAnt intAnt = null;
+        if(this.currentParcel.isPresent()){
+            intAnt = new IntentionAnt(new LinkedList<>(path),0,false,
+                    this.antID, this.id, this, this.currentParcel.get());
+        }else{
+            intAnt = new IntentionAnt(new LinkedList<>(path),0,false,
+                    this.antID, this.id, this, null);
+        }
+        this.commDevice.broadcast(intAnt);
+        this.antID += 1;
     }
 
     /**
@@ -390,6 +491,8 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
      * described in "Multi-agent route planning using delegate MAS." (2016).
      */
     private List<List<Point>> getAlternativePaths(int numberOfPaths, Point start, List<Point> dest) {
+        System.out.println("Nodes: " + this.graphRoadModel.getGraph().getNodes().size() +
+                " Connections: " + this.graphRoadModel.getGraph().getConnections().size());
         List<List<Point>> alternativePaths = new LinkedList<>();
 
         int fails = 0;

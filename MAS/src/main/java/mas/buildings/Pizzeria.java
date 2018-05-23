@@ -96,4 +96,8 @@ public class Pizzeria implements RoadUser, TickListener, PizzeriaUser {
     @Override
     public void afterTick(@NotNull TimeLapse timeLapse) {
     }
+
+    public List<DeliveryTask> getTasks() {
+        return this.getAvailableDeliveryTasks();
+    }
 }

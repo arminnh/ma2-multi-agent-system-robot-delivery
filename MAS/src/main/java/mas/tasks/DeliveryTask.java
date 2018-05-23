@@ -21,13 +21,19 @@ public class DeliveryTask implements RoadUser, CommUser {
     private int pizzasRequested;
     private int pizzasReady;
     private int pizzasDelivered;
-
+    private int deliveryID;
+    private static int idCounter = 0;
 
     public DeliveryTask(Point position, int pizzasRequested, long time) {
         this.position = position;
         this.pizzasRequested = pizzasRequested;
         this.pizzasDelivered = 0;
         this.start_time = time;
+        this.deliveryID = this.getNextID();
+    }
+
+    private int getNextID(){
+        return idCounter++;
     }
 
     @Override
@@ -76,5 +82,9 @@ public class DeliveryTask implements RoadUser, CommUser {
 
     public long getWaitingTime(long currentTime) {
         return currentTime - start_time;
+    }
+
+    public int getDeliveryID() {
+        return deliveryID;
     }
 }

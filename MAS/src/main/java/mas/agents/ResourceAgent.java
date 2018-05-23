@@ -8,13 +8,15 @@ import com.github.rinde.rinsim.core.model.time.TimeLapse;
 import com.github.rinde.rinsim.geom.Point;
 import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
-import mas.messages.ExplorationAnt;
-import mas.messages.Messages;
+import mas.buildings.ChargingStation;
+import mas.messages.*;
+import mas.tasks.DeliveryTask;
 import org.apache.commons.math3.random.RandomGenerator;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 public class ResourceAgent implements CommUser, RoadUser, TickListener {
 
@@ -65,8 +67,81 @@ public class ResourceAgent implements CommUser, RoadUser, TickListener {
                 neighbors.add(m.getSender());
             } else if (m.getContents().getClass() == ExplorationAnt.class) {
                 handleExplorationAnt(m);
+            } else if (m.getContents().getClass() == IntentionAnt.class) {
+                handleIntentionAnt(m);
+            } else if (m.getContents().getClass() == DesireAnt.class) {
+                handleDesireAnt(m);
             }
         }
+    }
+
+    private void handleDesireAnt(Message m) {
+        DesireAnt ant = (DesireAnt) m.getContents();
+        System.out.println("Desire ant at " + this.position);
+
+        /*
+        Desire ant has:
+        - list path
+        - long estimatedTime
+        - boolean isReturning,
+        - int id
+        - Integer robotID
+        - CommUser robot
+        - int score
+        - int deliveryID,
+        - int capacity
+         */
+
+        if(ant.hasReachedDestination(this.position)){
+            // Get delivery parcel
+            if(!ant.isReturning){
+                // We are looking for deliveryTasks
+                Set<DeliveryTask> deliveryTasks = this.roadModel.getObjectsAt(this, DeliveryTask.class);
+
+                
+            }
+            /*
+            if(deliveryTasks.size() > 0){
+                for(DeliveryTask task: deliveryTasks){
+                    // Find the task with the right id
+                    if(task.getDeliveryID() == ant.deliveryID){
+                        // Check if the task has resources left
+
+                    }
+                }
+            }else{
+                // Get charging station
+                Set<ChargingStation> chargingStation = this.roadModel.getObjectsAt(this, ChargingStation.class);
+            }*/
+        }else{
+            sendAntToNextHop(ant);
+        }
+    }
+
+    private void handleIntentionAnt(Message m) {
+        IntentionAnt ant = (IntentionAnt) m.getContents();
+        System.out.println("Intention ant at " + this.position);
+
+        if(ant.hasReachedDestination(this.position)){
+            // Get delivery parcel
+            Set<DeliveryTask> deliveryTasks = this.roadModel.getObjectsAt(this, DeliveryTask.class);
+            if(deliveryTasks.size() > 0){
+                for(DeliveryTask task: deliveryTasks){
+                    // Find the task with the right id
+                    if(task.getDeliveryID() == ant.deliveryID){
+                        // Check if the task has resources left
+
+                    }
+                }
+            }else{
+                // Get charging station
+                Set<ChargingStation> chargingStation = this.roadModel.getObjectsAt(this, ChargingStation.class);
+            }
+
+        }else{
+            sendAntToNextHop(ant);
+        }
+
     }
 
     private void handleExplorationAnt(Message m) {
@@ -97,7 +172,7 @@ public class ResourceAgent implements CommUser, RoadUser, TickListener {
         }
     }
 
-    private void sendAntToNextHop(ExplorationAnt ant) {
+    private void sendAntToNextHop(Ant ant) {
         if (ant.path.size() == 0) {
             System.out.println("CANNOT SEND ANT TO NEXT HOP FOR EMPTY PATH");
         }

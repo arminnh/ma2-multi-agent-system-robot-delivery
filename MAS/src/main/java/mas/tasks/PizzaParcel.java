@@ -9,6 +9,7 @@ public class PizzaParcel extends Parcel {
     public final int amountOfPizzas;
     // the time at which the PizzaParcel was created
     public final long start_time;
+    public int deliveryID;
 
     public PizzaParcel(ParcelDTO parcelDto, DeliveryTask deliveryTask, int pizzaAmount, long time) {
         super(parcelDto);
@@ -16,5 +17,6 @@ public class PizzaParcel extends Parcel {
         this.deliveryTask = deliveryTask;
         this.amountOfPizzas = pizzaAmount;
         this.start_time = time;
+        this.deliveryID = deliveryTask.getDeliveryID();
     }
 }
