@@ -73,6 +73,21 @@ public class ResourceAgent implements CommUser, RoadUser, TickListener {
         }
 
         readMessages(timeLapse);
+
+        evaporateReservations(timeLapse);
+    }
+
+    private void evaporateReservations(@NotNull TimeLapse timeLapse) {
+        // evaporates reservations
+        for(Integer k1: this.reservations.keySet()){
+            for(DeliveryTaskReservation resv: this.reservations.get(k1)){
+                if(resv.evaporationTimestamp > timeLapse.getStartTime()){
+                    // Evaporate this reservation
+                    System.out.println("Evaporation reservation " + resv.deliveryTaskID);
+                    this.reservations.get(k1).remove(resv);
+                }
+            }
+        }
     }
 
     private void readMessages(TimeLapse timeLapse) {
