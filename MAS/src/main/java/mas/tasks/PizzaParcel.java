@@ -17,6 +17,6 @@ public class PizzaParcel extends Parcel {
         this.deliveryTask = deliveryTask;
         this.amountOfPizzas = pizzaAmount;
         this.start_time = time;
-        this.deliveryID = deliveryTask.getDeliveryID();
+        this.deliveryID = deliveryTask.getID();
     }
 }

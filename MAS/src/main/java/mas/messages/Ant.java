@@ -9,18 +9,22 @@ import java.util.List;
 public class Ant implements MessageContents {
     public final List<Point> path;
     public final long estimatedTime;
-    public final int id;
+    public final int antID;
     public final int robotID;
     public final CommUser robot;
     public final boolean isReturning;
 
-    public Ant(List<Point> path, long estimatedTime, boolean isReturning, int id, Integer robotID, CommUser robot){
+    public Ant(List<Point> path, long estimatedTime, boolean isReturning, int antID, Integer robotID, CommUser robot) {
         this.robot = robot;
         this.isReturning = isReturning;
-        this.id = id;
+        this.antID = antID;
         this.robotID = robotID;
         this.path = path;
         this.estimatedTime = estimatedTime;
+    }
+
+    public Ant copy(long estimatedTime) {
+        return new Ant(this.path, estimatedTime, this.isReturning, this.antID, this.robotID, this.robot);
     }
 
     public boolean hasReachedDestination(Point p) {

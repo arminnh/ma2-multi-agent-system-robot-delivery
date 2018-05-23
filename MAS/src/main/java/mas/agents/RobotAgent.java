@@ -27,12 +27,12 @@ import mas.graphs.AStar;
 import mas.messages.DesireAnt;
 import mas.messages.ExplorationAnt;
 import mas.messages.IntentionAnt;
+import mas.messages.MultiDestinationAnt;
 import mas.models.PizzeriaModel;
 import mas.models.PizzeriaUser;
 import mas.tasks.DeliveryTask;
 import mas.tasks.PizzaParcel;
 import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.math3.random.RandomGenerator;
 import org.jetbrains.annotations.NotNull;
 
@@ -179,9 +179,9 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
             for(DesireAnt ant: bestTasks){
                 Point dest = ant.path.get(ant.path.size() - 1);
                 dests.add(dest);
-                int capacity =  Math.min(remainingCapacity, ant.capacity);
+                int capacity =  Math.min(remainingCapacity, ant.pizzas);
                 remainingCapacity -= capacity;
-                pairs.add(new DeliveryTaskData(dest, ant.deliveryID, capacity));
+                pairs.add(new DeliveryTaskData(dest, ant.deliveryTaskID, capacity));
             }
             // TODO: send out exploration ants???
             explorePaths(dests, pairs);
@@ -256,7 +256,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
         for(DeliveryTask task: tasks){
             List<Point> path = this.roadModel.getShortestPathTo(this, task.getPosition().get());
             DesireAnt desireAnt = new DesireAnt(path, 0,
-                    false, this.antID, this.id, this, null, task.getDeliveryID(), 0);
+                    false, this.antID, this.id, this, null, task.getID(), 0);
             this.antID++;
             this.commDevice.broadcast(desireAnt);
             this.waitingForDesireAnts++;
@@ -275,7 +275,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
 
             // If an exploration ant has returned, store the explored path and its estimated cost.
             if (m.getContents().getClass() == ExplorationAnt.class) {
-                ExplorationAnt ant = (ExplorationAnt) m.getContents();
+                MultiDestinationAnt ant = (MultiDestinationAnt) m.getContents();
 
                 this.exploredPaths.add(new ImmutablePair<>(ant.path, ant.estimatedTime));
 
@@ -363,7 +363,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
             PizzaParcel currParcel = this.currentParcel.get();
             DeliveryTask deliveryTask = currParcel.deliveryTask;
 
-            // If the robot is at the delivery location of the deliveryTask
+            // If the robot is at the delivery position of the deliveryTask
             if (this.roadModel.equalPosition(this, deliveryTask)) {
                 // Deliver the pizzas
                 this.pdpModel.deliver(this, currParcel, time);

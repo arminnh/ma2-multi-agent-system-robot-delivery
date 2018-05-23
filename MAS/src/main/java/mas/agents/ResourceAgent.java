@@ -1,6 +1,9 @@
 package mas.agents;
 
-import com.github.rinde.rinsim.core.model.comm.*;
+import com.github.rinde.rinsim.core.model.comm.CommDevice;
+import com.github.rinde.rinsim.core.model.comm.CommDeviceBuilder;
+import com.github.rinde.rinsim.core.model.comm.CommUser;
+import com.github.rinde.rinsim.core.model.comm.Message;
 import com.github.rinde.rinsim.core.model.road.RoadModel;
 import com.github.rinde.rinsim.core.model.road.RoadUser;
 import com.github.rinde.rinsim.core.model.time.TickListener;
@@ -16,9 +19,10 @@ import mas.tasks.DeliveryTask;
 import org.apache.commons.math3.random.RandomGenerator;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
+import java.util.stream.Collectors;
 
 public class ResourceAgent implements CommUser, RoadUser, TickListener {
 
@@ -29,7 +33,9 @@ public class ResourceAgent implements CommUser, RoadUser, TickListener {
     private Point position;
     private boolean first_tick = true;
     private List<CommUser> neighbors = new LinkedList<>();
-    private
+    private Optional<ChargingStation> chargingStation = Optional.absent();
+    private HashMap<Integer, DeliveryTask> deliveryTasks = new HashMap<>();
+    private HashMap<Integer, List<DeliveryTaskReservation>> reservations = new HashMap<>();
 
     public ResourceAgent(Point position, RandomGenerator rng) {
         this.position = position;
@@ -60,17 +66,17 @@ public class ResourceAgent implements CommUser, RoadUser, TickListener {
             this.commDevice.broadcast(Messages.NICE_TO_MEET_YOU);
         }
 
-        readMessages();
+        readMessages(timeLapse);
     }
 
-    private void readMessages() {
+    private void readMessages(TimeLapse timeLapse) {
         for (Message m : this.commDevice.getUnreadMessages()) {
             if (m.getContents() == Messages.NICE_TO_MEET_YOU) {
                 neighbors.add(m.getSender());
             } else if (m.getContents().getClass() == ExplorationAnt.class) {
                 handleExplorationAnt(m);
             } else if (m.getContents().getClass() == IntentionAnt.class) {
-                handleIntentionAnt(m);
+                handleIntentionAnt(m, timeLapse);
             } else if (m.getContents().getClass() == DesireAnt.class) {
                 handleDesireAnt(m);
             }
@@ -79,60 +85,23 @@ public class ResourceAgent implements CommUser, RoadUser, TickListener {
 
     private void handleDesireAnt(Message m) {
         DesireAnt ant = (DesireAnt) m.getContents();
+
         System.out.println("Desire ant at " + this.position);
 
-        if(ant.hasReachedDestination(this.position)){
-            // Get delivery parcel
-            if(!ant.isReturning){
-                // We are looking for deliveryTasks
-                Set<DeliveryTask> deliveryTasks = this.roadModel.getObjectsAt(this, DeliveryTask.class);
+        if (ant.hasReachedDestination(this.position)) {
+            if (ant.isReturning) {
+                this.commDevice.send(ant.copy(Lists.reverse(ant.path), true, null, null), ant.robot);
+            } else {
+                DeliveryTask task = this.deliveryTasks.get(ant.deliveryTaskID);
 
-                for(DeliveryTask task: deliveryTasks){
-                    if(task.getDeliveryID() == ant.deliveryID){
+                // Calculate distance
+                DesireAnt newAnt = ant.copy(Lists.reverse(ant.path), true, task.getScore(), this.getPizzasLeftForDeliveryTask(task.getID()));
 
-                        // Calculate distance
-
-                        DesireAnt newAnt = ant.copy(Lists.reverse(ant.path), null, true,
-                                task.getScore(), task.getPizzasLeft());
-
-                        sendAntToNextHop(newAnt);
-                    }
-                }
-            }else{
-
-                this.commDevice.send(ant.copy(
-                        Lists.reverse(ant.path),null, true, null, null
-                        ), ant.robot);
+                sendAntToNextHop(newAnt);
             }
-        }else{
+        } else {
             sendAntToNextHop(ant);
         }
-    }
-
-    private void handleIntentionAnt(Message m) {
-        IntentionAnt ant = (IntentionAnt) m.getContents();
-        System.out.println("Intention ant at " + this.position);
-
-        if(ant.hasReachedDestination(this.position)){
-            // Get delivery parcel
-            Set<DeliveryTask> deliveryTasks = this.roadModel.getObjectsAt(this, DeliveryTask.class);
-            if(deliveryTasks.size() > 0){
-                for(DeliveryTask task: deliveryTasks){
-                    // Find the task with the right id
-                    if(task.getDeliveryID() == ant.deliveryID){
-                        // Check if the task has resources left
-
-                    }
-                }
-            }else{
-                // Get charging station
-                Set<ChargingStation> chargingStation = this.roadModel.getObjectsAt(this, ChargingStation.class);
-            }
-
-        }else{
-            sendAntToNextHop(ant);
-        }
-
     }
 
     private void handleExplorationAnt(Message m) {
@@ -145,43 +114,146 @@ public class ResourceAgent implements CommUser, RoadUser, TickListener {
         if (ant.hasReachedDestination(this.position)) {
             if (ant.isReturning) {
                 // The ant reached the RobotAgent.
-                this.commDevice.send(ant.copy(Lists.reverse(ant.path), null, null, null), ant.robot);
+                this.commDevice.send(ant.copy(Lists.reverse(ant.path), null, null), ant.robot);
             } else {
+                // Create new list of DeliveryTaskData for next ant
+                List<DeliveryTaskData> newDeliveriesData = updateExplorationAntDeliveryData(ant);
 
-                Set<DeliveryTask> deliveryTasks = this.roadModel.getObjectsAt(this, DeliveryTask.class);
-                DeliveryTaskData data = ant.getDeliveryDataForLoc(this.position);
-                for (DeliveryTask task : deliveryTasks) {
-                    // Find the task with the right id
-                    if (task.getDeliveryID() == data.id) {
-                        // Check if the task has resources left
-                        List<DeliveryTaskData> newData = new LinkedList<>();
-                        for(DeliveryTaskData t : ant.deliveries){
-                            if(t.location != this.position){
-                                newData.add(t);
-                            }
-                        }
-
-                        newData.add(new DeliveryTaskData(data.location, data.id,
-                                Math.min(task.getPizzasLeft(), data.capacity)));
-
-                        if(ant.hasReachedFinalDestination(this.position)){
-                            sendAntToNextHop(ant.copy(Lists.reverse(ant.path), null, true, newData));
-                        }else{
-                            sendAntToNextHop(ant.copy(ant.path, null, false, newData));
-                        }
-                    }
+                if (ant.hasReachedFinalDestination(this.position)) {
+                    sendAntToNextHop(ant.copy(Lists.reverse(ant.path), true, newDeliveriesData));
+                } else {
+                    sendAntToNextHop(ant.copy(ant.path, false, newDeliveriesData));
                 }
             }
 
         } else {
-            long estimatedTime = ant.estimatedTime;
-            if (!ant.isReturning) {
-                estimatedTime++;
-                // TODO: calculate new estimated time based on this_location -> next_location
-            }
-
-            sendAntToNextHop(ant.copy(null, estimatedTime, null, null));
+            sendAntToNextHop(ant);
         }
+    }
+
+    private void handleIntentionAnt(Message m, TimeLapse timeLapse) {
+        IntentionAnt ant = (IntentionAnt) m.getContents();
+        System.out.println("Intention ant at " + this.position);
+
+        if (ant.hasReachedDestination(this.position)) {
+            if (ant.isReturning) {
+                this.commDevice.send(ant.copy(Lists.reverse(ant.path), true, ant.deliveries), ant.robot);
+            } else {
+                if (ant.toChargingStation) {
+                    handleIntentionAntForChargingStation();
+                } else {
+                    handleIntentionAntForDeliveryTask(timeLapse, ant);
+                }
+            }
+        } else {
+            sendAntToNextHop(ant);
+        }
+    }
+
+    private void handleIntentionAntForDeliveryTask(TimeLapse timeLapse, IntentionAnt ant) {
+        // Get data of all DeliveryTasks on this position
+        List<DeliveryTaskData> newDeliveriesData = new LinkedList<>();
+
+        for (DeliveryTaskData deliveryData : ant.deliveries) {
+            if (deliveryData.position == this.position) {
+                // Fetch the relevant DeliveryTask
+                DeliveryTask task = this.deliveryTasks.get(deliveryData.deliveryTaskID);
+
+                // Check if a reservation can be updated or can be made (= if the task has pizzas to be delivered)
+                boolean updated = this.updateReservation(task, deliveryData, timeLapse);
+
+                if (updated) {
+                    // The reservation has been updated, set 'confirmed' to true in the delivery data.
+                    newDeliveriesData.add(deliveryData.copy(true));
+
+                } else {
+                    if (deliveryData.pizzas <= this.getPizzasLeftForDeliveryTask(task.getID())) {
+                        createReservation(timeLapse, deliveryData, task);
+
+                        // A reservation has been created, set 'confirmed' to true in the delivery data.
+                        newDeliveriesData.add(deliveryData.copy(true));
+
+                    } else {
+                        // A reservation could not be created, set 'confirmed' to true in the delivery data.
+                        newDeliveriesData.add(deliveryData.copy(false));
+                    }
+
+                }
+
+            } else {
+                // Nothing to be done for this delivery data.
+                newDeliveriesData.add(deliveryData);
+            }
+        }
+
+        // Send the ants
+        if (ant.hasReachedFinalDestination(this.position)) {
+            this.sendAntToNextHop(ant.copy(Lists.reverse(ant.path), true, newDeliveriesData));
+        } else {
+            this.sendAntToNextHop(ant.copy(ant.path, false, newDeliveriesData));
+        }
+    }
+
+    private void handleIntentionAntForChargingStation() {
+        if (this.chargingStation.isPresent()) {
+            System.out.println(this.chargingStation.get());
+            // TODO: charging logic
+        } else {
+            System.err.println("ANT ARRIVED AT DESTINATION WHILE GOING TO CHARGING STATION, BUT THERE WAS NO CHARGING STATION");
+        }
+    }
+
+    @NotNull
+    private List<DeliveryTaskData> updateExplorationAntDeliveryData(ExplorationAnt ant) {
+        List<DeliveryTaskData> newDeliveriesData = new LinkedList<>();
+
+        for (DeliveryTaskData deliveryData : ant.deliveries) {
+            if (deliveryData.position == this.position) {
+                // Get the task with the correct deliveryTaskID
+                DeliveryTask task = this.deliveryTasks.get(deliveryData.deliveryTaskID);
+
+                // Calculate the (possibly new) amount of pizzas that the robot can send for this task
+                int newPizzaAmount = Math.min(this.getPizzasLeftForDeliveryTask(task.getID()), deliveryData.pizzas);
+
+                newDeliveriesData.add(new DeliveryTaskData(deliveryData.position, deliveryData.robotID,
+                        deliveryData.deliveryTaskID, newPizzaAmount, false));
+            } else {
+                // Nothing to be done for this delivery data.
+                newDeliveriesData.add(deliveryData);
+            }
+        }
+
+        return newDeliveriesData;
+    }
+
+    private void createReservation(TimeLapse timeLapse, DeliveryTaskData deliveryData, DeliveryTask task) {
+        // Make the reservation and send the ant back to confirm.
+        long evaporationTimestamp = timeLapse.getEndTime() + SimulatorSettings.INTENTION_RESERVATION_LIFETIME;
+
+        DeliveryTaskReservation reservation = new DeliveryTaskReservation(deliveryData.robotID,
+                task.getID(), deliveryData.pizzas, evaporationTimestamp
+        );
+
+        this.reservations.get(task.getID()).add(reservation);
+    }
+
+    private boolean updateReservation(DeliveryTask task, DeliveryTaskData deliveryData, TimeLapse timeLapse) {
+        // If the reservation has already been made, update it.
+        List<DeliveryTaskReservation> reservations = this.reservations.get(task.getID()).stream()
+                .filter(r -> r.deliveryTaskID == deliveryData.deliveryTaskID && r.robotID == deliveryData.robotID)
+                .collect(Collectors.toList());
+
+        if (reservations.size() > 0) {
+            // Update the timer.
+            DeliveryTaskReservation r = reservations.get(0);
+            DeliveryTaskReservation new_reservation = r.copy(timeLapse.getEndTime() + SimulatorSettings.INTENTION_RESERVATION_LIFETIME);
+
+            this.reservations.get(task.getID()).remove(r);
+            this.reservations.get(task.getID()).add(new_reservation);
+            return true;
+        }
+
+        return false;
     }
 
     private void sendAntToNextHop(Ant ant) {
@@ -189,17 +261,46 @@ public class ResourceAgent implements CommUser, RoadUser, TickListener {
             System.out.println("CANNOT SEND ANT TO NEXT HOP FOR EMPTY PATH");
         }
 
+        long estimatedTime = ant.estimatedTime;
+        if (!ant.isReturning) {
+            estimatedTime++;
+            // TODO: calculate new estimated time based on this_location -> next_location
+        }
+        ant = ant.copy(estimatedTime);
+
         int nextPositionIndex = ant.path.indexOf(this.position) + 1;
         Point nextPosition = ant.path.get(nextPositionIndex);
 
-        for (CommUser neighbor: this.neighbors) {
+        for (CommUser neighbor : this.neighbors) {
             if (neighbor.getPosition().get().equals(nextPosition)) {
                 this.commDevice.send(ant, neighbor);
             }
         }
     }
 
+    private int getPizzasLeftForDeliveryTask(Integer deliveryTaskID) {
+        DeliveryTask task = this.deliveryTasks.get(deliveryTaskID);
+        List<DeliveryTaskReservation> reservations = this.reservations.get(deliveryTaskID);
+
+        int pizzasInReservations = 0;
+        for (DeliveryTaskReservation r : reservations) {
+            pizzasInReservations += r.pizzaAmount;
+        }
+
+        return task.getPizzasRemaining() - pizzasInReservations;
+    }
+
     @Override
     public void afterTick(TimeLapse timeLapse) {
+    }
+
+    public void addDeliveryTask(DeliveryTask task) {
+        this.deliveryTasks.put(task.getID(), task);
+        this.reservations.put(task.getID(), new LinkedList<>());
+    }
+
+    public void removeDeliveryTask(DeliveryTask task) {
+        this.deliveryTasks.remove(task.getID());
+        this.reservations.remove(task.getID());
     }
 }

@@ -20,7 +20,6 @@ public class DeliveryTask implements RoadUser, CommUser {
     public final long start_time;
     private Point position;
     private int pizzasRequested;
-    private int pizzasReady;
     private int pizzasDelivered;
     private int deliveryID;
     private static int idCounter = 0;
@@ -58,24 +57,16 @@ public class DeliveryTask implements RoadUser, CommUser {
         return this.pizzasRequested;
     }
 
-    public int getPizzasReady() {
-        return this.pizzasReady;
+    public int getPizzasRemaining() {
+        return this.pizzasRequested - this.pizzasDelivered;
     }
 
     public int getPizzasDelivered() {
         return this.pizzasDelivered;
     }
 
-    public int getPizzasLeft() {
-        return this.pizzasRequested - this.pizzasReady;
-    }
-
     public boolean isFinished() {
         return this.pizzasDelivered == this.pizzasRequested;
-    }
-
-    public void addReadyPizzas(int amount) {
-        this.pizzasReady += amount;
     }
 
     public void deliverPizzas(int amount) {
@@ -86,7 +77,7 @@ public class DeliveryTask implements RoadUser, CommUser {
         return currentTime - start_time;
     }
 
-    public int getDeliveryID() {
+    public int getID() {
         return deliveryID;
     }
 
@@ -96,9 +87,5 @@ public class DeliveryTask implements RoadUser, CommUser {
         // - Use waiting time (OK)
         // - Estimated delivery time
         return getWaitingTime(clock.getCurrentTime());
-    }
-
-    public int getDeliveryAm(Integer pizzaDeliveryAmount) {
-        return Math.min(this.getPizzasLeft(), pizzaDeliveryAmount);
     }
 }

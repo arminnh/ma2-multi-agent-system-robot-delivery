@@ -11,6 +11,7 @@ import com.github.rinde.rinsim.core.model.time.TimeLapse;
 import com.github.rinde.rinsim.event.EventAPI;
 import com.github.rinde.rinsim.event.EventDispatcher;
 import com.github.rinde.rinsim.geom.Point;
+import mas.agents.ResourceAgent;
 import mas.agents.RobotAgent;
 import mas.buildings.ChargingStation;
 import mas.buildings.Pizzeria;
@@ -18,6 +19,8 @@ import mas.tasks.DeliveryTask;
 import mas.tasks.PizzaParcel;
 import org.apache.commons.math3.random.RandomGenerator;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Set;
 
 public class PizzeriaModel extends Model.AbstractModel<PizzeriaUser> {
 
@@ -82,6 +85,9 @@ public class PizzeriaModel extends Model.AbstractModel<PizzeriaUser> {
         DeliveryTask task = new DeliveryTask(roadModel.getRandomPosition(rng), pizzaAmount, time, clock);
         sim.register(task);
 
+        Set<ResourceAgent> agents = this.roadModel.getObjectsAt(task, ResourceAgent.class);
+        agents.iterator().next().addDeliveryTask(task);
+
         eventDispatcher.dispatchEvent(new PizzeriaEvent(
                 PizzeriaEventType.NEW_TASK, time, task, null, null
         ));
@@ -102,7 +108,6 @@ public class PizzeriaModel extends Model.AbstractModel<PizzeriaUser> {
         PizzaParcel parcel = this.newPizzaParcel(task, position, pizzaAmount, time.getStartTime());
 
         robotAgent.setPizzaParcel(parcel);
-        task.addReadyPizzas(pizzaAmount);
 
         this.pdpModel.pickup(robotAgent, parcel, time);
     }
@@ -113,6 +118,9 @@ public class PizzeriaModel extends Model.AbstractModel<PizzeriaUser> {
         task.deliverPizzas(parcel.amountOfPizzas);
 
         if (task.isFinished()) {
+            Set<ResourceAgent> agents = this.roadModel.getObjectsAt(task, ResourceAgent.class);
+            agents.iterator().next().removeDeliveryTask(task);
+
             eventDispatcher.dispatchEvent(new PizzeriaEvent(
                     PizzeriaEventType.END_TASK, time, task, parcel, vehicle
             ));

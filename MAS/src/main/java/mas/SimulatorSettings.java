@@ -20,4 +20,5 @@ public class SimulatorSettings {
     public static final double PIZZA_AMOUNT_MEAN = 4;
     public static final int ALTERNATIVE_PATHS_TO_EXPLORE = 5;
 
+    public static final long INTENTION_RESERVATION_LIFETIME = 10000L; // 10 seconds
 }
