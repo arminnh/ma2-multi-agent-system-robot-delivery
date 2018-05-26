@@ -16,7 +16,7 @@ public class SimulatorSettings {
     public static final double PROB_NEW_PARCEL = .02;
     public static final double PROB_PIZZERIA_OPEN = .002;
     public static final double PROB_PIZZERIA_CLOSE = .002;
-    public static final double PROB_NEW_ROAD_WORKS = 0.005;
+    public static final double PROB_NEW_ROAD_WORKS = 0;
     public static final long TIME_ROAD_WORKS = 15000;
     public static final double PIZZA_AMOUNT_STD = 0.75;
     public static final double PIZZA_AMOUNT_MEAN = 4;

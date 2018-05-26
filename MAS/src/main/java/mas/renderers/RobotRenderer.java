@@ -1,19 +1,13 @@
 package mas.renderers;
 
-import com.github.rinde.rinsim.core.model.pdp.PDPModel;
 import com.github.rinde.rinsim.core.model.road.RoadModel;
-import com.github.rinde.rinsim.core.model.road.RoadUser;
 import com.github.rinde.rinsim.geom.Point;
 import com.github.rinde.rinsim.ui.renderers.CanvasRenderer.AbstractCanvasRenderer;
 import com.github.rinde.rinsim.ui.renderers.ViewPort;
-import com.google.common.base.Predicate;
-import com.google.common.collect.Maps;
 import mas.agents.RobotAgent;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.GC;
-
-import java.util.Map;
-import java.util.Map.Entry;
+import org.jetbrains.annotations.NotNull;
 
 
 public class RobotRenderer extends AbstractCanvasRenderer {
@@ -33,25 +27,32 @@ public class RobotRenderer extends AbstractCanvasRenderer {
     }
 
     @Override
-    public void renderStatic(GC gc, ViewPort vp) {
+    public void renderStatic(@NotNull GC gc, @NotNull ViewPort vp) {
     }
 
     @Override
-    public void renderDynamic(GC gc, ViewPort vp, long time) {
-        final Map<RoadUser, Point> map = Maps.filterEntries(roadModel.getObjectsAndPositions(), Filter.ROBOTS);
+    public void renderDynamic(@NotNull GC gc, @NotNull ViewPort vp, long time) {
+        for (RobotAgent robot : this.roadModel.getObjectsOfType(RobotAgent.class)) {
+            if (!robot.getPosition().isPresent()) {
+                continue;
+            }
 
-        for (final Entry<RoadUser, Point> robotEntry : map.entrySet()) {
-            final RobotAgent robotAgent = (RobotAgent) robotEntry.getKey();
-            final Point p = robotAgent.getPosition().get();
-            final int currentBattery = robotAgent.getRemainingBatteryCapacity();
+            final Point p = robot.getPosition().get();
+            final int currentBattery = robot.getRemainingBatteryCapacity();
             final int x = vp.toCoordX(p.x) + X_OFFSET;
             final int y = vp.toCoordY(p.y) + Y_OFFSET;
 
             final org.eclipse.swt.graphics.Point extent = gc.textExtent(Integer.toString(100) + "%");
             gc.setBackground(gc.getDevice().getSystemColor(SWT.COLOR_BLACK));
 
-            gc.fillRoundRectangle(x - extent.x / 2, y - extent.y / 2, extent.x + 2, extent.y + 2,
-                    ROUND_RECT_ARC_HEIGHT, ROUND_RECT_ARC_HEIGHT);
+            gc.fillRoundRectangle(
+                    x - extent.x / 2,
+                    y - extent.y / 2,
+                    extent.x + 2,
+                    extent.y + 2,
+                    ROUND_RECT_ARC_HEIGHT,
+                    ROUND_RECT_ARC_HEIGHT
+            );
 
             if (currentBattery > 80) {
                 gc.setBackground(gc.getDevice().getSystemColor(SWT.COLOR_GREEN));
@@ -63,26 +64,24 @@ public class RobotRenderer extends AbstractCanvasRenderer {
                 gc.setBackground(gc.getDevice().getSystemColor(SWT.COLOR_RED));
             }
 
-            gc.fillRoundRectangle(x - extent.x / 2, y - extent.y / 2,
-                    Math.max((extent.x + 2) * currentBattery / 100, 0), extent.y + 2,
-                    ROUND_RECT_ARC_HEIGHT, ROUND_RECT_ARC_HEIGHT);
+            gc.fillRoundRectangle(
+                    x - extent.x / 2,
+                    y - extent.y / 2,
+                    Math.max((extent.x + 2) * currentBattery / 100, 0),
+                    extent.y + 2,
+                    ROUND_RECT_ARC_HEIGHT, ROUND_RECT_ARC_HEIGHT
+            );
 
             gc.setForeground(gc.getDevice().getSystemColor(SWT.COLOR_BLACK));
 
-            gc.drawText(Integer.toString(Math.max(currentBattery, 0)) + "%", x - extent.x / 2 + 1,
-                    y - extent.y / 2 + 1,true);
+            gc.drawText(
+                    Integer.toString(Math.max(currentBattery, 0)) + "%",
+                    x - extent.x / 2 + 1,
+                    y - extent.y / 2 + 1,
+                    true
+            );
         }
 
-    }
-
-    private enum Filter implements Predicate<Entry<RoadUser, Point>> {
-        ROBOTS {
-            @Override
-            public boolean apply(Entry<RoadUser, Point> input) {
-                return input.getKey() instanceof RobotAgent;
-            }
-
-        }
     }
 }
 

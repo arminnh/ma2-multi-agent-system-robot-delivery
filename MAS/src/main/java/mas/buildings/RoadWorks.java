@@ -24,7 +24,7 @@ public class RoadWorks implements RoadUser, TickListener, PizzeriaUser {
     }
 
     @Override
-    public void initRoadUser(RoadModel model) {
+    public void initRoadUser(@NotNull RoadModel model) {
         this.roadModel = model;
 
         this.roadModel.addObjectAt(this, this.position);

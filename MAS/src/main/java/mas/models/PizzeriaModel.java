@@ -132,7 +132,8 @@ public class PizzeriaModel extends Model.AbstractModel<PizzeriaUser> {
             this.deliveryTasks.remove(task.id);
 
             // Unregister the task from the simulator
-            this.sim.unregister(task);
+            //
+            //this.sim.unregister(task);
         }
     }
 

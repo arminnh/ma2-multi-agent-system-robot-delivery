@@ -71,7 +71,7 @@ public class PizzaDeliverySimulator {
                 .with(CommRenderer.builder().withMessageCount()
                         //.withReliabilityColors()
                         //.withToString()
-                        //.withMessageCount())
+                        //.withMessageCount()
                 )
                 .with(DeliveryTaskRenderer.builder())
                 .with(RobotRenderer.builder())
