@@ -213,6 +213,8 @@ public class PizzeriaModel extends Model.AbstractModel<PizzeriaUser> {
 
         // Remove all connections to neighbors for which the connections in both ways can be removed.
         for (ResourceAgent neighbor : resourceAgent.getNeighbors()) {
+            // TODO: fetch all robots and check that their positions do not lie in (resourceAgent.position, neighbor.position)
+
             // Try to remove the connection in one way, then try to remove it in the other.
             // If the connection cannot be removed in both ways, make sure they both are still in the graph afterwards.
             try {
