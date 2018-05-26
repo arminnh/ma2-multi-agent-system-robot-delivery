@@ -165,4 +165,10 @@ public class PizzeriaModel extends Model.AbstractModel<PizzeriaUser> {
     public Long getCurrentTime(){
         return clock.getCurrentTime();
     }
+
+    public void dropParcel(RobotAgent robotAgent, PizzaParcel removeParcel, TimeLapse time) {
+        eventDispatcher.dispatchEvent(new PizzeriaEvent(
+                PizzeriaEventType.DROP_PARCEL, time.getStartTime(), null,  removeParcel, robotAgent
+        ));
+    }
 }

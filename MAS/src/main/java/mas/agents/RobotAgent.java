@@ -32,6 +32,7 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.math3.analysis.function.Exp;
 import org.apache.commons.math3.random.RandomGenerator;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.measure.unit.SI;
 import javax.swing.text.html.Option;
@@ -321,7 +322,6 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
 
     private void handleIntentionAntMessage(TimeLapse time, Message m) {
         IntentionAnt ant = (IntentionAnt) m.getContents();
-        System.out.println("MHHH");
 
         if (ant.toChargingStation) {
             // TODO: Charging logic
@@ -329,7 +329,8 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
             this.intention = Optional.of(new LinkedList<>(ant.path));
         } else {
             for (DeliveryTaskData deliveryTaskData: ant.deliveries) {
-                if (deliveryTaskData.reservationConfirmed) {
+                // Check if we don't have a parcel yet and if the reservation is confirmed
+                if (deliveryTaskData.reservationConfirmed && this.getParcelForDeliveryTaskID(deliveryTaskData) == null) {
                     PizzaParcel parcel = this.pizzeriaModel.newPizzaParcel(deliveryTaskData.deliveryTaskID,
                             this.getPosition().get(), deliveryTaskData.pizzas, time.getStartTime());
 
@@ -338,6 +339,21 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
                     this.addPizzaParcel(parcel);
                 }else{
                     System.out.println("Reservation denied");
+                    if(this.intention.isPresent()){
+                        // There was a reservation denied
+                        // Get the correct parcel from our current parcels
+                        PizzaParcel removeParcel = getParcelForDeliveryTaskID(deliveryTaskData);
+
+                        if(removeParcel != null){
+                            this.currentParcels.remove(removeParcel);
+
+                            // Notify the model that we're dropping a parcel
+                            this.pizzeriaModel.dropParcel(this, removeParcel, time);
+
+                            // Unregister the parcel from pdp
+                            this.pdpModel.unregister(removeParcel);
+                        }
+                    }
                 }
             }
 
@@ -349,6 +365,17 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
             }
         }
         this.waitingForIntentionAnt--;
+    }
+
+    @Nullable
+    private PizzaParcel getParcelForDeliveryTaskID(DeliveryTaskData deliveryTaskData) {
+        PizzaParcel removeParcel = null;
+        for(PizzaParcel p : this.currentParcels){
+            if(p.deliveryTaskID == deliveryTaskData.deliveryTaskID){
+                removeParcel = p;
+            }
+        }
+        return removeParcel;
     }
 
     /**

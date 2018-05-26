@@ -43,6 +43,11 @@ public enum PizzeriaEventType {
     /**
      * Indicates that a {@link RobotAgent} is leaving a {@link mas.buildings.ChargingStation}
      */
-    ROBOT_LEAVING_CHARGING_STATION
+    ROBOT_LEAVING_CHARGING_STATION,
+
+    /**
+     * Indicates that a {@link RobotAgent} is dropping a {@link mas.tasks.PizzaParcel}
+     */
+    DROP_PARCEL
 
 }

@@ -11,6 +11,10 @@
 
 7. Intention
 8. Create pizzaParcel
+9. Try to deliver parcel
+    1. Send intention ants regularly to refresh the reservation
+    2. If refresh OK => keep driving
+    3. If refresh NOK => return to pizzeria
 
 
 

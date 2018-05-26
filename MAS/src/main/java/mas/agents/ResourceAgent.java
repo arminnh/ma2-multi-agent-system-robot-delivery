@@ -79,13 +79,14 @@ public class ResourceAgent implements CommUser, RoadUser, TickListener {
 
     private void evaporateReservations(@NotNull TimeLapse timeLapse) {
         // evaporates reservations
+        //System.out.println("It is now: " + timeLapse.getStartTime());
         for(Integer k1: this.reservations.keySet()){
-            for(DeliveryTaskReservation resv: this.reservations.get(k1)){
-                if(resv.evaporationTimestamp > timeLapse.getStartTime()){
-                    // Evaporate this reservation
-                    System.out.println("Evaporation reservation " + resv.deliveryTaskID);
-                    this.reservations.get(k1).remove(resv);
-                }
+            //System.out.println("Resv for " + k1 + " is " + this.reservations.get(k1).size());
+            int oldSize = this.reservations.get(k1).size();
+            this.reservations.get(k1).removeIf(r -> r.evaporationTimestamp < timeLapse.getStartTime());
+            //System.out.println("Updated Resv for " + k1 + " is " + this.reservations.get(k1).size());
+            if(oldSize > this.reservations.get(k1).size()){
+                System.out.println("Evaporation!");
             }
         }
     }
@@ -268,12 +269,11 @@ public class ResourceAgent implements CommUser, RoadUser, TickListener {
     private void createReservation(TimeLapse timeLapse, DeliveryTaskData deliveryData, DeliveryTask task) {
         // Make the reservation and send the ant back to confirm.
         long evaporationTimestamp = timeLapse.getEndTime() + SimulatorSettings.INTENTION_RESERVATION_LIFETIME;
-
         DeliveryTaskReservation reservation = new DeliveryTaskReservation(deliveryData.robotID,
                 task.id, deliveryData.pizzas, evaporationTimestamp
         );
 
-        System.out.println("Reservation " + task.id + " "+  deliveryData.robotID+" "+ deliveryData.pizzas);
+        System.out.println("Reservation " + task.id + " "+  deliveryData.robotID+" "+ deliveryData.pizzas + " " + evaporationTimestamp);
         this.reservations.get(task.id).add(reservation);
     }
 
