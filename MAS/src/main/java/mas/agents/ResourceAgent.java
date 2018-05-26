@@ -11,7 +11,7 @@ import com.github.rinde.rinsim.core.model.time.TimeLapse;
 import com.github.rinde.rinsim.geom.Point;
 import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
-import mas.DeliveryTaskData;
+import mas.IntentionData;
 import mas.SimulatorSettings;
 import mas.buildings.ChargingStation;
 import mas.messages.*;
@@ -143,8 +143,8 @@ public class ResourceAgent implements CommUser, RoadUser, TickListener {
                 // The ant reached the RobotAgent.
                 this.commDevice.send(ant.copy(Lists.reverse(ant.path), null, null), ant.robot);
             } else {
-                // Create new list of DeliveryTaskData for next ant
-                List<DeliveryTaskData> newDeliveriesData = updateExplorationAntDeliveryData(ant);
+                // Create new list of IntentionData for next ant
+                List<IntentionData> newDeliveriesData = updateExplorationAntDeliveryData(ant);
 
                 if (ant.hasReachedFinalDestination(this.position)) {
                     sendAntToNextHop(ant.copy(Lists.reverse(ant.path), true, newDeliveriesData));
@@ -179,17 +179,16 @@ public class ResourceAgent implements CommUser, RoadUser, TickListener {
 
     private void handleIntentionAntForDeliveryTask(TimeLapse timeLapse, IntentionAnt ant) {
         // Get data of all DeliveryTasks on this position
-        List<DeliveryTaskData> newDeliveriesData = new LinkedList<>();
+        List<IntentionData> newDeliveriesData = new LinkedList<>();
 
-        for (DeliveryTaskData deliveryData : ant.deliveries) {
+        for (IntentionData deliveryData : ant.deliveries) {
             if (deliveryData.position == this.position && deliveryData.deliveryTaskID != null) {
                 // Fetch the relevant DeliveryTask
                 DeliveryTask task = this.deliveryTasks.get(deliveryData.deliveryTaskID);
 
                 // Check if a reservation can be updated or can be made (= if the task has pizzas to be delivered)
-                boolean updated = false;
                 if(task != null){
-                    updated = this.updateReservation(task, deliveryData, timeLapse);
+                    boolean updated = this.updateReservation(task, deliveryData, timeLapse);
 
                     if (updated) {
                         // The reservation has been updated, set 'confirmed' to true in the delivery data.
@@ -238,10 +237,10 @@ public class ResourceAgent implements CommUser, RoadUser, TickListener {
     }
 
     @NotNull
-    private List<DeliveryTaskData> updateExplorationAntDeliveryData(ExplorationAnt ant) {
-        List<DeliveryTaskData> newDeliveriesData = new LinkedList<>();
+    private List<IntentionData> updateExplorationAntDeliveryData(ExplorationAnt ant) {
+        List<IntentionData> newDeliveriesData = new LinkedList<>();
 
-        for (DeliveryTaskData deliveryData : ant.deliveries) {
+        for (IntentionData deliveryData : ant.deliveries) {
             if (deliveryData.position == this.position && deliveryData.deliveryTaskID != null) {
                 // Get the task with the correct deliveryTaskID
                 DeliveryTask task = this.deliveryTasks.get(deliveryData.deliveryTaskID);
@@ -254,7 +253,7 @@ public class ResourceAgent implements CommUser, RoadUser, TickListener {
                     newPizzaAmount = Math.min(this.getPizzasLeftForDeliveryTask(task.id), deliveryData.pizzas);
                 }
 
-                newDeliveriesData.add(new DeliveryTaskData(deliveryData.position, deliveryData.robotID,
+                newDeliveriesData.add(new IntentionData(deliveryData.position, deliveryData.robotID,
                         deliveryData.deliveryTaskID, newPizzaAmount, false));
 
             } else {
@@ -266,7 +265,7 @@ public class ResourceAgent implements CommUser, RoadUser, TickListener {
         return newDeliveriesData;
     }
 
-    private void createReservation(TimeLapse timeLapse, DeliveryTaskData deliveryData, DeliveryTask task) {
+    private void createReservation(TimeLapse timeLapse, IntentionData deliveryData, DeliveryTask task) {
         // Make the reservation and send the ant back to confirm.
         long evaporationTimestamp = timeLapse.getEndTime() + SimulatorSettings.INTENTION_RESERVATION_LIFETIME;
         DeliveryTaskReservation reservation = new DeliveryTaskReservation(deliveryData.robotID,
@@ -277,9 +276,8 @@ public class ResourceAgent implements CommUser, RoadUser, TickListener {
         this.reservations.get(task.id).add(reservation);
     }
 
-    private boolean updateReservation(DeliveryTask task, DeliveryTaskData deliveryData, TimeLapse timeLapse) {
-        // If the reservation has already been made, update it.
-
+    private boolean updateReservation(DeliveryTask task, IntentionData deliveryData, TimeLapse timeLapse) {
+        // If the reservation has already been made by the same robot, update it.
         List<DeliveryTaskReservation> reservations = this.reservations.get(task.id).stream()
                 .filter(r -> r.deliveryTaskID == deliveryData.deliveryTaskID && r.robotID == deliveryData.robotID)
                 .collect(Collectors.toList());
@@ -308,7 +306,7 @@ public class ResourceAgent implements CommUser, RoadUser, TickListener {
             // TODO: calculate new estimated time based on this_location -> next_location
         }
         ant = ant.copy(estimatedTime);
-
+        System.out.println("ant.path = " + ant.path);
         int nextPositionIndex = ant.path.indexOf(this.position) + 1;
         Point nextPosition = ant.path.get(nextPositionIndex);
 

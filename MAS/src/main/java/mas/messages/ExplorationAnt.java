@@ -2,7 +2,7 @@ package mas.messages;
 
 import com.github.rinde.rinsim.core.model.comm.CommUser;
 import com.github.rinde.rinsim.geom.Point;
-import mas.DeliveryTaskData;
+import mas.IntentionData;
 
 import java.util.List;
 
@@ -13,15 +13,15 @@ import java.util.List;
  */
 public class ExplorationAnt extends MultiDestinationAnt {
 
-    public ExplorationAnt(int id, List<Point> path, long estimatedTime, boolean isReturning, Integer robotID, CommUser robot, List<DeliveryTaskData> deliveries) {
+    public ExplorationAnt(int id, List<Point> path, long estimatedTime, boolean isReturning, Integer robotID, CommUser robot, List<IntentionData> deliveries) {
         super(id, path, estimatedTime, isReturning, robotID, robot, deliveries);
     }
 
-    public ExplorationAnt(List<Point> path, long estimatedTime, boolean isReturning, Integer robotID, CommUser robot, List<DeliveryTaskData> deliveries) {
+    public ExplorationAnt(List<Point> path, long estimatedTime, boolean isReturning, Integer robotID, CommUser robot, List<IntentionData> deliveries) {
         super(path, estimatedTime, isReturning, robotID, robot, deliveries);
     }
 
-    public ExplorationAnt copy(List<Point> p, Boolean returning, List<DeliveryTaskData> deliveries) {
+    public ExplorationAnt copy(List<Point> p, Boolean returning, List<IntentionData> deliveries) {
         p = (p != null) ? p : this.path;
         returning = (returning != null) ? returning : this.isReturning;
         deliveries = (deliveries != null) ? deliveries : this.deliveries;

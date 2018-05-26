@@ -39,7 +39,9 @@ public class Ant implements MessageContents {
     }
 
     public boolean hasReachedDestination(Point p) {
-        return this.path.get(this.path.size() - 1) == p;
+        //System.out.println("p + \" \" +this.path.get(this.path.size() - 1)  = " + p + " " +this.path.get(this.path.size() - 1) );
+        //System.out.println("this.path.get(this.path.size() - 1) == p = " + (this.path.get(this.path.size() - 1).equals(p)));
+        return this.path.get(this.path.size() - 1).equals(p);
     }
 
     private int getNextID() {

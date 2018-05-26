@@ -167,8 +167,10 @@ public class PizzeriaModel extends Model.AbstractModel<PizzeriaUser> {
     }
 
     public void dropParcel(RobotAgent robotAgent, PizzaParcel removeParcel, TimeLapse time) {
+        //this.sim.unregister(removeParcel);
         eventDispatcher.dispatchEvent(new PizzeriaEvent(
                 PizzeriaEventType.DROP_PARCEL, time.getStartTime(), null,  removeParcel, robotAgent
         ));
+
     }
 }

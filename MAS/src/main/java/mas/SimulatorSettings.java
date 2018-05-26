@@ -5,7 +5,7 @@ public class SimulatorSettings {
     public static final long RANDOM_SEED = 123L;
     public static final int SIM_SPEEDUP = 1;
 
-    public static final int NUM_ROBOTS = 3;
+    public static final int NUM_ROBOTS = 1;
     public static final int ROBOT_CAPACITY = 5;
     public static final int BATTERY_CAPACITY = 100;
     public static final int VEHICLE_LENGTH = 1;
@@ -21,4 +21,6 @@ public class SimulatorSettings {
     public static final int ALTERNATIVE_PATHS_TO_EXPLORE = 3;
 
     public static final long INTENTION_RESERVATION_LIFETIME = 10000L; // 10 seconds
+    public static final Long REFRESH_INTENTIONS = 1000L; // 4 seconds
+    public static final Long REFRESH_EXPLORATIONS = 20000L;
 }

@@ -89,7 +89,7 @@ public class PizzaDeliverySimulator{
                 .setTickLength(SimulatorSettings.TICK_LENGTH)
                 // set the random seed we use in this 'experiment'
                 //.setRandomSeed(RANDOM_SEED)
-                .addModel(RoadModelBuilders.dynamicGraph(CityGraphCreator.createGraph(10, SimulatorSettings.VEHICLE_LENGTH))
+                .addModel(RoadModelBuilders.dynamicGraph(CityGraphCreator.createGraph(5, SimulatorSettings.VEHICLE_LENGTH))
                         .withDistanceUnit(SI.METER)
                         .withModificationCheck(true))
                 .addModel(DefaultPDPModel.builder())
@@ -132,7 +132,8 @@ public class PizzaDeliverySimulator{
 
             // Robots start at the pizzeria
             sim.register(new RobotAgent(
-                    vdto, battery, getNextRobotID(), pizzeria.getPosition(), SimulatorSettings.ALTERNATIVE_PATHS_TO_EXPLORE
+                    vdto, battery, getNextRobotID(), pizzeria.getPosition(),
+                    SimulatorSettings.ALTERNATIVE_PATHS_TO_EXPLORE, chargingStation.getPosition()
             ));
         }
 

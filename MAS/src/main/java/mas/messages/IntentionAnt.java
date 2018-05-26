@@ -2,7 +2,7 @@ package mas.messages;
 
 import com.github.rinde.rinsim.core.model.comm.CommUser;
 import com.github.rinde.rinsim.geom.Point;
-import mas.DeliveryTaskData;
+import mas.IntentionData;
 
 import java.util.List;
 
@@ -16,21 +16,21 @@ public class IntentionAnt extends MultiDestinationAnt {
     public final boolean toChargingStation;
     public final boolean toDeliveryTask;
 
-    public IntentionAnt(int id, List<Point> path, long estimatedTime, boolean isReturning, Integer robotID, CommUser robot, List<DeliveryTaskData> deliveries) {
-        super(id, path, estimatedTime, isReturning, robotID, robot, deliveries);
+    public IntentionAnt(int id, List<Point> path, long estimatedTime, boolean isReturning, Integer robotID, CommUser robot, List<IntentionData> intentions) {
+        super(id, path, estimatedTime, isReturning, robotID, robot, intentions);
 
-        this.toDeliveryTask = deliveries.get(0).deliveryTaskID != null;
+        this.toDeliveryTask = deliveries != null && deliveries.get(0).deliveryTaskID != null;
         this.toChargingStation = !this.toDeliveryTask;
     }
 
-    public IntentionAnt(List<Point> path, long estimatedTime, boolean isReturning, Integer robotID, CommUser robot, List<DeliveryTaskData> deliveries) {
-        super(path, estimatedTime, isReturning, robotID, robot, deliveries);
+    public IntentionAnt(List<Point> path, long estimatedTime, boolean isReturning, Integer robotID, CommUser robot, List<IntentionData> intentions) {
+        super(path, estimatedTime, isReturning, robotID, robot, intentions);
 
-        this.toDeliveryTask = deliveries.get(0).deliveryTaskID != null;
+        this.toDeliveryTask = deliveries != null && deliveries.get(0).deliveryTaskID != null;
         this.toChargingStation = !this.toDeliveryTask;
     }
 
-    public IntentionAnt copy(List<Point> path, boolean isReturning, List<DeliveryTaskData> deliveries) {
+    public IntentionAnt copy(List<Point> path, boolean isReturning, List<IntentionData> deliveries) {
         return new IntentionAnt(this.id, path, this.estimatedTime, isReturning, this.robotID, this.robot, deliveries);
     }
 

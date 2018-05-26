@@ -14,18 +14,32 @@ public class AStar {
     public AStar() {
     }
 
+    static double _roundToClosestEven(double d){
+        return Math.round(d / 2) *2 ;
+    }
+
+    static Point roundStartPointToEven(Point start){
+        double new_x = _roundToClosestEven(start.x);
+        double new_y = _roundToClosestEven(start.y);
+
+        return new Point(new_x, new_y);
+    }
+
     static public List<Point> getShortestPath(GraphRoadModel graphModel, Table<Point, Point, Double> weights,
                                               Point start, List<Point> dest) {
         // Implementation of A* based on https://en.wikipedia.org/wiki/A*_search_algorithm#Pseudocode
-        List<Point> path = new LinkedList<>();
-
         // Points already evaluated
         List<Point> closedSet = new LinkedList<>();
 
         // The set of currently discovered nodes that are not evaluated yet.
         // Initially, only the start node is known.
         List<Point> openSet = new LinkedList<>();
+        //System.out.println("start = " + start);
+        start = roundStartPointToEven(start);
+        //System.out.println("start2 = " + start);
+
         openSet.add(start);
+
 
         HashMap<Point, Point> cameFrom = new HashMap<>();
 
@@ -106,6 +120,7 @@ public class AStar {
         Point minPoint = null;
         double minVal = Double.MAX_VALUE;
         for (Point p : points) {
+            //System.out.println("p = " + p);
             double fVal = fScore.get(p);
             if (fVal < minVal) {
                 minVal = fVal;
