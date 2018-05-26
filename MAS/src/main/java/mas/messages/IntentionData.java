@@ -21,4 +21,14 @@ public class IntentionData {
     public IntentionData copy(boolean confirmed) {
         return new IntentionData(this.position, this.robotID, this.deliveryTaskID, this.pizzas, confirmed);
     }
+
+    @Override
+    public String toString() {
+        return "{destination: " + this.position +
+                ", robotID: " + this.robotID +
+                ", deliveryTaskID: " + this.deliveryTaskID +
+                ", pizzas: " + this.pizzas +
+                ", reservationConfirmed: " + this.reservationConfirmed +
+                "}";
+    }
 }
