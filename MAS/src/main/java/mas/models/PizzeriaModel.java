@@ -4,11 +4,14 @@ import com.github.rinde.rinsim.core.Simulator;
 import com.github.rinde.rinsim.core.model.Model;
 import com.github.rinde.rinsim.core.model.pdp.Parcel;
 import com.github.rinde.rinsim.core.model.pdp.ParcelDTO;
+import com.github.rinde.rinsim.core.model.road.DynamicGraphRoadModelImpl;
 import com.github.rinde.rinsim.core.model.road.RoadModel;
 import com.github.rinde.rinsim.core.model.time.Clock;
 import com.github.rinde.rinsim.core.model.time.TimeLapse;
 import com.github.rinde.rinsim.event.EventAPI;
 import com.github.rinde.rinsim.event.EventDispatcher;
+import com.github.rinde.rinsim.geom.Connection;
+import com.github.rinde.rinsim.geom.ListenableGraph;
 import com.github.rinde.rinsim.geom.Point;
 import mas.SimulatorSettings;
 import mas.agents.ResourceAgent;
@@ -42,13 +45,13 @@ public class PizzeriaModel extends Model.AbstractModel<PizzeriaUser> {
         this.clock = clock;
     }
 
+    public static PizzeriaModelBuilder builder() {
+        return new PizzeriaModelBuilder();
+    }
+
     public void setSimulator(Simulator sim, RandomGenerator rng) {
         this.sim = sim;
         this.rng = rng;
-    }
-
-    public static PizzeriaModelBuilder builder() {
-        return new PizzeriaModelBuilder();
     }
 
     public EventAPI getEventAPI() {
@@ -177,7 +180,11 @@ public class PizzeriaModel extends Model.AbstractModel<PizzeriaUser> {
 
             if (noRobots && noTasks && noOtherWorks && noPizzeria && noChargingStation) {
                 // Link the works to the resource agents of they are on.
-                this.roadModel.getObjectsAt(roadWorks, ResourceAgent.class).iterator().next().setRoadWorks(roadWorks);
+                ResourceAgent agent = this.roadModel.getObjectsAt(roadWorks, ResourceAgent.class).iterator().next();
+                agent.setRoadWorks(roadWorks);
+
+                // Remove the node the RoadWorks lie on from the GraphRoadModel
+                this.removeGraphConnectionsForNode(agent);
 
                 eventDispatcher.dispatchEvent(new PizzeriaEvent(
                         PizzeriaEventType.STARTED_ROADWORKS, 0, null, null, null
@@ -190,25 +197,75 @@ public class PizzeriaModel extends Model.AbstractModel<PizzeriaUser> {
         }
     }
 
+    private void removeGraphConnectionsForNode(ResourceAgent resourceAgent) {
+        final DynamicGraphRoadModelImpl g = sim.getModelProvider().getModel(DynamicGraphRoadModelImpl.class);
+        ListenableGraph graph = g.getGraph();
+
+        // Remove all connections to neighbors for which the connections in both ways can be removed.
+        for (ResourceAgent neighbor : resourceAgent.getNeighbors()) {
+            // Try to remove the connection in one way, then try to remove it in the other.
+            // If the connection cannot be removed in both ways, make sure they both are still in the graph afterwards.
+            try {
+                Connection c1 = graph.getConnection(resourceAgent.position, neighbor.position);
+                Connection c2 = graph.getConnection(neighbor.position, resourceAgent.position);
+
+                graph.removeConnection(c1.from(), c1.to());
+
+                try {
+                    graph.removeConnection(c2.from(), c2.to());
+                } catch (IllegalStateException | IllegalArgumentException e) {
+                    // Removing connection c2 caused an exception, add c1 back to the graph.
+                    graph.addConnection(c1.from(), c1.to());
+                }
+
+            } catch (IllegalStateException | IllegalArgumentException e) {
+                // Removing connection c1 caused an exception, nothing to do.
+                System.out.println("CATCH???");
+            }
+        }
+
+    }
+
+    private void addGraphConnectionsForNode(ResourceAgent resourceAgent) {
+        final DynamicGraphRoadModelImpl g = sim.getModelProvider().getModel(DynamicGraphRoadModelImpl.class);
+        ListenableGraph graph = g.getGraph();
+
+        for (ResourceAgent neighbor : resourceAgent.getNeighbors()) {
+            if (!neighbor.getRoadWorks().isPresent()) {
+                try {
+                    graph.addConnection(resourceAgent.position, neighbor.position);
+                    graph.addConnection(neighbor.position, resourceAgent.position);
+                } catch (IllegalArgumentException e) {
+                    // Connection already exists
+                }
+            }
+        }
+    }
+
     public void finishRoadWorks(RoadWorks roadWorks) {
+        ResourceAgent agent = this.roadModel.getObjectsAt(roadWorks, ResourceAgent.class).iterator().next();
+
+        // Add the connections that were removed
+        this.addGraphConnectionsForNode(agent);
+
         // Unlink the road works from the resource agent they are linked to.
-        this.roadModel.getObjectsAt(roadWorks, ResourceAgent.class).iterator().next().removeRoadWorks();
+        agent.removeRoadWorks();
 
         // Unregister the works from the simulator
         this.sim.unregister(roadWorks);
 
         eventDispatcher.dispatchEvent(new PizzeriaEvent(
-                PizzeriaEventType.FINISHED_ROADWORKS, 0, null,  null, null
+                PizzeriaEventType.FINISHED_ROADWORKS, 0, null, null, null
         ));
     }
 
-    public Long getCurrentTime(){
+    public Long getCurrentTime() {
         return clock.getCurrentTime();
     }
 
     public void dropParcel(RobotAgent robotAgent, PizzaParcel removeParcel, TimeLapse time) {
         eventDispatcher.dispatchEvent(new PizzeriaEvent(
-                PizzeriaEventType.DROP_PARCEL, time.getStartTime(), null,  removeParcel, robotAgent
+                PizzeriaEventType.DROP_PARCEL, time.getStartTime(), null, removeParcel, robotAgent
         ));
     }
 }
