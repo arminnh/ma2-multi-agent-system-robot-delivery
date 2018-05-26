@@ -8,12 +8,14 @@ import com.github.rinde.rinsim.core.model.road.RoadModel;
 import com.github.rinde.rinsim.core.model.road.RoadUser;
 import com.github.rinde.rinsim.core.model.time.TickListener;
 import com.github.rinde.rinsim.core.model.time.TimeLapse;
+import com.github.rinde.rinsim.geom.Connection;
 import com.github.rinde.rinsim.geom.Point;
 import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
 import mas.IntentionData;
 import mas.SimulatorSettings;
 import mas.buildings.ChargingStation;
+import mas.buildings.RoadWorks;
 import mas.messages.*;
 import mas.tasks.DeliveryTask;
 import org.apache.commons.math3.random.RandomGenerator;
@@ -31,9 +33,10 @@ public class ResourceAgent implements CommUser, RoadUser, TickListener {
     private RandomGenerator rng;
     private CommDevice commDevice;
 
-    private Point position;
+    public final Point position;
     private boolean first_tick = true;
-    private List<CommUser> neighbors = new LinkedList<>();
+    private List<ResourceAgent> neighbors = new LinkedList<>();
+    private Optional<RoadWorks> roadWorks = Optional.absent();
     private Optional<ChargingStation> chargingStation = Optional.absent();
     private HashMap<Integer, DeliveryTask> deliveryTasks = new HashMap<>();
     private HashMap<Integer, List<DeliveryTaskReservation>> reservations = new HashMap<>();
@@ -41,11 +44,6 @@ public class ResourceAgent implements CommUser, RoadUser, TickListener {
     public ResourceAgent(Point position, RandomGenerator rng) {
         this.position = position;
         this.rng = rng;
-    }
-
-    @Override
-    public Optional<Point> getPosition() {
-        return Optional.of(this.position);
     }
 
     @Override
@@ -63,6 +61,15 @@ public class ResourceAgent implements CommUser, RoadUser, TickListener {
         if (stations.size() > 0) {
             this.chargingStation = Optional.of(stations.iterator().next());
         }
+    }
+
+    @Override
+    public Optional<Point> getPosition() {
+        return Optional.of(this.position);
+    }
+
+    public List<ResourceAgent> getNeighbors() {
+        return this.neighbors;
     }
 
     @Override
@@ -94,7 +101,7 @@ public class ResourceAgent implements CommUser, RoadUser, TickListener {
     private void readMessages(TimeLapse timeLapse) {
         for (Message m : this.commDevice.getUnreadMessages()) {
             if (m.getContents() == Messages.NICE_TO_MEET_YOU) {
-                neighbors.add(m.getSender());
+                neighbors.add((ResourceAgent) m.getSender());
             } else if (m.getContents().getClass() == ExplorationAnt.class) {
                 handleExplorationAnt(m);
             } else if (m.getContents().getClass() == IntentionAnt.class) {
@@ -310,7 +317,7 @@ public class ResourceAgent implements CommUser, RoadUser, TickListener {
         int nextPositionIndex = ant.path.indexOf(this.position) + 1;
         Point nextPosition = ant.path.get(nextPositionIndex);
 
-        for (CommUser neighbor : this.neighbors) {
+        for (ResourceAgent neighbor : this.neighbors) {
             if (neighbor.getPosition().get().equals(nextPosition)) {
                 this.commDevice.send(ant, neighbor);
             }
@@ -341,5 +348,17 @@ public class ResourceAgent implements CommUser, RoadUser, TickListener {
     public void removeDeliveryTask(DeliveryTask task) {
         this.deliveryTasks.remove(task.id);
         this.reservations.remove(task.id);
+    }
+
+    public void setRoadWorks(RoadWorks roadWorks) {
+        this.roadWorks = Optional.of(roadWorks);
+    }
+
+    public void removeRoadWorks() {
+        this.roadWorks = Optional.absent();
+    }
+
+    public Optional<RoadWorks> getRoadWorks() {
+        return roadWorks;
     }
 }

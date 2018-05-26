@@ -252,7 +252,7 @@ public class TheListener implements Listener {
         } else if (e.getEventType() == PizzeriaEventType.CLOSE_PIZZERIA) {
             pizzerias--;
 
-        } else if (e.getEventType() == PizzeriaEventType.NEW_ROADWORKS) {
+        } else if (e.getEventType() == PizzeriaEventType.STARTED_ROADWORKS) {
             roadWorks++;
             totalRoadWorks++;
 

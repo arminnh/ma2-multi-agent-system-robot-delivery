@@ -28,7 +28,7 @@ public enum PizzeriaEventType {
     /**
      * Indicates that a new {@link} has opened
      */
-    NEW_ROADWORKS,
+    STARTED_ROADWORKS,
 
     /**
      * Indicates that a {@link} has finished
