@@ -220,10 +220,8 @@ public class PizzeriaModel extends Model.AbstractModel<PizzeriaUser> {
 
             } catch (IllegalStateException | IllegalArgumentException e) {
                 // Removing connection c1 caused an exception, nothing to do.
-                System.out.println("CATCH???");
             }
         }
-
     }
 
     private void addGraphConnectionsForNode(ResourceAgent resourceAgent) {
