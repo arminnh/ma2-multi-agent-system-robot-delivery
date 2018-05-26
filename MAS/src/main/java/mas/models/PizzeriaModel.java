@@ -92,7 +92,7 @@ public class PizzeriaModel extends Model.AbstractModel<PizzeriaUser> {
     }
 
     public void createNewDeliveryTask(RandomGenerator rng, double pizzaMean, double pizzaStd, long time) {
-        int pizzaAmount = (int) (rng.nextGaussian() * pizzaStd + pizzaMean);
+        int pizzaAmount = 1; //(int) (rng.nextGaussian() * pizzaStd + pizzaMean);
 
         DeliveryTask task = new DeliveryTask(roadModel.getRandomPosition(rng), pizzaAmount, time, clock);
         this.deliveryTasks.put(task.id, task);
