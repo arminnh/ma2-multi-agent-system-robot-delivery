@@ -3,7 +3,6 @@ package mas;
 import com.github.rinde.rinsim.core.Simulator;
 import com.github.rinde.rinsim.core.model.comm.CommModel;
 import com.github.rinde.rinsim.core.model.pdp.DefaultPDPModel;
-import com.github.rinde.rinsim.core.model.pdp.PDPModel;
 import com.github.rinde.rinsim.core.model.pdp.VehicleDTO;
 import com.github.rinde.rinsim.core.model.road.GraphRoadModel;
 import com.github.rinde.rinsim.core.model.road.RoadModel;
@@ -21,6 +20,7 @@ import mas.agents.ResourceAgent;
 import mas.agents.RobotAgent;
 import mas.buildings.ChargingStation;
 import mas.buildings.Pizzeria;
+import mas.buildings.RoadWorks;
 import mas.graphs.CityGraphCreator;
 import mas.models.PizzeriaModel;
 import mas.renderers.DeliveryTaskRenderer;
@@ -66,6 +66,7 @@ public class PizzaDeliverySimulator{
                         .withImageAssociation(Pizzeria.class, "/pizzeria.png")
                         .withImageAssociation(ChargingStation.class, "/charging_station.png")
                         .withImageAssociation(DeliveryTask.class, "/graphics/flat/person-black-32.png")
+                        .withImageAssociation(RoadWorks.class, "/road_works.png")
                 )
                 .with(CommRenderer.builder().withMessageCount()
                         //.withReliabilityColors()
@@ -81,6 +82,7 @@ public class PizzaDeliverySimulator{
          * https://www.shutterstock.com/image-vector/line-pixel-style-classic-robot-rectangle-488817829
          * https://www.shutterstock.com/image-vector/pizza-delivery-service-icon-set-pixel-1039221658
          * https://www.shutterstock.com/search/source+station
+         * https://cdn1.iconfinder.com/data/icons/road-trip/90/work_in_progress-512.png
          */
 
         // initialize a new Simulator instance
@@ -136,6 +138,11 @@ public class PizzaDeliverySimulator{
             ));
         }
 
+        // At every node, insert a ResourceAgent
+        for (Point node : graph.getGraph().getNodes()) {
+            pizzeriaModel.createResourceAgent(node, sim.getRandomGenerator());
+        }
+
         // TickListener for creation of new delivery tasks
         sim.addTickListener(new TickListener() {
             @Override
@@ -150,10 +157,19 @@ public class PizzaDeliverySimulator{
             }
         });
 
-        // At every node, insert a ResourceAgent
-        for (Point node : graph.getGraph().getNodes()) {
-            sim.register(new ResourceAgent(node, sim.getRandomGenerator()));
-        }
+        sim.addTickListener(new TickListener() {
+            @Override
+            public void tick(TimeLapse timeLapse) {
+                if (rng.nextDouble() < SimulatorSettings.PROB_NEW_ROAD_WORKS) {
+                    pizzeriaModel.newRoadWorks(timeLapse);
+                }
+            }
+
+            @Override
+            public void afterTick(TimeLapse timeLapse) {
+
+            }
+        });
 
         // Start the simulation.
         sim.start();

@@ -52,7 +52,7 @@ public final class StatsTracker extends AbstractModelVoid implements StatsProvid
 
     public void addDeliveryTaskModelListener(PizzeriaModel pizzeriaModel) {
         pizzeriaModel.getEventAPI().addListener(theListener, ROBOT_AT_CHARGING_STATION, ROBOT_LEAVING_CHARGING_STATION,
-                NEW_PIZZERIA, NEW_ROADWORKS, NEW_TASK, END_TASK, CLOSE_PIZZERIA, FINISHED_ROADWORKS);
+                NEW_PIZZERIA, STARTED_ROADWORKS, NEW_TASK, END_TASK, CLOSE_PIZZERIA, FINISHED_ROADWORKS);
     }
 
     @Override

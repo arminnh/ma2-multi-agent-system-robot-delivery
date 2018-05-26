@@ -14,6 +14,7 @@ import com.google.common.collect.Lists;
 import mas.DeliveryTaskData;
 import mas.SimulatorSettings;
 import mas.buildings.ChargingStation;
+import mas.buildings.RoadWorks;
 import mas.messages.*;
 import mas.tasks.DeliveryTask;
 import org.apache.commons.math3.random.RandomGenerator;
@@ -34,6 +35,7 @@ public class ResourceAgent implements CommUser, RoadUser, TickListener {
     private Point position;
     private boolean first_tick = true;
     private List<CommUser> neighbors = new LinkedList<>();
+    private Optional<RoadWorks> roadWorks;
     private Optional<ChargingStation> chargingStation = Optional.absent();
     private HashMap<Integer, DeliveryTask> deliveryTasks = new HashMap<>();
     private HashMap<Integer, List<DeliveryTaskReservation>> reservations = new HashMap<>();
@@ -343,5 +345,13 @@ public class ResourceAgent implements CommUser, RoadUser, TickListener {
     public void removeDeliveryTask(DeliveryTask task) {
         this.deliveryTasks.remove(task.id);
         this.reservations.remove(task.id);
+    }
+
+    public void setRoadWorks(RoadWorks roadWorks) {
+        this.roadWorks = Optional.of(roadWorks);
+    }
+
+    public void removeRoadWorks() {
+        this.roadWorks = Optional.absent();
     }
 }

@@ -10,10 +10,12 @@ import com.github.rinde.rinsim.core.model.time.TimeLapse;
 import com.github.rinde.rinsim.event.EventAPI;
 import com.github.rinde.rinsim.event.EventDispatcher;
 import com.github.rinde.rinsim.geom.Point;
+import mas.SimulatorSettings;
 import mas.agents.ResourceAgent;
 import mas.agents.RobotAgent;
 import mas.buildings.ChargingStation;
 import mas.buildings.Pizzeria;
+import mas.buildings.RoadWorks;
 import mas.tasks.DeliveryTask;
 import mas.tasks.PizzaParcel;
 import org.apache.commons.collections4.CollectionUtils;
@@ -146,17 +148,55 @@ public class PizzeriaModel extends Model.AbstractModel<PizzeriaUser> {
         eventDispatcher.dispatchEvent(new PizzeriaEvent(
                 PizzeriaEventType.ROBOT_LEAVING_CHARGING_STATION, 0, null, null, null
         ));
-
     }
 
-    public void newRoadWorks() {
-        eventDispatcher.dispatchEvent(new PizzeriaEvent(
-                PizzeriaEventType.NEW_ROADWORKS, 0, null, null, null
-        ));
-
+    public void createResourceAgent(Point position, RandomGenerator randomGenerator) {
+        sim.register(new ResourceAgent(position, sim.getRandomGenerator()));
     }
 
-    public void finishRoadWorks() {
+    public void newRoadWorks(TimeLapse timeLapse) {
+        // Road works can only be set on positions where there is no robot, building, or delivery task.
+        // Try to create new road works up to 3 times.
+        int attempts = 5;
+
+        while (attempts-- > 0) {
+            // Find a new random position.
+            Point position = this.roadModel.getRandomPosition(this.rng);
+
+            RoadWorks roadWorks = new RoadWorks(position, timeLapse.getEndTime() + SimulatorSettings.TIME_ROAD_WORKS);
+
+            // First, register the works on the road
+            this.sim.register(roadWorks);
+
+            // If there is is nothing else on the position, set link to the relevant resource agent and fire an event
+            boolean noRobots = this.roadModel.getObjectsAt(roadWorks, RobotAgent.class).isEmpty();
+            boolean noTasks = this.roadModel.getObjectsAt(roadWorks, DeliveryTask.class).isEmpty();
+            boolean noOtherWorks = this.roadModel.getObjectsAt(roadWorks, RoadWorks.class).size() == 1;
+            boolean noPizzeria = this.roadModel.getObjectsAt(roadWorks, Pizzeria.class).isEmpty();
+            boolean noChargingStation = this.roadModel.getObjectsAt(roadWorks, ChargingStation.class).isEmpty();
+
+            if (noRobots && noTasks && noOtherWorks && noPizzeria && noChargingStation) {
+                // Link the works to the resource agents of they are on.
+                this.roadModel.getObjectsAt(roadWorks, ResourceAgent.class).iterator().next().setRoadWorks(roadWorks);
+
+                eventDispatcher.dispatchEvent(new PizzeriaEvent(
+                        PizzeriaEventType.STARTED_ROADWORKS, 0, null, null, null
+                ));
+
+                return;
+            } else {
+                this.sim.unregister(roadWorks);
+            }
+        }
+    }
+
+    public void finishRoadWorks(RoadWorks roadWorks) {
+        // Unlink the road works from the resource agent they are linked to.
+        this.roadModel.getObjectsAt(roadWorks, ResourceAgent.class).iterator().next().removeRoadWorks();
+
+        // Unregister the works from the simulator
+        this.sim.unregister(roadWorks);
+
         eventDispatcher.dispatchEvent(new PizzeriaEvent(
                 PizzeriaEventType.FINISHED_ROADWORKS, 0, null,  null, null
         ));
