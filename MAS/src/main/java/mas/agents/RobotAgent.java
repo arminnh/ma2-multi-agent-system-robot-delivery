@@ -72,8 +72,8 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
     private HashMap<DesireAnt, Long> desires = new HashMap<>();
     private boolean goingToPizzeria = false;
     private int waitingForIntentionAnt = 0;
-    private Long lastIntentionUpdate = null;
-    private Long lastExplorationUpdate = null;
+    private Optional<Long> nextIntentionAntsUpdate = Optional.absent();
+    private Optional<Long> nextExplorationAntsUpdate = Optional.absent();
     private Point chargingStationPosition;
     private boolean isAtNode;
 
@@ -156,21 +156,18 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
         // Read all new messages
         this.readMessages(time);
 
+        if (!this.desires.isEmpty() && this.waitingForDesireAnts == 0) {
+            evaluateDesiresAndStartExploration();
+        }
+
         // If waiting for ExplorationAnts and they all have returned, evaluate the different paths
-        if (this.explorationAnts.size() > 0 && this.waitingForExplorationAnts == 0) {
+        if (!this.explorationAnts.isEmpty() && this.waitingForExplorationAnts == 0) {
             this.evaluateExploredPathsAndReviseIntentions();
         }
 
-        if (!this.desires.isEmpty()) {
-            decideOnIntentions();
-        }
+        this.doAction(time);
 
-        this.actionLogic(time);
-
-        // Only send ants out when you have some battery left
-        if (this.getCapacityLeft() > 0) {
-            this.resendAnts(time);
-        }
+        this.resendAnts(time);
     }
 
     private boolean waitingForAnts() {
@@ -178,42 +175,45 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
     }
 
     private void resendAnts(TimeLapse time) {
-        System.out.println("RobotAgent.resendAnts");
-        // If intention is present send out intention ants
-        if (this.intention.isPresent() && this.lastIntentionUpdate != null) {
+        // If intention is present, send out intention ants for refresh.
+        // Also, can only send ants when there is some battery left.
+        if (this.intention.isPresent() && this.getCapacityLeft() > 0) {
 
-            if (this.lastIntentionUpdate + SimulatorSettings.REFRESH_INTENTIONS < time.getStartTime() &&
-                    this.waitingForIntentionAnt == 0 && !this.goingToPizzeria) {
-                System.out.println("Sending out intention ants");
-                // We're making a delivery!
+            if (this.nextIntentionAntsUpdate.isPresent() && this.nextIntentionAntsUpdate.get() < time.getEndTime()
+                    && this.waitingForIntentionAnt == 0 && !this.goingToPizzeria) {
+                System.out.println("resendAnts: Sending out intention ants");
+                this.nextIntentionAntsUpdate = Optional.absent();
+
                 if (this.currentParcels.size() > 0) {
-                    sendIntentionAntForCurrentParcels(this.intention.get());
+                    // Robot is making a delivery
+                    this.sendIntentionAntForCurrentParcels(this.intention.get());
                 } else if (this.goingToCharge) {
                     this.sendIntentionAntToChargingStation(this.intention.get());
                 }
             }
 
-            if (this.lastExplorationUpdate + SimulatorSettings.REFRESH_EXPLORATIONS < time.getStartTime() &&
-                    this.waitingForExplorationAnts == 0) {
+            if (this.nextExplorationAntsUpdate.isPresent() && this.nextExplorationAntsUpdate.get() < time.getEndTime()
+                    && this.waitingForExplorationAnts == 0) {
+                System.out.println("resendAnts: Sending out exploration ants");
+                this.nextIntentionAntsUpdate = Optional.absent();
 
                 if (this.goingToPizzeria) {
                     System.out.println("RobotAgent.resendAnts.this.goingToPizzeria");
                     explorePaths(this.pizzeriaPosition);
+
                 } else if (this.goingToCharge) {
                     System.out.println("RobotAgent.resendAnts.this.goingToCharge");
-
                     explorePaths(this.chargingStationPosition);
+
                 } else {
                     System.out.println("RobotAgent.resendAnts.else");
-
                     checkPathsForCurrentParcels();
                 }
             }
         }
-
     }
 
-    private void actionLogic(@NotNull TimeLapse time) {
+    private void doAction(@NotNull TimeLapse time) {
         // TODO: something for intention messages here ??
         if (!this.currentParcels.isEmpty() && !this.intention.isPresent()) {
             // We do have parcels but we don't have an intention!
@@ -279,8 +279,8 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
         }
     }
 
-    private void decideOnIntentions() {
-        System.out.println("RobotAgent.decideOnIntentions");
+    private void evaluateDesiresAndStartExploration() {
+        System.out.println("RobotAgent.evaluateDesiresAndStartExploration");
         System.out.println(this.desires);
         // Decide on desire
         List<DesireAnt> bestTasks = getHighestDesires();
@@ -389,7 +389,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
         this.explorationAnts.add(ant);
         this.waitingForExplorationAnts--;
         if (this.waitingForIntentionAnt == 0) {
-            this.lastExplorationUpdate = time.getStartTime();
+            this.nextExplorationAntsUpdate = Optional.of(time.getStartTime() + SimulatorSettings.REFRESH_EXPLORATIONS);
         }
 
         System.out.println("Robot " + this.id + " got ExplorationAnt for robotID " + ant.robotID);
@@ -410,12 +410,11 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
         IntentionAnt ant = (IntentionAnt) m.getContents();
 
         if (ant.toChargingStation) {
-            // TODO: Charging logic
             System.out.println("CHARGING");
             this.intention = Optional.of(new LinkedList<>(ant.path));
             System.out.println("CHARGE_ROUTE this.intention = " + this.intention);
             System.out.println("this.hasPizzaParcel() = " + this.hasPizzaParcel());
-            this.lastIntentionUpdate = time.getStartTime();
+            this.nextIntentionAntsUpdate = Optional.of(time.getStartTime() + SimulatorSettings.REFRESH_INTENTIONS);
 
         } else {
             for (IntentionData intentionData : ant.deliveries) {
@@ -454,7 +453,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
             if (this.hasPizzaParcel()) {
                 System.out.println("Got parcel, setting intention " + ant.path);
                 this.intention = Optional.of(new LinkedList<>(ant.path));
-                this.lastIntentionUpdate = time.getStartTime();
+                this.nextIntentionAntsUpdate = Optional.of(time.getStartTime() + SimulatorSettings.REFRESH_INTENTIONS);
             } else {
 
                 System.out.println("d");
