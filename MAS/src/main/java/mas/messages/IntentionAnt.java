@@ -16,9 +16,20 @@ public class IntentionAnt extends MultiDestinationAnt {
     public final boolean toChargingStation;
     public final boolean toDeliveryTask;
 
-    public IntentionAnt(int id, List<Point> path, long estimatedTime, boolean isReturning, Integer robotID, CommUser robot, List<IntentionData> intentions) {
+    public IntentionAnt(int id, List<Point> path, long estimatedTime, boolean isReturning, Integer robotID, CommUser robot, List<IntentionData> intentions){
         super(id, path, estimatedTime, isReturning, robotID, robot, intentions);
 
+        if(intentions != null){
+            for(IntentionData d: intentions){
+                if(d.position == null){
+                    try {
+                        throw new Exception("null poss");
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
         this.toDeliveryTask = intentions != null && intentions.get(0).deliveryTaskID != null;
         this.toChargingStation = !this.toDeliveryTask;
     }
@@ -27,7 +38,17 @@ public class IntentionAnt extends MultiDestinationAnt {
         super(path, estimatedTime, isReturning, robotID, robot, intentions);
         System.out.println("path = [" + path + "], estimatedTime = [" + estimatedTime + "], isReturning = [" + isReturning + "], robotID = [" + robotID + "], robot = [" + robot + "], intentions = [" + intentions + "]");
         System.out.println(intentions.get(0).deliveryTaskID);
-
+        if(intentions != null){
+            for(IntentionData d: intentions){
+                if(d.position == null){
+                    try {
+                        throw new Exception("null poss");
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
         this.toDeliveryTask = intentions != null && intentions.get(0).deliveryTaskID != null;
         this.toChargingStation = !this.toDeliveryTask;
     }

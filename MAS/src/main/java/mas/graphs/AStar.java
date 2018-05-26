@@ -15,11 +15,11 @@ public class AStar {
     public AStar() {
     }
 
-    static double _roundToClosestEven(double d){
+    private static double _roundToClosestEven(double d){
         return Math.round(d / 2) *2 ;
     }
 
-    static Point roundStartPointToEven(Point start){
+    private static Point roundStartPointToEven(Point start){
         double new_x = _roundToClosestEven(start.x);
         double new_y = _roundToClosestEven(start.y);
 
@@ -173,5 +173,4 @@ public class AStar {
     private static Double dist_between(Point current, Point neighbor) {
         return Math.abs(current.x - neighbor.x) + Math.abs(current.y - neighbor.y);
     }
-
 }

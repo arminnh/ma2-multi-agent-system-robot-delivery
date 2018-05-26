@@ -5,7 +5,7 @@ public class SimulatorSettings {
     public static final long RANDOM_SEED = 123L;
     public static final int SIM_SPEEDUP = 1;
 
-    public static final int NUM_ROBOTS = 2;
+    public static final int NUM_ROBOTS = 4;
     public static final int ROBOT_CAPACITY = 5;
     public static final int BATTERY_CAPACITY = 100;
     public static final int VEHICLE_LENGTH = 1;

@@ -83,7 +83,8 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
             Battery battery,
             ListenableGraph<LengthData> staticGraph,
             Point pizzeriaPosition,
-            int alternativePathsToExplore
+            int alternativePathsToExplore,
+            Point chargingStationPosition
     ) {
         super(vdto);
 
@@ -160,7 +161,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
             this.evaluateExploredPathsAndReviseIntentions();
         }
 
-        if (!this.desires.isEmpty() && this.waitingForDesireAnts == 0) {
+        if (!this.desires.isEmpty()) {
             decideOnIntentions();
         }
 
@@ -172,7 +173,12 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
         }
     }
 
+    private boolean waitingForAnts(){
+        return this.waitingForExplorationAnts > 0 || this.waitingForIntentionAnt > 0 || this.waitingForDesireAnts > 0;
+    }
+
     private void resendAnts(TimeLapse time) {
+        System.out.println("RobotAgent.resendAnts");
         // If intention is present send out intention ants
         if(this.intention.isPresent() && this.lastIntentionUpdate != null){
 
@@ -215,7 +221,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
             // 1. Recalculate the best path for our current parcels
             // 2. Resend Intention ants
             checkPathsForCurrentParcels();
-        } else if (this.intention.isPresent()) {
+        } else if (this.intention.isPresent() && !waitingForAnts()) {
             followIntention(time);
         } else {
             // No intention is present and no desire. First choose a new desire.
@@ -302,6 +308,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
         System.out.println("RobotAgent.followIntention");
         // Make the robot follow its intention. If the robot arrives at the next position it its
         // intention, that position will be removed from the Queue.
+        System.out.println("this.intention.get() = " + this.intention.get());
         this.move(time);
 
         //intentionReconsideration();
@@ -320,6 +327,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
             this.intendedArrivalTime = 0;
             // If the robot was delivering a PizzaParcel
             if (this.goingToCharge) {
+                System.out.println("Arriving at charging");
                 this.arriveAtChargingStation();
                 // If the robot was going towards a pizzeria
             } else if(this.goingToPizzeria) {
@@ -404,8 +412,12 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
 
         if (ant.toChargingStation) {
             // TODO: Charging logic
-            //System.out.println("CHARGING");
+            System.out.println("CHARGING");
             this.intention = Optional.of(new LinkedList<>(ant.path));
+            System.out.println("CHARGE_ROUTE this.intention = " + this.intention);
+            System.out.println("this.hasPizzaParcel() = " + this.hasPizzaParcel());
+            this.lastIntentionUpdate = time.getStartTime();
+
         } else {
             for (IntentionData intentionData : ant.deliveries) {
 
@@ -500,14 +512,8 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
         System.out.println("this.intention.isPresent() = " + this.intention.isPresent());
         // If the new best path is better than the current one, update the intention of the robot.
         if (!this.intention.isPresent() || bestTime < this.intendedArrivalTime) {
-            // If we only have 1 node left in the path but we're already at this node...
-            // just drop this
-            if(bestAnt.path.size() == 1 && bestAnt.path.get(0).equals(this.getPosition().get())) {
-                return;
-            }
 
             if(this.goingToPizzeria){
-
                 this.intention = Optional.of(new LinkedList<>(bestAnt.path));
             } else {
                 this.sendIntentionAnt(bestAnt);
@@ -526,10 +532,8 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
 
             if (!this.getPosition().get().equals(this.intention.get().peek())) {
                 progress = this.roadModel.moveTo(this, this.intention.get().peek(), time);
-                this.isAtNode = false;
             } else {
                 progress = this.roadModel.moveTo(this, this.intention.get().remove(), time);
-                this.isAtNode = true;
             }
             //System.out.println("moving = [" + progress + "], path left: " + this.intention.get() + " pos "+ this.getPosition().get());
 
@@ -589,7 +593,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
      * Sets the relevant variables for arriving at a Pizzeria.
      */
     private void arriveAtPizzeria(@NotNull TimeLapse time) {
-        if (this.roadModel.getPosition(this) == this.pizzeriaPosition) {
+        if (this.roadModel.getPosition(this).equals(this.pizzeriaPosition)) {
             System.out.println("User at pizzeria!");
             this.isAtPizzeria = true;
             this.goingToPizzeria = false;
@@ -784,7 +788,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
     private List<Map.Entry<DesireAnt, Long>> sortMapDescending(HashMap<DesireAnt, Long> map) {
         // From: https://beginnersbook.com/2013/12/how-to-sort-hashmap-in-java-by-keys-and-values/
 
-        LinkedList<Map.Entry<DesireAnt, Long>> list = new LinkedList<Map.Entry<DesireAnt, Long>>(map.entrySet());
+        LinkedList<Map.Entry<DesireAnt, Long>> list = new LinkedList<>(map.entrySet());
 
         // Defined Custom Comparator here
         list.sort(Comparator.comparing(Map.Entry::getValue));

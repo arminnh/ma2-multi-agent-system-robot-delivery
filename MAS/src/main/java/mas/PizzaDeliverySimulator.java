@@ -87,8 +87,8 @@ public class PizzaDeliverySimulator {
 
         // Create the graphs for the virtual environment. Need to create them twice in order to keep a static one
         // on the vehicles. It was impossible to create a graph snapshot in the vehicles.
-        ListenableGraph<LengthData> staticGraph = CityGraphCreator.createGraph(20, SimulatorSettings.VEHICLE_LENGTH);
-        ListenableGraph<LengthData> dynamicGraph = CityGraphCreator.createGraph(20, SimulatorSettings.VEHICLE_LENGTH);
+        ListenableGraph<LengthData> staticGraph = CityGraphCreator.createGraph(5, SimulatorSettings.VEHICLE_LENGTH);
+        ListenableGraph<LengthData> dynamicGraph = CityGraphCreator.createGraph(5, SimulatorSettings.VEHICLE_LENGTH);
 
         // initialize a new Simulator instance
         final Simulator sim = Simulator.builder()
@@ -139,7 +139,7 @@ public class PizzaDeliverySimulator {
             // Robots start at the pizzeria
             sim.register(new RobotAgent(
                     getNextRobotID(), vdto, battery, staticGraph, pizzeria.getPosition(),
-                    SimulatorSettings.ALTERNATIVE_PATHS_TO_EXPLORE)
+                    SimulatorSettings.ALTERNATIVE_PATHS_TO_EXPLORE, chargingStation.getPosition())
             );
         }
 

@@ -32,7 +32,9 @@ public class MultiDestinationAnt extends Ant {
                 return false;
             }
             for (IntentionData delivery : this.deliveries) {
-                System.out.println("delivery.position + \" \" + p = " + delivery.position + " " + p + " "+delivery.position.equals(p));
+                System.out.println("delivery.position + \" \" + p = " + delivery.position + " " +p);
+                System.out.println(" "+delivery.position.equals(p));
+
                 if (delivery.position.equals(p)) {
                     return true;
                 }
