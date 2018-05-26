@@ -3,7 +3,8 @@
 - BDI
     => Charging logic verbeteren
                 
-- Roadworks
-- Intention ant terugsturen (refresh)
+- Roadworks (OK?)
+- Intention ant terugsturen (OK?)
 - Reservations laten expiren (OK?)
 - Scenario's
+- Robots effectief meerdere pizza's laten meepakken van meerdere tasks

@@ -59,7 +59,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
     private boolean isCharging = false;
     private boolean isAtPizzeria = true;
     private int waitingForExplorationAnts = 0;
-    private long intentionTimeLeft = Long.MAX_VALUE;
+    private long intendedArrivalTime = Long.MAX_VALUE;
     private Optional<Queue<Point>> intention = Optional.absent();
     private Queue<PizzaParcel> currentParcels = new LinkedList<>();
     private Optional<ChargingStation> currentChargingStation = Optional.absent();
@@ -176,8 +176,8 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
                 // We're making a delivery!
                 if(this.currentParcels.size() > 0){
                     sendIntentionAntForCurrentParcels(this.intention.get());
-                }else{
-                    this.sendIntentionAnt(this.intention.get());
+                }else if(this.goingToCharge){
+                    this.sendIntentionAntToChargingStation(this.intention.get());
                 }
             }
 
@@ -185,10 +185,15 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
                     this.waitingForExplorationAnts == 0){
 
                 if(this.goingToPizzeria){
+                    System.out.println("RobotAgent.resendAnts.this.goingToPizzeria");
                     explorePaths(this.pizzeriaPosition);
                 }else if(this.goingToCharge){
+                    System.out.println("RobotAgent.resendAnts.this.goingToCharge");
+
                     explorePaths(this.chargingStationPosition);
                 }else{
+                    System.out.println("RobotAgent.resendAnts.else");
+
                     checkPathsForCurrentParcels();
                 }
             }
@@ -232,6 +237,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
     }
 
     private void checkPathsForCurrentParcels() {
+        System.out.println("RobotAgent.checkPathsForCurrentParcels");
         List<IntentionData> deliveries = new LinkedList<>();
 
         for (PizzaParcel parcel: this.currentParcels) {
@@ -243,6 +249,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
     }
 
     private void toChargingStationOrPizzeria() {
+        System.out.println("RobotAgent.toChargingStationOrPizzeria");
         // Check if the robot should go to a charging station
         if (this.getRemainingBatteryCapacity() <= 35) {
             System.out.println("GoingToCharge");
@@ -261,6 +268,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
     }
 
     private void decideOnIntentions() {
+        System.out.println("RobotAgent.decideOnIntentions");
         System.out.println(this.desires);
         // Decide on desire
         List<DesireAnt> bestTasks = getHighestDesires();
@@ -303,7 +311,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
             System.out.println("intention is empty");
 
             this.intention = Optional.absent();
-
+            this.intendedArrivalTime = 0;
             // If the robot was delivering a PizzaParcel
             if (this.goingToCharge) {
                 this.arriveAtChargingStation();
@@ -463,6 +471,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
      * one the robot is currently following, the intention will be updated and new IntentionAnts will be sent.
      */
     private void evaluateExploredPathsAndReviseIntentions() {
+        System.out.println("RobotAgent.evaluateExploredPathsAndReviseIntentions");
         Long bestTime = Long.MAX_VALUE;
         ExplorationAnt bestAnt = null;
 
@@ -472,10 +481,18 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
                 bestAnt = ant;
             }
         }
+        
         this.explorationAnts.clear();
 
+        System.out.println("this.intention.isPresent() = " + this.intention.isPresent());
         // If the new best path is better than the current one, update the intention of the robot.
-        if (!this.intention.isPresent() || bestTime < this.intentionTimeLeft) {
+        if (!this.intention.isPresent() || bestTime < this.intendedArrivalTime) {
+            // If we only have 1 node left in the path but we're already at this node...
+            // just drop this
+            if(bestAnt.path.size() == 1 && bestAnt.path.get(0).equals(this.getPosition().get())) {
+                return;
+            }
+
             if(this.goingToPizzeria){
                 this.intention = Optional.of(new LinkedList<>(bestAnt.path));
             }else{
@@ -500,7 +517,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
                 progress = this.roadModel.moveTo(this, this.intention.get().remove(), time);
                 this.isAtNode = true;
             }
-            System.out.println("moving = [" + progress + "], path left: " + this.intention.get());
+            //System.out.println("moving = [" + progress + "], path left: " + this.intention.get() + " pos "+ this.getPosition().get());
 
             // progress = roadModel.followPath(this, this.intention.get(), time);
 
@@ -596,6 +613,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
      * Explores different paths towards a single destination.
      */
     private void explorePaths(Point destination) {
+        System.out.println("RobotAgent.explorePaths22222");
         List<IntentionData> deliveries = new LinkedList<>();
         deliveries.add(new IntentionData(destination, this.id, null, null, false));
 
@@ -606,6 +624,8 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
      * Explores different paths towards multiple destinations to be followed sequentially.
      */
     private void explorePaths(List<IntentionData> deliveries) {
+        System.out.println("RobotAgent.explorePaths");
+        System.out.println("deliveries = [" + deliveries + "]");
         List<Point> destinations = new LinkedList<>();
 
         for (IntentionData data: deliveries) {
@@ -633,7 +653,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
     /**
      * Sends out IntentionAnt to reserve the destination for a path.
      */
-    private void sendIntentionAnt(Queue<Point> path) {
+    private void sendIntentionAntToChargingStation(Queue<Point> path) {
         List<IntentionData> deliveries = new LinkedList<>();
         deliveries.add(new IntentionData(this.chargingStationPosition, this.id,
                0, 0, false));
@@ -646,6 +666,8 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
     }
 
     private void sendIntentionAntForCurrentParcels(Queue<Point> path){
+        System.out.println("RobotAgent.sendIntentionAntForCurrentParcels");
+        System.out.println("path = [" + path + "]");
         List<IntentionData> deliveries = new LinkedList<>();
 
         for (PizzaParcel parcel: this.currentParcels) {
@@ -657,12 +679,16 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
                 this.id, this, deliveries);
         this.commDevice.broadcast(ant);
         this.waitingForIntentionAnt++;
+        System.out.println("[OUT] RobotAgent.sendIntentionAntForCurrentParcels");
+
     }
 
     /**
      * Sends out ExplorationAnts to explore each of the given paths.
      */
     private void sendExplorationAnts(List<List<Point>> paths, List<IntentionData> pairs) {
+        System.out.println("RobotAgent.sendExplorationAnts");
+        System.out.println("paths = [" + paths + "], pairs = [" + pairs + "]");
         // Send exploration messages over the found paths
         for (List<Point> path : paths) {
             this.commDevice.broadcast(

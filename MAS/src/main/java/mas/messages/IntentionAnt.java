@@ -19,14 +19,16 @@ public class IntentionAnt extends MultiDestinationAnt {
     public IntentionAnt(int id, List<Point> path, long estimatedTime, boolean isReturning, Integer robotID, CommUser robot, List<IntentionData> intentions) {
         super(id, path, estimatedTime, isReturning, robotID, robot, intentions);
 
-        this.toDeliveryTask = deliveries != null && deliveries.get(0).deliveryTaskID != null;
+        this.toDeliveryTask = intentions != null && intentions.get(0).deliveryTaskID != null;
         this.toChargingStation = !this.toDeliveryTask;
     }
 
     public IntentionAnt(List<Point> path, long estimatedTime, boolean isReturning, Integer robotID, CommUser robot, List<IntentionData> intentions) {
         super(path, estimatedTime, isReturning, robotID, robot, intentions);
+        System.out.println("path = [" + path + "], estimatedTime = [" + estimatedTime + "], isReturning = [" + isReturning + "], robotID = [" + robotID + "], robot = [" + robot + "], intentions = [" + intentions + "]");
+        System.out.println(intentions.get(0).deliveryTaskID);
 
-        this.toDeliveryTask = deliveries != null && deliveries.get(0).deliveryTaskID != null;
+        this.toDeliveryTask = intentions != null && intentions.get(0).deliveryTaskID != null;
         this.toChargingStation = !this.toDeliveryTask;
     }
 

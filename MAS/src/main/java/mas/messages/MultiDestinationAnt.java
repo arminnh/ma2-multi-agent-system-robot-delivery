@@ -24,6 +24,7 @@ public class MultiDestinationAnt extends Ant {
     }
 
     public boolean hasReachedDestination(Point p) {
+        System.out.println("MultiDestinationAnt.hasReachedDestination");
         if (this.isReturning) {
             return super.hasReachedDestination(p);
         } else {
@@ -31,7 +32,8 @@ public class MultiDestinationAnt extends Ant {
                 return false;
             }
             for (IntentionData delivery : this.deliveries) {
-                if (delivery.position == p) {
+                System.out.println("delivery.position + \" \" + p = " + delivery.position + " " + p + " "+delivery.position.equals(p));
+                if (delivery.position.equals(p)) {
                     return true;
                 }
             }

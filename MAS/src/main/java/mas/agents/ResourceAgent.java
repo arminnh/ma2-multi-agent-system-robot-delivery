@@ -167,15 +167,20 @@ public class ResourceAgent implements CommUser, RoadUser, TickListener {
 
     private void handleIntentionAnt(Message m, TimeLapse timeLapse) {
         IntentionAnt ant = (IntentionAnt) m.getContents();
-        System.out.println("Intention ant at " + this.position + " id: " + ant.id);
+        System.out.println("Intention ant at " + this.position + " id: " + ant.id + " deliveries "+ ant.deliveries);
 
         if (ant.hasReachedDestination(this.position)) {
             if (ant.isReturning) {
+                System.out.println("ant.isReturning = " + ant.isReturning);
                 this.commDevice.send(ant.copy(Lists.reverse(ant.path), true, ant.deliveries), ant.robot);
             } else {
                 if (ant.toChargingStation) {
+                    System.out.println("ant.toChargingStation = " + ant.toChargingStation);
+
                     handleIntentionAntForChargingStation(ant);
                 } else {
+                    System.out.println("delivery");
+
                     handleIntentionAntForDeliveryTask(timeLapse, ant);
                 }
             }
@@ -185,11 +190,12 @@ public class ResourceAgent implements CommUser, RoadUser, TickListener {
     }
 
     private void handleIntentionAntForDeliveryTask(TimeLapse timeLapse, IntentionAnt ant) {
+        System.out.println("ResourceAgent.handleIntentionAntForDeliveryTask");
         // Get data of all DeliveryTasks on this position
         List<IntentionData> newDeliveriesData = new LinkedList<>();
 
         for (IntentionData deliveryData : ant.deliveries) {
-            if (deliveryData.position == this.position && deliveryData.deliveryTaskID != null) {
+            if (deliveryData.position.equals(this.position) && deliveryData.deliveryTaskID != null) {
                 // Fetch the relevant DeliveryTask
                 DeliveryTask task = this.deliveryTasks.get(deliveryData.deliveryTaskID);
 
@@ -199,7 +205,7 @@ public class ResourceAgent implements CommUser, RoadUser, TickListener {
 
                     if (updated) {
                         // The reservation has been updated, set 'confirmed' to true in the delivery data.
-                        newDeliveriesData.add(deliveryData.copy(true));
+                        newDeliveriesData.add(deliveryData.copy(false));
 
                     } else {
                         if(deliveryData.pizzas <= this.getPizzasLeftForDeliveryTask(task.id) &&
@@ -305,6 +311,10 @@ public class ResourceAgent implements CommUser, RoadUser, TickListener {
     private void sendAntToNextHop(Ant ant) {
         if (ant.path.size() == 0) {
             System.out.println("CANNOT SEND ANT TO NEXT HOP FOR EMPTY PATH");
+        }
+        if(ant.path.size() == 1){
+            this.commDevice.send(ant, ant.robot);
+            return;
         }
 
         long estimatedTime = ant.estimatedTime;
