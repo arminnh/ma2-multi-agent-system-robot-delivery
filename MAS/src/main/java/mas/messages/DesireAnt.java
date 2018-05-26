@@ -25,6 +25,17 @@ public class DesireAnt extends Ant {
         this.pizzas = pizzas;
     }
 
+    @Override
+    public String toString() {
+        return "{id: " + this.id +
+                ", deliveryTaskID: " + this.deliveryTaskID +
+                ", pizzas: " + this.pizzas +
+                ", isReturning: " + this.isReturning +
+                ", estimatedTime: " + this.estimatedTime +
+                ", path: " + this.path +
+                "}";
+    }
+
     public DesireAnt copy(List<Point> p, Boolean returning, Long score, Integer capacity) {
         p = (p != null) ? p : this.path;
         returning = (returning != null) ? returning : this.isReturning;

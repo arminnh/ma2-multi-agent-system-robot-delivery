@@ -56,7 +56,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
 
     private int id = -1;
     private Battery battery;
-    private int currentAmountOfPizzas = -1;
+    private int currentAmountOfPizzas = 0;
     private double metersMoved = 0;
     private Point pizzeriaPosition;
     private boolean goingToCharge = false;
@@ -124,7 +124,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
     }
 
     private List<DesireAnt> getHighestDesires() {
-        System.out.println(this.desires);
+        System.out.println("RobotAgent.getHighestDesires: " + this.desires);
 
         List<DesireAnt> bestTasks = new LinkedList<>();
         int remainingCapacity = this.getCapacityLeft();
@@ -280,11 +280,10 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
     }
 
     private void evaluateDesiresAndStartExploration() {
-        System.out.println("RobotAgent.evaluateDesiresAndStartExploration");
-        System.out.println(this.desires);
+        System.out.println("RobotAgent.evaluateDesiresAndStartExploration: " + this.desires);
         // Decide on desire
         List<DesireAnt> bestTasks = getHighestDesires();
-        List<IntentionData> deliveries = new LinkedList<>();
+        List<IntentionData> intentionData = new LinkedList<>();
         System.out.println("BestTasks " + bestTasks);
 
         int remainingCapacity = this.getCapacityLeft();
@@ -294,21 +293,20 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
             int pizzas = Math.min(remainingCapacity, ant.pizzas);
             remainingCapacity -= pizzas;
 
-            deliveries.add(new IntentionData(destination, this.id, ant.deliveryTaskID, pizzas, false));
+            intentionData.add(new IntentionData(destination, this.id, ant.deliveryTaskID, pizzas, false));
         }
 
-        explorePaths(deliveries);
-        if (deliveries.size() > 1) {
-            explorePaths(Lists.reverse(deliveries));
+        explorePaths(intentionData);
+        if (intentionData.size() > 1) {
+            explorePaths(Lists.reverse(intentionData));
         }
         this.desires.clear();
     }
 
     private void followIntention(@NotNull TimeLapse time) {
-        System.out.println("RobotAgent.followIntention");
+        System.out.println("RobotAgent.followIntention, this.intention.get() = " + this.intention.get());
         // Make the robot follow its intention. If the robot arrives at the next position it its
         // intention, that position will be removed from the Queue.
-        System.out.println("this.intention.get() = " + this.intention.get());
         this.move(time);
 
         //intentionReconsideration();
@@ -318,7 +316,6 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
             this.deliverPizzaParcel(parcel, time);
         }
 
-        System.out.println("this.intention.get() = " + this.intention.get());
         // If robot arrived at the destination of the intention, the intention will be empty
         if (this.intention.get().isEmpty()) {
             System.out.println("intention is empty");
@@ -385,22 +382,20 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
 
     private void handleExplorationAntMessage(TimeLapse time, Message m) {
         ExplorationAnt ant = (ExplorationAnt) m.getContents();
+        System.out.println("Robot " + this.id + " got ExplorationAnt for robotID " + ant.robotID);
 
         this.explorationAnts.add(ant);
         this.waitingForExplorationAnts--;
         if (this.waitingForIntentionAnt == 0) {
             this.nextExplorationAntsUpdate = Optional.of(time.getStartTime() + SimulatorSettings.REFRESH_EXPLORATIONS);
         }
-
-        System.out.println("Robot " + this.id + " got ExplorationAnt for robotID " + ant.robotID);
     }
 
     private void handleDesireAntMessage(Message m) {
-        System.out.println("Got desire ant");
         DesireAnt ant = (DesireAnt) m.getContents();
+        System.out.println("Got desire ant: " + ant);
         if (ant.pizzas > 0) {
             this.desires.put(ant, ant.score);
-            System.out.println(this.desires);
         }
 
         this.waitingForDesireAnts--;
@@ -410,10 +405,8 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
         IntentionAnt ant = (IntentionAnt) m.getContents();
 
         if (ant.toChargingStation) {
-            System.out.println("CHARGING");
             this.intention = Optional.of(new LinkedList<>(ant.path));
-            System.out.println("CHARGE_ROUTE this.intention = " + this.intention);
-            System.out.println("this.hasPizzaParcel() = " + this.hasPizzaParcel());
+            System.out.println("CHARGING, this.hasPizzaParcel() = " + this.hasPizzaParcel() + ", this.intention = " + this.intention);
             this.nextIntentionAntsUpdate = Optional.of(time.getStartTime() + SimulatorSettings.REFRESH_INTENTIONS);
 
         } else {
@@ -455,9 +448,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
                 this.intention = Optional.of(new LinkedList<>(ant.path));
                 this.nextIntentionAntsUpdate = Optional.of(time.getStartTime() + SimulatorSettings.REFRESH_INTENTIONS);
             } else {
-
-                System.out.println("d");
-
+                System.out.println("RobotAgent.handleIntentionAntMessage: ????????????????????????????????");
             }
         }
         this.waitingForIntentionAnt--;
@@ -467,13 +458,15 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
     private PizzaParcel getParcelForDeliveryTaskID(IntentionData intentionData) {
         System.out.println("RobotAgent.getParcelForDeliveryTaskID");
         PizzaParcel removeParcel = null;
+
         for (PizzaParcel p : this.currentParcels) {
-            System.out.println("p.deliveryTaskID + \" \" + intentionData.deliveryTaskID = " + p.deliveryTaskID + " " + intentionData.deliveryTaskID);
+            System.out.println("p.deliveryTaskID: " + p.deliveryTaskID + " intentionData.deliveryTaskID: " + intentionData.deliveryTaskID);
             if (p.deliveryTaskID == intentionData.deliveryTaskID) {
 
                 removeParcel = p;
             }
         }
+
         return removeParcel;
     }
 
@@ -482,7 +475,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
      * one the robot is currently following, the intention will be updated and new IntentionAnts will be sent.
      */
     private void evaluateExploredPathsAndReviseIntentions() {
-        System.out.println("RobotAgent.evaluateExploredPathsAndReviseIntentions");
+        System.out.println("RobotAgent.evaluateExploredPathsAndReviseIntentions, this.intention.isPresent(): " + this.intention.isPresent());
         Long bestTime = Long.MAX_VALUE;
         ExplorationAnt bestAnt = null;
 
@@ -495,7 +488,6 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
 
         this.explorationAnts.clear();
 
-        System.out.println("this.intention.isPresent() = " + this.intention.isPresent());
         // If the new best path is better than the current one, update the intention of the robot.
         if (!this.intention.isPresent() || bestTime < this.intendedArrivalTime) {
 
@@ -520,9 +512,6 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
             } else {
                 progress = this.roadModel.moveTo(this, this.intention.get().remove(), time);
             }
-            //System.out.println("moving = [" + progress + "], path left: " + this.intention.get() + " pos "+ this.getPosition().get());
-
-            // progress = roadModel.followPath(this, this.intention.get(), time);
 
             this.metersMoved += progress.distance().doubleValue(SI.METER);
             if (this.metersMoved > 1.0) {
@@ -643,12 +632,11 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
     /**
      * Explores different paths towards multiple destinations to be followed sequentially.
      */
-    private void explorePaths(List<IntentionData> deliveries) {
-        System.out.println("RobotAgent.explorePaths");
-        System.out.println("deliveries = [" + deliveries + "]");
+    private void explorePaths(List<IntentionData> intentionData) {
+        System.out.println("RobotAgent.explorePaths, intentionData: " + intentionData);
         List<Point> destinations = new LinkedList<>();
 
-        for (IntentionData data : deliveries) {
+        for (IntentionData data : intentionData) {
 
             destinations.add(data.position);
         }
@@ -656,7 +644,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
         // Generate a couple of possible paths towards the destination(s) and send exploration messages to explore them.
         List<List<Point>> paths = this.getAlternativePaths(this.alternativePathsToExplore, this.getPosition().get(), destinations);
 
-        this.sendExplorationAnts(paths, deliveries);
+        this.sendExplorationAnts(paths, intentionData);
     }
 
     /**
@@ -687,8 +675,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
     }
 
     private void sendIntentionAntForCurrentParcels(Queue<Point> path) {
-        System.out.println("RobotAgent.sendIntentionAntForCurrentParcels");
-        System.out.println("path = [" + path + "]");
+        System.out.println("RobotAgent.sendIntentionAntForCurrentParcels, path:" + path);
         List<IntentionData> deliveries = new LinkedList<>();
 
         for (PizzaParcel parcel : this.currentParcels) {
@@ -707,13 +694,12 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
     /**
      * Sends out ExplorationAnts to explore each of the given paths.
      */
-    private void sendExplorationAnts(List<List<Point>> paths, List<IntentionData> pairs) {
-        System.out.println("RobotAgent.sendExplorationAnts");
-        System.out.println("paths = [" + paths + "], pairs = [" + pairs + "]");
+    private void sendExplorationAnts(List<List<Point>> paths, List<IntentionData> intentionData) {
+        System.out.println("RobotAgent.sendExplorationAnts, paths: " + paths + ", intentionData: " + intentionData);
         // Send exploration messages over the found paths
         for (List<Point> path : paths) {
             this.commDevice.broadcast(
-                    new ExplorationAnt(path, 0, false, this.id, this, pairs)
+                    new ExplorationAnt(path, 0, false, this.id, this, intentionData)
             );
             this.waitingForExplorationAnts++;
         }
@@ -737,7 +723,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
      * described in "Multi-agent route planning using delegate MAS." (2016).
      */
     private List<List<Point>> getAlternativePaths(int numberOfPaths, Point start, List<Point> dest) {
-        System.out.println("Nodes: " + this.staticGraph.getNodes().size() + " Connections: " + this.staticGraph.getConnections().size());
+        // System.out.println("Nodes: " + this.staticGraph.getNodes().size() + " Connections: " + this.staticGraph.getConnections().size());
         List<List<Point>> alternativePaths = new LinkedList<>();
 
         int fails = 0;
