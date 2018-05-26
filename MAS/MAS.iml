@@ -11,8 +11,8 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="Maven: com.github.rinde:rinsim-example:4.4.3" level="project" />
-    <orderEntry type="library" name="Maven: com.github.rinde:rinsim-core:4.4.3" level="project" />
+    <orderEntry type="library" name="Maven: com.github.rinde:rinsim-example:4.4.5" level="project" />
+    <orderEntry type="library" name="Maven: com.github.rinde:rinsim-core:4.4.5" level="project" />
     <orderEntry type="library" name="Maven: net.openhft:affinity:3.0.1" level="project" />
     <orderEntry type="library" name="Maven: net.java.dev.jna:jna:4.1.0" level="project" />
     <orderEntry type="library" name="Maven: net.java.dev.jna:jna-platform:4.1.0" level="project" />
@@ -25,24 +25,31 @@
     <orderEntry type="library" name="Maven: com.google.code.findbugs:jsr305:3.0.2" level="project" />
     <orderEntry type="library" name="Maven: org.jscience:jscience:4.3.1" level="project" />
     <orderEntry type="library" name="Maven: org.javolution:javolution:5.2.3" level="project" />
-    <orderEntry type="library" name="Maven: com.github.rinde:rinsim-event:4.4.3" level="project" />
-    <orderEntry type="library" name="Maven: com.github.rinde:rinsim-fsm:4.4.3" level="project" />
-    <orderEntry type="library" name="Maven: com.github.rinde:rinsim-cli:4.4.3" level="project" />
-    <orderEntry type="library" name="Maven: com.github.rinde:rinsim-geom:4.4.3" level="project" />
-    <orderEntry type="library" name="Maven: com.github.rinde:rinsim-event:test-jar:tests:4.4.3" level="project" />
-    <orderEntry type="library" name="Maven: com.github.rinde:rinsim-scenario:4.4.3" level="project" />
-    <orderEntry type="library" name="Maven: com.github.rinde:rinsim-scenario-util:4.4.3" level="project" />
-    <orderEntry type="library" name="Maven: com.github.rinde:rinsim-experiment:4.4.3" level="project" />
-    <orderEntry type="library" name="Maven: com.github.rinde:rinsim-io:4.4.3" level="project" />
+    <orderEntry type="library" name="Maven: com.github.rinde:rinsim-event:4.4.5" level="project" />
+    <orderEntry type="library" name="Maven: com.github.rinde:rinsim-fsm:4.4.5" level="project" />
+    <orderEntry type="library" name="Maven: com.github.rinde:rinsim-cli:4.4.5" level="project" />
+    <orderEntry type="library" name="Maven: com.google.guava:guava-testlib:24.1-android" level="project" />
+    <orderEntry type="library" name="Maven: junit:junit:4.11" level="project" />
+    <orderEntry type="library" name="Maven: org.hamcrest:hamcrest-core:1.3" level="project" />
+    <orderEntry type="library" name="Maven: com.github.rinde:rinsim-geom:4.4.5" level="project" />
+    <orderEntry type="library" name="Maven: com.github.rinde:rinsim-event:test-jar:tests:4.4.5" level="project" />
+    <orderEntry type="library" name="Maven: com.github.rinde:rinsim-scenario:4.4.5" level="project" />
+    <orderEntry type="library" name="Maven: com.github.rinde:rinsim-scenario-util:4.4.5" level="project" />
+    <orderEntry type="library" name="Maven: com.github.rinde:rinsim-experiment:4.4.5" level="project" />
+    <orderEntry type="library" name="Maven: com.github.rinde:rinsim-io:4.4.5" level="project" />
     <orderEntry type="library" name="Maven: org.jppf:jppf-client:4.1.3" level="project" />
     <orderEntry type="library" name="Maven: org.jppf:jppf-common-node:4.1.3" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="Maven: org.jppf:jppf-jmxremote_optional:1.0" level="project" />
     <orderEntry type="library" name="Maven: org.jppf:jppf-common:4.1.3" level="project" />
-    <orderEntry type="library" name="Maven: com.github.rinde:rinsim-ui:4.4.3" level="project" />
+    <orderEntry type="library" name="Maven: com.github.rinde:rinsim-ui:4.4.5" level="project" />
     <orderEntry type="library" name="Maven: org.eclipse.swt:org.eclipse.swt.cocoa.macosx.x86_64:4.5.2" level="project" />
-    <orderEntry type="library" name="Maven: com.github.rinde:rinsim-pdptw:4.4.3" level="project" />
-    <orderEntry type="library" name="Maven: com.google.guava:guava:19.0" level="project" />
-    <orderEntry type="library" name="Maven: com.github.rinde:rinsim-test-util:test-jar:tests:4.4.3" level="project" />
+    <orderEntry type="library" name="Maven: com.github.rinde:rinsim-pdptw:4.4.5" level="project" />
+    <orderEntry type="library" name="Maven: com.google.guava:guava:24.1-android" level="project" />
+    <orderEntry type="library" name="Maven: org.checkerframework:checker-compat-qual:2.0.0" level="project" />
+    <orderEntry type="library" name="Maven: com.google.errorprone:error_prone_annotations:2.1.3" level="project" />
+    <orderEntry type="library" name="Maven: com.google.j2objc:j2objc-annotations:1.1" level="project" />
+    <orderEntry type="library" name="Maven: org.codehaus.mojo:animal-sniffer-annotations:1.14" level="project" />
+    <orderEntry type="library" name="Maven: com.github.rinde:rinsim-test-util:test-jar:tests:4.4.5" level="project" />
     <orderEntry type="library" name="Maven: org.apache.commons:commons-collections4:4.1" level="project" />
     <orderEntry type="library" name="Maven: org.slf4j:slf4j-api:1.7.5" level="project" />
   </component>

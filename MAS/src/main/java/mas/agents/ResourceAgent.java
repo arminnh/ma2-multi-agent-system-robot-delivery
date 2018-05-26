@@ -321,16 +321,25 @@ public class ResourceAgent implements CommUser, RoadUser, TickListener {
             estimatedTime++;
             // TODO: calculate new estimated time based on this_location -> next_location
         }
-        ant = ant.copy(estimatedTime);
 
         int nextPositionIndex = ant.path.indexOf(this.position) + 1;
         Point nextPosition = ant.path.get(nextPositionIndex);
 
         for (ResourceAgent neighbor : this.neighbors) {
             if (neighbor.getPosition().get().equals(nextPosition)) {
+                if(neighbor.hasRoadWorks()){
+                    estimatedTime += SimulatorSettings.TIME_ROAD_WORKS;
+                }
+
+                ant = ant.copy(estimatedTime);
+
                 this.commDevice.send(ant, neighbor);
             }
         }
+    }
+
+    public boolean hasRoadWorks(){
+        return this.roadWorks.isPresent();
     }
 
     private int getPizzasLeftForDeliveryTask(Integer deliveryTaskID) {
