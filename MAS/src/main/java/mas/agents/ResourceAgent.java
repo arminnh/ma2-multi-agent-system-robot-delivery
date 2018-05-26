@@ -205,7 +205,7 @@ public class ResourceAgent implements CommUser, RoadUser, TickListener {
 
                     if (updated) {
                         // The reservation has been updated, set 'confirmed' to true in the delivery data.
-                        newDeliveriesData.add(deliveryData.copy(false));
+                        newDeliveriesData.add(deliveryData.copy(true));
 
                     } else {
                         if(deliveryData.pizzas <= this.getPizzasLeftForDeliveryTask(task.id) &&
