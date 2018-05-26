@@ -9,12 +9,13 @@ import com.github.rinde.rinsim.core.model.pdp.Vehicle;
 import com.github.rinde.rinsim.core.model.pdp.VehicleDTO;
 import com.github.rinde.rinsim.core.model.rand.RandomProvider;
 import com.github.rinde.rinsim.core.model.rand.RandomUser;
-import com.github.rinde.rinsim.core.model.road.GraphRoadModel;
 import com.github.rinde.rinsim.core.model.road.MoveProgress;
 import com.github.rinde.rinsim.core.model.road.MovingRoadUser;
 import com.github.rinde.rinsim.core.model.road.RoadModel;
 import com.github.rinde.rinsim.core.model.time.TickListener;
 import com.github.rinde.rinsim.core.model.time.TimeLapse;
+import com.github.rinde.rinsim.geom.LengthData;
+import com.github.rinde.rinsim.geom.ListenableGraph;
 import com.github.rinde.rinsim.geom.Point;
 import com.google.common.base.Optional;
 import com.google.common.collect.HashBasedTable;
@@ -23,19 +24,19 @@ import com.google.common.collect.Table;
 import mas.DeliveryTaskData;
 import mas.buildings.ChargingStation;
 import mas.graphs.AStar;
-import mas.messages.*;
+import mas.messages.Ant;
+import mas.messages.DesireAnt;
+import mas.messages.ExplorationAnt;
+import mas.messages.IntentionAnt;
 import mas.models.PizzeriaModel;
 import mas.models.PizzeriaUser;
 import mas.tasks.DeliveryTask;
 import mas.tasks.PizzaParcel;
-import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.apache.commons.math3.analysis.function.Exp;
 import org.apache.commons.math3.random.RandomGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.measure.unit.SI;
-import javax.swing.text.html.Option;
 import java.util.*;
 
 /**
@@ -50,7 +51,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
     private PDPModel pdpModel;
     private CommDevice commDevice;
     private PizzeriaModel pizzeriaModel;
-    private GraphRoadModel graphRoadModel;
+    private ListenableGraph<LengthData> staticGraph;
 
     private int id = -1;
     private Battery battery;
@@ -71,11 +72,19 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
     private boolean goingToPizzeria = false;
     private int waitingForIntentionAnt = 0;
 
-    public RobotAgent(VehicleDTO vdto, Battery battery, int id, Point pizzeriaPosition, int alternativePathsToExplore) {
+    public RobotAgent(
+            int id,
+            VehicleDTO vdto,
+            Battery battery,
+            ListenableGraph<LengthData> staticGraph,
+            Point pizzeriaPosition,
+            int alternativePathsToExplore
+    ) {
         super(vdto);
 
         this.id = id;
         this.battery = battery;
+        this.staticGraph = staticGraph;
         this.pizzeriaPosition = pizzeriaPosition;
         this.alternativePathsToExplore = alternativePathsToExplore;
     }
@@ -84,9 +93,6 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
     public void initRoadPDP(RoadModel pRoadModel, PDPModel pPdpModel) {
         this.pdpModel = pPdpModel;
         this.roadModel = pRoadModel;
-        // TODO: Make sure that the static map never changes when we add a roadwork!!
-        // Maybe need to do a copy!
-        this.graphRoadModel = (GraphRoadModel) pRoadModel;
     }
 
     @Override
@@ -166,7 +172,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
             }
 
             explorePaths(deliveries);
-            if(deliveries.size() > 1){
+            if (deliveries.size() > 1) {
                 explorePaths(Lists.reverse(deliveries));
             }
             this.desires.clear();
@@ -202,7 +208,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
                 if (this.goingToCharge) {
                     this.arriveAtChargingStation();
                     // If the robot was going towards a pizzeria
-                } else if(this.goingToPizzeria) {
+                } else if (this.goingToPizzeria) {
                     this.arriveAtPizzeria(time);
                 }
             }
@@ -215,7 +221,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
                 // If at pizzeria ask for tasks
                 if (this.isAtPizzeria) {
                     List<DeliveryTask> tasks = pizzeriaModel.getDeliveryTasks();
-                    if(!tasks.isEmpty()){
+                    if (!tasks.isEmpty()) {
                         sendDesireAntsForTasks(tasks);
                         return;
                     }
@@ -226,7 +232,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
                 if (!this.currentParcels.isEmpty()) {
                     List<DeliveryTaskData> deliveries = new LinkedList<>();
 
-                    for (PizzaParcel parcel: this.currentParcels) {
+                    for (PizzaParcel parcel : this.currentParcels) {
                         deliveries.add(new DeliveryTaskData(parcel.getDeliveryLocation(), this.id,
                                 parcel.deliveryTaskID, parcel.amountOfPizzas, false));
                     }
@@ -258,9 +264,12 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
     private void sendDesireAntsForTasks(List<DeliveryTask> tasks) {
         System.out.println("sendDesireAntsForTasks");
         for (DeliveryTask task : tasks) {
-            List<Point> path = this.roadModel.getShortestPathTo(this, task.getPosition().get());
-            DesireAnt desireAnt = new DesireAnt(path, 0,
-                    false, this.id, this, null, task.id, 0);
+
+            List<Point> destinations = new LinkedList<>(Arrays.asList(task.getPosition().get()));
+            List<Point> path = this.getAlternativePaths(1, this.getPosition().get(), destinations).get(0);
+
+            DesireAnt desireAnt = new DesireAnt(path, 0, false, this.id, this, null, task.id, 0);
+
             this.commDevice.broadcast(desireAnt);
             this.waitingForDesireAnts++;
         }
@@ -276,9 +285,9 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
     private void readMessages(TimeLapse time) {
         for (Message m : this.commDevice.getUnreadMessages()) {
 
-            if(Ant.class.isInstance(m.getContents())){
+            if (Ant.class.isInstance(m.getContents())) {
                 Ant ant = (Ant) m.getContents();
-                if(ant.robotID != this.id){
+                if (ant.robotID != this.id) {
                     continue;
                 }
             }
@@ -312,9 +321,9 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
     private void handleDesireAntMessage(Message m) {
         System.out.println("Got desire ant");
         DesireAnt ant = (DesireAnt) m.getContents();
-        if(ant.pizzas > 0){
+        if (ant.pizzas > 0) {
             this.desires.put(ant, ant.score);
-            System.out.println( this.desires);
+            System.out.println(this.desires);
         }
 
         this.waitingForDesireAnts--;
@@ -328,7 +337,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
             //System.out.println("CHARGING");
             this.intention = Optional.of(new LinkedList<>(ant.path));
         } else {
-            for (DeliveryTaskData deliveryTaskData: ant.deliveries) {
+            for (DeliveryTaskData deliveryTaskData : ant.deliveries) {
                 // Check if we don't have a parcel yet and if the reservation is confirmed
                 if (deliveryTaskData.reservationConfirmed && this.getParcelForDeliveryTaskID(deliveryTaskData) == null) {
                     PizzaParcel parcel = this.pizzeriaModel.newPizzaParcel(deliveryTaskData.deliveryTaskID,
@@ -337,14 +346,14 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
                     this.pdpModel.pickup(this, parcel, time);
 
                     this.addPizzaParcel(parcel);
-                }else{
+                } else {
                     System.out.println("Reservation denied");
-                    if(this.intention.isPresent()){
+                    if (this.intention.isPresent()) {
                         // There was a reservation denied
                         // Get the correct parcel from our current parcels
                         PizzaParcel removeParcel = getParcelForDeliveryTaskID(deliveryTaskData);
 
-                        if(removeParcel != null){
+                        if (removeParcel != null) {
                             this.currentParcels.remove(removeParcel);
 
                             // Notify the model that we're dropping a parcel
@@ -357,9 +366,9 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
                 }
             }
 
-            if(this.hasPizzaParcel()){
+            if (this.hasPizzaParcel()) {
                 this.intention = Optional.of(new LinkedList<>(ant.path));
-            }else{
+            } else {
                 System.out.println("d");
 
             }
@@ -370,8 +379,8 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
     @Nullable
     private PizzaParcel getParcelForDeliveryTaskID(DeliveryTaskData deliveryTaskData) {
         PizzaParcel removeParcel = null;
-        for(PizzaParcel p : this.currentParcels){
-            if(p.deliveryTaskID == deliveryTaskData.deliveryTaskID){
+        for (PizzaParcel p : this.currentParcels) {
+            if (p.deliveryTaskID == deliveryTaskData.deliveryTaskID) {
                 removeParcel = p;
             }
         }
@@ -397,9 +406,9 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
 
         // If the new best path is better than the current one, update the intention of the robot.
         if (!this.intention.isPresent() || bestTime < this.intentionTimeLeft) {
-            if(this.goingToPizzeria){
+            if (this.goingToPizzeria) {
                 this.intention = Optional.of(new LinkedList<>(bestAnt.path));
-            }else{
+            } else {
                 this.sendIntentionAnt(bestAnt);
             }
         }
@@ -525,7 +534,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
     private void explorePaths(List<DeliveryTaskData> deliveries) {
         List<Point> destinations = new LinkedList<>();
 
-        for (DeliveryTaskData data: deliveries) {
+        for (DeliveryTaskData data : deliveries) {
             destinations.add(data.position);
         }
 
@@ -540,7 +549,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
      */
     private void sendIntentionAnt(ExplorationAnt explorationAnt) {
 
-        IntentionAnt ant = new IntentionAnt(explorationAnt.path, 0, false, this.id,this,
+        IntentionAnt ant = new IntentionAnt(explorationAnt.path, 0, false, this.id, this,
                 explorationAnt.deliveries);
         this.waitingForIntentionAnt++;
 
@@ -588,8 +597,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
      * described in "Multi-agent route planning using delegate MAS." (2016).
      */
     private List<List<Point>> getAlternativePaths(int numberOfPaths, Point start, List<Point> dest) {
-        System.out.println("Nodes: " + this.graphRoadModel.getGraph().getNodes().size() +
-                " Connections: " + this.graphRoadModel.getGraph().getConnections().size());
+        System.out.println("Nodes: " + this.staticGraph.getNodes().size() + " Connections: " + this.staticGraph.getConnections().size());
         List<List<Point>> alternativePaths = new LinkedList<>();
 
         int fails = 0;
@@ -599,7 +607,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
         Table<Point, Point, Double> weights = HashBasedTable.create();
 
         while (alternativePaths.size() < numberOfPaths && fails < maxFails) {
-            List<Point> path = AStar.getShortestPath(this.graphRoadModel, weights, start, new LinkedList<>(dest));
+            List<Point> path = AStar.getShortestPath(this.staticGraph, weights, start, new LinkedList<>(dest));
 
             if (path != null) {
                 if (alternativePaths.contains(path)) {
@@ -614,7 +622,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
                     if (beta < alpha) {
 
                         // Careful: there is also an getOutgoingConnections
-                        for (Point v2 : this.graphRoadModel.getGraph().getIncomingConnections(v)) {
+                        for (Point v2 : this.staticGraph.getIncomingConnections(v)) {
                             if (weights.contains(v, v2)) {
                                 weights.put(v, v2, weights.get(v, v2) + penalty);
                             } else {
@@ -631,6 +639,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
                     }
                 }
             } else {
+                fails++;
                 System.err.println("GOT null PATH OUT OF A* SEARCH");
             }
         }
@@ -638,18 +647,13 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
         return alternativePaths;
     }
 
-    private static List<Map.Entry<DesireAnt, Long>> sortMapDescending(HashMap map) {
+    private List<Map.Entry<DesireAnt, Long>> sortMapDescending(HashMap<DesireAnt, Long> map) {
         // From: https://beginnersbook.com/2013/12/how-to-sort-hashmap-in-java-by-keys-and-values/
 
-        List<Map.Entry<DesireAnt, Long>> list = new LinkedList(map.entrySet());
+        LinkedList<Map.Entry<DesireAnt, Long>> list = new LinkedList<Map.Entry<DesireAnt, Long>>(map.entrySet());
 
         // Defined Custom Comparator here
-        Collections.sort(list, new Comparator<Map.Entry<DesireAnt, Long>>() {
-            public int compare(Map.Entry o1, Map.Entry o2) {
-                return ((Comparable) o1.getValue())
-                        .compareTo(o2.getValue());
-            }
-        });
+        list.sort(Comparator.comparing(Map.Entry::getValue));
 
         return Lists.reverse(list);
     }

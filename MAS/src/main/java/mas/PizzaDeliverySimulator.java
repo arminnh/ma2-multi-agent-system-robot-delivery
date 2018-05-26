@@ -4,11 +4,12 @@ import com.github.rinde.rinsim.core.Simulator;
 import com.github.rinde.rinsim.core.model.comm.CommModel;
 import com.github.rinde.rinsim.core.model.pdp.DefaultPDPModel;
 import com.github.rinde.rinsim.core.model.pdp.VehicleDTO;
-import com.github.rinde.rinsim.core.model.road.GraphRoadModel;
 import com.github.rinde.rinsim.core.model.road.RoadModel;
 import com.github.rinde.rinsim.core.model.road.RoadModelBuilders;
 import com.github.rinde.rinsim.core.model.time.TickListener;
 import com.github.rinde.rinsim.core.model.time.TimeLapse;
+import com.github.rinde.rinsim.geom.LengthData;
+import com.github.rinde.rinsim.geom.ListenableGraph;
 import com.github.rinde.rinsim.geom.Point;
 import com.github.rinde.rinsim.pdptw.common.StatsPanel;
 import com.github.rinde.rinsim.ui.View;
@@ -16,7 +17,6 @@ import com.github.rinde.rinsim.ui.renderers.CommRenderer;
 import com.github.rinde.rinsim.ui.renderers.GraphRoadModelRenderer;
 import com.github.rinde.rinsim.ui.renderers.RoadUserRenderer;
 import mas.agents.Battery;
-import mas.agents.ResourceAgent;
 import mas.agents.RobotAgent;
 import mas.buildings.ChargingStation;
 import mas.buildings.Pizzeria;
@@ -32,7 +32,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.measure.unit.SI;
 
-public class PizzaDeliverySimulator{
+public class PizzaDeliverySimulator {
 
     private static int robotID = 1;
     private static int pizzaParcelID = 1;
@@ -76,7 +76,7 @@ public class PizzaDeliverySimulator{
                 .with(DeliveryTaskRenderer.builder())
                 .with(RobotRenderer.builder())
                 .with(StatsPanel.builder())
-                .withResolution(800, 600);
+                .withResolution(1200, 800);
         /*
          * Image sources:
          * https://www.shutterstock.com/image-vector/line-pixel-style-classic-robot-rectangle-488817829
@@ -85,13 +85,18 @@ public class PizzaDeliverySimulator{
          * https://cdn1.iconfinder.com/data/icons/road-trip/90/work_in_progress-512.png
          */
 
+        // Create the graphs for the virtual environment. Need to create them twice in order to keep a static one
+        // on the vehicles. It was impossible to create a graph snapshot in the vehicles.
+        ListenableGraph<LengthData> staticGraph = CityGraphCreator.createGraph(20, SimulatorSettings.VEHICLE_LENGTH);
+        ListenableGraph<LengthData> dynamicGraph = CityGraphCreator.createGraph(20, SimulatorSettings.VEHICLE_LENGTH);
+
         // initialize a new Simulator instance
         final Simulator sim = Simulator.builder()
                 // set the length of a simulation 'tick'
                 .setTickLength(SimulatorSettings.TICK_LENGTH)
                 // set the random seed we use in this 'experiment'
                 //.setRandomSeed(RANDOM_SEED)
-                .addModel(RoadModelBuilders.dynamicGraph(CityGraphCreator.createGraph(10, SimulatorSettings.VEHICLE_LENGTH))
+                .addModel(RoadModelBuilders.dynamicGraph(dynamicGraph)
                         .withDistanceUnit(SI.METER)
                         .withModificationCheck(true))
                 .addModel(DefaultPDPModel.builder())
@@ -104,7 +109,6 @@ public class PizzaDeliverySimulator{
 
         final RandomGenerator rng = sim.getRandomGenerator();
         final RoadModel roadModel = sim.getModelProvider().getModel(RoadModel.class);
-        final GraphRoadModel graph = sim.getModelProvider().getModel(GraphRoadModel.class);
         final PizzeriaModel pizzeriaModel = sim.getModelProvider().getModel(PizzeriaModel.class);
         pizzeriaModel.setSimulator(sim, rng);
 
@@ -134,12 +138,13 @@ public class PizzaDeliverySimulator{
 
             // Robots start at the pizzeria
             sim.register(new RobotAgent(
-                    vdto, battery, getNextRobotID(), pizzeria.getPosition(), SimulatorSettings.ALTERNATIVE_PATHS_TO_EXPLORE
-            ));
+                    getNextRobotID(), vdto, battery, staticGraph, pizzeria.getPosition(),
+                    SimulatorSettings.ALTERNATIVE_PATHS_TO_EXPLORE)
+            );
         }
 
         // At every node, insert a ResourceAgent
-        for (Point node : graph.getGraph().getNodes()) {
+        for (Point node : staticGraph.getNodes()) {
             pizzeriaModel.createResourceAgent(node, sim.getRandomGenerator());
         }
 

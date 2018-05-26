@@ -27,8 +27,7 @@ public class CityGraphCreator {
     public static ListenableGraph<LengthData> createGraph(Integer size, int vehicleLength) {
         final Graph<LengthData> g = new TableGraph<>();
 
-        final Table<Integer, Integer, Point> leftMatrix =
-                createMatrix(size, size, new Point(0, 0), vehicleLength);
+        final Table<Integer, Integer, Point> leftMatrix = createMatrix(size, size, new Point(0, 0), vehicleLength);
 
         for (final Map<Integer, Point> column : leftMatrix.columnMap().values()) {
             Graphs.addBiPath(g, column.values());
