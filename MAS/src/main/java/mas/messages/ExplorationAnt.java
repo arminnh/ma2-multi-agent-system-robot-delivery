@@ -2,7 +2,6 @@ package mas.messages;
 
 import com.github.rinde.rinsim.core.model.comm.CommUser;
 import com.github.rinde.rinsim.geom.Point;
-import mas.IntentionData;
 
 import java.util.List;
 

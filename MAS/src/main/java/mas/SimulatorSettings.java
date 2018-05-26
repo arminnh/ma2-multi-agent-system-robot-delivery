@@ -2,12 +2,12 @@ package mas;
 
 public class SimulatorSettings {
     public static final long TICK_LENGTH = 100L;
-    public static final int SIM_SPEEDUP = 1;
+    public static final int SIM_SPEEDUP = 2;
     public static final int WINDOW_WIDTH = 1200;
     public static final int WINDOW_HEIGHT = 800;
 
-    public static final int CITY_SIZE = 15;
-    public static final int NUM_ROBOTS = 2;
+    public static final int CITY_SIZE = 6;
+    public static final int NUM_ROBOTS = 1;
     public static final int ROBOT_CAPACITY = 5;
     public static final int BATTERY_CAPACITY = 100;
     public static final int VEHICLE_LENGTH = 1;

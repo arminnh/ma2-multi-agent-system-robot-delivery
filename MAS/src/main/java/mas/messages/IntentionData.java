@@ -1,4 +1,4 @@
-package mas;
+package mas.messages;
 
 
 import com.github.rinde.rinsim.geom.Point;

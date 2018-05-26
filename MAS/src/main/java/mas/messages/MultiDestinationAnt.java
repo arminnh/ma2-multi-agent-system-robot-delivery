@@ -2,7 +2,6 @@ package mas.messages;
 
 import com.github.rinde.rinsim.core.model.comm.CommUser;
 import com.github.rinde.rinsim.geom.Point;
-import mas.IntentionData;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -24,7 +23,7 @@ public class MultiDestinationAnt extends Ant {
     }
 
     public boolean hasReachedDestination(Point p) {
-        System.out.println("MultiDestinationAnt.hasReachedDestination");
+        System.out.println("MultiDestinationAnt.hasReachedDestination, estimatedTime: " + this.estimatedTime + ", path: " + this.path);
         if (this.isReturning) {
             return super.hasReachedDestination(p);
         } else {
@@ -32,8 +31,7 @@ public class MultiDestinationAnt extends Ant {
                 return false;
             }
             for (IntentionData delivery : this.deliveries) {
-                System.out.println("delivery.position + \" \" + p = " + delivery.position + " " +p);
-                System.out.println(" "+delivery.position.equals(p));
+                System.out.println("Position: " + p + ", Destination: " + delivery.position + ", equal: " + delivery.position.equals(p));
 
                 if (delivery.position.equals(p)) {
                     return true;

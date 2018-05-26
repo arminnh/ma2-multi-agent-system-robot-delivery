@@ -8,11 +8,10 @@ import com.github.rinde.rinsim.core.model.road.RoadModel;
 import com.github.rinde.rinsim.core.model.road.RoadUser;
 import com.github.rinde.rinsim.core.model.time.TickListener;
 import com.github.rinde.rinsim.core.model.time.TimeLapse;
-import com.github.rinde.rinsim.geom.Connection;
 import com.github.rinde.rinsim.geom.Point;
 import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
-import mas.IntentionData;
+import mas.messages.IntentionData;
 import mas.SimulatorSettings;
 import mas.buildings.ChargingStation;
 import mas.buildings.RoadWorks;
@@ -114,7 +113,7 @@ public class ResourceAgent implements CommUser, RoadUser, TickListener {
 
     private void handleDesireAnt(Message m) {
         DesireAnt ant = (DesireAnt) m.getContents();
-        System.out.println("Desire ant at " + this.position + " id: " + ant.id);
+        System.out.println("Desire ant at " + this.position + ", id: " + ant.id);
 
         if (ant.hasReachedDestination(this.position)) {
             if (ant.isReturning) {
@@ -141,7 +140,7 @@ public class ResourceAgent implements CommUser, RoadUser, TickListener {
 
     private void handleExplorationAnt(Message m) {
         ExplorationAnt ant = (ExplorationAnt) m.getContents();
-        System.out.println("Exploration ant at " + this.position + " id: " + ant.id);
+        System.out.println("Exploration ant at " + this.position + ", id: " + ant.id + ", data: " + ant.deliveries);
 
         // Check if the ant reached its current destination. Once the ant reached the original destination, the
         // destination and path are reversed towards the RobotAgent that sent the ant.
@@ -167,7 +166,7 @@ public class ResourceAgent implements CommUser, RoadUser, TickListener {
 
     private void handleIntentionAnt(Message m, TimeLapse timeLapse) {
         IntentionAnt ant = (IntentionAnt) m.getContents();
-        System.out.println("Intention ant at " + this.position + " id: " + ant.id + " deliveries "+ ant.deliveries);
+        System.out.println("Intention ant at " + this.position + ", id: " + ant.id + ", data: " + ant.deliveries);
 
         if (ant.hasReachedDestination(this.position)) {
             if (ant.isReturning) {
@@ -259,7 +258,7 @@ public class ResourceAgent implements CommUser, RoadUser, TickListener {
                 DeliveryTask task = this.deliveryTasks.get(deliveryData.deliveryTaskID);
 
                 // Calculate the (possibly new) amount of pizzas that the robot can send for this task
-                System.out.println("updateExplorationAntDeliveryData: " + task + " " + deliveryData);
+                System.out.println("updateExplorationAntDeliveryData for task " + task);
                 Integer newPizzaAmount = 0;
 
                 if(this.deliveryTasks.containsKey(deliveryData.deliveryTaskID)){
@@ -323,7 +322,7 @@ public class ResourceAgent implements CommUser, RoadUser, TickListener {
             // TODO: calculate new estimated time based on this_location -> next_location
         }
         ant = ant.copy(estimatedTime);
-        System.out.println("ant.path = " + ant.path);
+
         int nextPositionIndex = ant.path.indexOf(this.position) + 1;
         Point nextPosition = ant.path.get(nextPositionIndex);
 

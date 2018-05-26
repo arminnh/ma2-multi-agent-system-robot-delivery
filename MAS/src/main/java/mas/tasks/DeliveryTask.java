@@ -45,6 +45,15 @@ public class DeliveryTask implements RoadUser {
         return Optional.of(this.position);
     }
 
+    @Override
+    public String toString() {
+        return "{id: " + this.id +
+                ", destination: " + this.position +
+                ", requested: " + this.pizzasRequested +
+                ", delivered: " + this.pizzasDelivered +
+                "}";
+    }
+
     public int getPizzasRequested() {
         return this.pizzasRequested;
     }

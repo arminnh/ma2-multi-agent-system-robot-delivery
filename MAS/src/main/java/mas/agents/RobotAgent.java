@@ -21,7 +21,7 @@ import com.google.common.base.Optional;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Table;
-import mas.IntentionData;
+import mas.messages.IntentionData;
 import mas.SimulatorSettings;
 import mas.buildings.ChargingStation;
 import mas.graphs.AStar;
@@ -393,7 +393,6 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
         }
 
         System.out.println("Robot " + this.id + " got ExplorationAnt for robotID " + ant.robotID);
-        System.out.println(ant.path + ", estimation: " + ant.estimatedTime);
     }
 
     private void handleDesireAntMessage(Message m) {
