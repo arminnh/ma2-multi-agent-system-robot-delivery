@@ -7,7 +7,6 @@ import com.github.rinde.rinsim.core.model.pdp.ParcelDTO;
 import com.github.rinde.rinsim.core.model.road.DynamicGraphRoadModelImpl;
 import com.github.rinde.rinsim.core.model.road.RoadModel;
 import com.github.rinde.rinsim.core.model.time.Clock;
-import com.github.rinde.rinsim.core.model.time.TimeLapse;
 import com.github.rinde.rinsim.event.EventAPI;
 import com.github.rinde.rinsim.event.EventDispatcher;
 import com.github.rinde.rinsim.geom.Connection;
@@ -71,7 +70,7 @@ public class PizzeriaModel extends Model.AbstractModel<PizzeriaUser> {
 
     public Pizzeria openPizzeria() {
         Pizzeria pizzeria = new Pizzeria(this.roadModel.getRandomPosition(rng));
-        sim.register(pizzeria);
+        this.sim.register(pizzeria);
 
         eventDispatcher.dispatchEvent(new PizzeriaEvent(
                 PizzeriaEventType.NEW_PIZZERIA, 0, null, null, null
@@ -80,19 +79,16 @@ public class PizzeriaModel extends Model.AbstractModel<PizzeriaUser> {
         return pizzeria;
     }
 
-    public void closePizzeria() {
+    public void closePizzeria(Pizzeria pizzeria) {
         eventDispatcher.dispatchEvent(new PizzeriaEvent(
                 PizzeriaEventType.CLOSE_PIZZERIA, 0, null, null, null
         ));
+
+        this.sim.unregister(pizzeria);
     }
 
     public List<DeliveryTask> getDeliveryTasks() {
-        List<DeliveryTask> tasks = new LinkedList<>(this.roadModel.getObjectsOfType(DeliveryTask.class));
-
-        // Filter out any tasks that need more pizzas to be created and delivered.
-        CollectionUtils.filter(tasks, o -> !o.isFinished());
-
-        return tasks;
+        return new LinkedList<>(this.roadModel.getObjectsOfType(DeliveryTask.class));
     }
 
     public void createNewDeliveryTask(RandomGenerator rng, double pizzaMean, double pizzaStd, long time) {
@@ -121,7 +117,7 @@ public class PizzeriaModel extends Model.AbstractModel<PizzeriaUser> {
         return parcel;
     }
 
-    public void deliverPizzas(RobotAgent vehicle, PizzaParcel parcel, long time) {
+    public void deliverPizzaParcel(RobotAgent vehicle, PizzaParcel parcel, long time) {
         DeliveryTask task = parcel.deliveryTask;
 
         task.deliverPizzas(parcel.amountOfPizzas);
@@ -134,7 +130,19 @@ public class PizzeriaModel extends Model.AbstractModel<PizzeriaUser> {
             eventDispatcher.dispatchEvent(new PizzeriaEvent(PizzeriaEventType.END_TASK, time, task, parcel, vehicle));
             this.roadModel.removeObject(task);
             this.deliveryTasks.remove(task.id);
+
+            // Unregister the task from the simulator
+            this.sim.unregister(task);
         }
+    }
+
+    public void dropPizzaParcel(RobotAgent robot, PizzaParcel parcel, long time) {
+        eventDispatcher.dispatchEvent(new PizzeriaEvent(
+                PizzeriaEventType.DROP_PARCEL, time, null, parcel, robot
+        ));
+
+        // Unregister the parcel from the simulator
+        this.sim.unregister(parcel);
     }
 
     public void robotArrivedAtChargingStation(RobotAgent r, ChargingStation cs) {
@@ -153,11 +161,11 @@ public class PizzeriaModel extends Model.AbstractModel<PizzeriaUser> {
         ));
     }
 
-    public void createResourceAgent(Point position, RandomGenerator randomGenerator) {
-        sim.register(new ResourceAgent(position, sim.getRandomGenerator()));
+    public void createResourceAgent(Point position) {
+        sim.register(new ResourceAgent(position, this.sim.getRandomGenerator()));
     }
 
-    public void newRoadWorks(TimeLapse timeLapse) {
+    public void newRoadWorks(long time) {
         // Road works can only be set on positions where there is no robot, building, or delivery task.
         // Try to create new road works up to 3 times.
         int attempts = 5;
@@ -166,7 +174,7 @@ public class PizzeriaModel extends Model.AbstractModel<PizzeriaUser> {
             // Find a new random position.
             Point position = this.roadModel.getRandomPosition(this.rng);
 
-            RoadWorks roadWorks = new RoadWorks(position, timeLapse.getEndTime() + SimulatorSettings.TIME_ROAD_WORKS);
+            RoadWorks roadWorks = new RoadWorks(position, time + SimulatorSettings.TIME_ROAD_WORKS);
 
             // First, register the works on the road
             this.sim.register(roadWorks);
@@ -192,6 +200,7 @@ public class PizzeriaModel extends Model.AbstractModel<PizzeriaUser> {
 
                 return;
             } else {
+                // The road works should not be added to the environment, unregister it
                 this.sim.unregister(roadWorks);
             }
         }
@@ -208,6 +217,8 @@ public class PizzeriaModel extends Model.AbstractModel<PizzeriaUser> {
             try {
                 Connection c1 = graph.getConnection(resourceAgent.position, neighbor.position);
                 Connection c2 = graph.getConnection(neighbor.position, resourceAgent.position);
+
+                System.out.println("road user: " + g.hasRoadUserOn(resourceAgent.position, neighbor.position) + ", " + g.hasRoadUserOn(neighbor.position, resourceAgent.position));
 
                 graph.removeConnection(c1.from(), c1.to());
 
@@ -249,23 +260,15 @@ public class PizzeriaModel extends Model.AbstractModel<PizzeriaUser> {
         // Unlink the road works from the resource agent they are linked to.
         agent.removeRoadWorks();
 
-        // Unregister the works from the simulator
-        this.sim.unregister(roadWorks);
-
         eventDispatcher.dispatchEvent(new PizzeriaEvent(
                 PizzeriaEventType.FINISHED_ROADWORKS, 0, null, null, null
         ));
+
+        // Unregister the works from the simulator
+        this.sim.unregister(roadWorks);
     }
 
     public Long getCurrentTime() {
         return clock.getCurrentTime();
-    }
-
-    public void dropParcel(RobotAgent robotAgent, PizzaParcel removeParcel, TimeLapse time) {
-        //this.sim.unregister(removeParcel);
-        eventDispatcher.dispatchEvent(new PizzeriaEvent(
-                PizzeriaEventType.DROP_PARCEL, time.getStartTime(), null, removeParcel, robotAgent
-        ));
-
     }
 }

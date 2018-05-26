@@ -76,7 +76,7 @@ public class PizzaDeliverySimulator {
                 .with(DeliveryTaskRenderer.builder())
                 .with(RobotRenderer.builder())
                 .with(StatsPanel.builder())
-                .withResolution(1200, 800);
+                .withResolution(SimulatorSettings.WINDOW_WIDTH, SimulatorSettings.WINDOW_HEIGHT);
         /*
          * Image sources:
          * https://www.shutterstock.com/image-vector/line-pixel-style-classic-robot-rectangle-488817829
@@ -87,8 +87,8 @@ public class PizzaDeliverySimulator {
 
         // Create the graphs for the virtual environment. Need to create them twice in order to keep a static one
         // on the vehicles. It was impossible to create a graph snapshot in the vehicles.
-        ListenableGraph<LengthData> staticGraph = CityGraphCreator.createGraph(5, SimulatorSettings.VEHICLE_LENGTH);
-        ListenableGraph<LengthData> dynamicGraph = CityGraphCreator.createGraph(5, SimulatorSettings.VEHICLE_LENGTH);
+        ListenableGraph<LengthData> staticGraph = CityGraphCreator.createGraph(SimulatorSettings.CITY_SIZE, SimulatorSettings.VEHICLE_LENGTH);
+        ListenableGraph<LengthData> dynamicGraph = CityGraphCreator.createGraph(SimulatorSettings.CITY_SIZE, SimulatorSettings.VEHICLE_LENGTH);
 
         // initialize a new Simulator instance
         final Simulator sim = Simulator.builder()
@@ -145,7 +145,7 @@ public class PizzaDeliverySimulator {
 
         // At every node, insert a ResourceAgent
         for (Point node : staticGraph.getNodes()) {
-            pizzeriaModel.createResourceAgent(node, sim.getRandomGenerator());
+            pizzeriaModel.createResourceAgent(node);
         }
 
         // TickListener for creation of new delivery tasks
@@ -166,7 +166,7 @@ public class PizzaDeliverySimulator {
             @Override
             public void tick(TimeLapse timeLapse) {
                 if (rng.nextDouble() < SimulatorSettings.PROB_NEW_ROAD_WORKS) {
-                    pizzeriaModel.newRoadWorks(timeLapse);
+                    pizzeriaModel.newRoadWorks(timeLapse.getEndTime());
                 }
             }
 

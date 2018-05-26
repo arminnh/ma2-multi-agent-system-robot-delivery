@@ -56,7 +56,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
 
     private int id = -1;
     private Battery battery;
-    private int currentCarriedPizzas = -1;
+    private int currentAmountOfPizzas = -1;
     private double metersMoved = 0;
     private Point pizzeriaPosition;
     private boolean goingToCharge = false;
@@ -168,42 +168,42 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
         this.actionLogic(time);
 
         // Only send ants out when you have some battery left
-        if(this.getCapacityLeft() > 0){
+        if (this.getCapacityLeft() > 0) {
             this.resendAnts(time);
         }
     }
 
-    private boolean waitingForAnts(){
+    private boolean waitingForAnts() {
         return this.waitingForExplorationAnts > 0 || this.waitingForIntentionAnt > 0 || this.waitingForDesireAnts > 0;
     }
 
     private void resendAnts(TimeLapse time) {
         System.out.println("RobotAgent.resendAnts");
         // If intention is present send out intention ants
-        if(this.intention.isPresent() && this.lastIntentionUpdate != null){
+        if (this.intention.isPresent() && this.lastIntentionUpdate != null) {
 
-            if(this.lastIntentionUpdate + SimulatorSettings.REFRESH_INTENTIONS < time.getStartTime() &&
-                    this.waitingForIntentionAnt == 0 && !this.goingToPizzeria){
+            if (this.lastIntentionUpdate + SimulatorSettings.REFRESH_INTENTIONS < time.getStartTime() &&
+                    this.waitingForIntentionAnt == 0 && !this.goingToPizzeria) {
                 System.out.println("Sending out intention ants");
                 // We're making a delivery!
-                if(this.currentParcels.size() > 0){
+                if (this.currentParcels.size() > 0) {
                     sendIntentionAntForCurrentParcels(this.intention.get());
-                }else if(this.goingToCharge){
+                } else if (this.goingToCharge) {
                     this.sendIntentionAntToChargingStation(this.intention.get());
                 }
             }
 
-            if(this.lastExplorationUpdate + SimulatorSettings.REFRESH_EXPLORATIONS < time.getStartTime() &&
-                    this.waitingForExplorationAnts == 0){
+            if (this.lastExplorationUpdate + SimulatorSettings.REFRESH_EXPLORATIONS < time.getStartTime() &&
+                    this.waitingForExplorationAnts == 0) {
 
-                if(this.goingToPizzeria){
+                if (this.goingToPizzeria) {
                     System.out.println("RobotAgent.resendAnts.this.goingToPizzeria");
                     explorePaths(this.pizzeriaPosition);
-                }else if(this.goingToCharge){
+                } else if (this.goingToCharge) {
                     System.out.println("RobotAgent.resendAnts.this.goingToCharge");
 
                     explorePaths(this.chargingStationPosition);
-                }else{
+                } else {
                     System.out.println("RobotAgent.resendAnts.else");
 
                     checkPathsForCurrentParcels();
@@ -252,7 +252,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
         System.out.println("RobotAgent.checkPathsForCurrentParcels");
         List<IntentionData> deliveries = new LinkedList<>();
 
-        for (PizzaParcel parcel: this.currentParcels) {
+        for (PizzaParcel parcel : this.currentParcels) {
             deliveries.add(new IntentionData(parcel.getDeliveryLocation(), this.id,
                     parcel.deliveryTaskID, parcel.amountOfPizzas, false));
         }
@@ -298,7 +298,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
         }
 
         explorePaths(deliveries);
-        if(deliveries.size() > 1){
+        if (deliveries.size() > 1) {
             explorePaths(Lists.reverse(deliveries));
         }
         this.desires.clear();
@@ -313,11 +313,11 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
 
         //intentionReconsideration();
 
-        if (!this.currentParcels.isEmpty() &&
-                this.currentParcels.peek().getDeliveryLocation().equals(this.getPosition().get())) {
-            System.out.println("Pizza delivery");
-            this.deliverPizzaParcel(time);
+        PizzaParcel parcel = this.currentParcels.peek();
+        if (!this.currentParcels.isEmpty() && parcel.getDeliveryLocation().equals(this.getPosition().get())) {
+            this.deliverPizzaParcel(parcel, time);
         }
+
         System.out.println("this.intention.get() = " + this.intention.get());
         // If robot arrived at the destination of the intention, the intention will be empty
         if (this.intention.get().isEmpty()) {
@@ -330,7 +330,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
                 System.out.println("Arriving at charging");
                 this.arriveAtChargingStation();
                 // If the robot was going towards a pizzeria
-            } else if(this.goingToPizzeria) {
+            } else if (this.goingToPizzeria) {
                 this.arriveAtPizzeria(time);
             }
         }
@@ -388,7 +388,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
 
         this.explorationAnts.add(ant);
         this.waitingForExplorationAnts--;
-        if(this.waitingForIntentionAnt == 0){
+        if (this.waitingForIntentionAnt == 0) {
             this.lastExplorationUpdate = time.getStartTime();
         }
 
@@ -435,22 +435,15 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
                         // There was a reservation denied
                         // Get the correct parcel from our current parcels
                         PizzaParcel removeParcel = getParcelForDeliveryTaskID(intentionData);
-                        System.out.println("removeParcel = " + removeParcel  + " goingToChargeStation " + this.goingToCharge);
-                        if(removeParcel != null){
+                        System.out.println("removeParcel = " + removeParcel + " goingToChargeStation " + this.goingToCharge);
+                        if (removeParcel != null) {
                             System.out.println("Removing parcel!!");
                             this.intention = Optional.absent();
 
                             System.out.println("intention = " + this.intention);
-                            dropParcel(removeParcel);
+                            this.dropParcel(removeParcel, time);
 
-
-                            // Notify the model that we're dropping a parcel
-                            this.pizzeriaModel.dropParcel(this, removeParcel, time);
-
-                            // Unregister the parcel from pdp
-                            this.pdpModel.drop(this, removeParcel, time);
-                            this.pdpModel.unregister(removeParcel);
-                        }else if(goingToCharge){
+                        } else if (goingToCharge) {
                             this.intention = Optional.absent();
                             this.goingToCharge = false;
 
@@ -459,11 +452,11 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
                 }
             }
 
-            if(this.hasPizzaParcel()){
-                System.out.println("Got parcel, setting intention "+ant.path );
+            if (this.hasPizzaParcel()) {
+                System.out.println("Got parcel, setting intention " + ant.path);
                 this.intention = Optional.of(new LinkedList<>(ant.path));
                 this.lastIntentionUpdate = time.getStartTime();
-            }else{
+            } else {
 
                 System.out.println("d");
 
@@ -472,18 +465,13 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
         this.waitingForIntentionAnt--;
     }
 
-    private void dropParcel(PizzaParcel removeParcel) {
-        this.currentParcels.remove(removeParcel);
-        this.currentCarriedPizzas -= removeParcel.amountOfPizzas;
-    }
-
     @Nullable
     private PizzaParcel getParcelForDeliveryTaskID(IntentionData intentionData) {
         System.out.println("RobotAgent.getParcelForDeliveryTaskID");
         PizzaParcel removeParcel = null;
-        for(PizzaParcel p : this.currentParcels){
+        for (PizzaParcel p : this.currentParcels) {
             System.out.println("p.deliveryTaskID + \" \" + intentionData.deliveryTaskID = " + p.deliveryTaskID + " " + intentionData.deliveryTaskID);
-            if(p.deliveryTaskID == intentionData.deliveryTaskID){
+            if (p.deliveryTaskID == intentionData.deliveryTaskID) {
 
                 removeParcel = p;
             }
@@ -506,14 +494,14 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
                 bestAnt = ant;
             }
         }
-        
+
         this.explorationAnts.clear();
 
         System.out.println("this.intention.isPresent() = " + this.intention.isPresent());
         // If the new best path is better than the current one, update the intention of the robot.
         if (!this.intention.isPresent() || bestTime < this.intendedArrivalTime) {
 
-            if(this.goingToPizzeria){
+            if (this.goingToPizzeria) {
                 this.intention = Optional.of(new LinkedList<>(bestAnt.path));
             } else {
                 this.sendIntentionAnt(bestAnt);
@@ -528,7 +516,6 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
     private void move(@NotNull TimeLapse time) {
         if (this.intention.isPresent()) {
             MoveProgress progress;
-
 
             if (!this.getPosition().get().equals(this.intention.get().peek())) {
                 progress = this.roadModel.moveTo(this, this.intention.get().peek(), time);
@@ -548,28 +535,45 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
     }
 
     /**
-     * Delivers a PizzaParcel for a certain DeliveryTask. It will deliver the parcel in the PDPModel, decrease the
-     * amount of pizzas for the DeliveryTask in the PizzeriaModel, and decrease the robot's currentCarriedPizzas.
+     * Delivers a PizzaParcel for a certain DeliveryTask. Delivers the parcel in the PDPModel, decreases the amount of
+     * pizzas for the DeliveryTask in the PizzeriaModel, and decreases the amount of pizzas held by the robot.
      */
-    private void deliverPizzaParcel(@NotNull TimeLapse time) {
-        PizzaParcel parcel = this.currentParcels.peek();
+    private void deliverPizzaParcel(PizzaParcel parcel, @NotNull TimeLapse time) {
+        System.out.println("RobotAgent.deliverPizzaParcel");
         DeliveryTask deliveryTask = parcel.deliveryTask;
 
-        // If the robot is at the delivery position of the deliveryTask
+        // If the robot is at the delivery position of the delivery task, deliver the pizza parcel
         if (this.roadModel.equalPosition(this, deliveryTask)) {
-            // Deliver the pizzas
+            this.removePizzaParcelFromRobot(parcel);
+
             this.pdpModel.deliver(this, parcel, time);
-            this.pizzeriaModel.deliverPizzas(this, parcel, time.getEndTime());
-
-            // Unload pizzas
-            this.currentCarriedPizzas -= parcel.amountOfPizzas;
-
-            // Remove current PizzaParcel
-            this.currentParcels.remove();
-
+            this.pizzeriaModel.deliverPizzaParcel(this, parcel, time.getEndTime());
         } else {
             System.err.println("TRYING TO DELIVER FROM WRONG POSITION");
         }
+    }
+
+    /**
+     * Makes the robot drop the parcel.
+     */
+    private void dropParcel(PizzaParcel parcel, TimeLapse time) {
+        System.out.println("RobotAgent.dropParcel");
+        this.removePizzaParcelFromRobot(parcel);
+
+        this.pdpModel.drop(this, parcel, time);
+        this.pizzeriaModel.dropPizzaParcel(this, parcel, time.getStartTime());
+    }
+
+    /**
+     * Removes a PizzaParcel from the robot by decreasing the amount of pizzas that are currently carried and removing
+     * the parcel from the list of parcels.
+     */
+    private void removePizzaParcelFromRobot(PizzaParcel parcel) {
+        // Unload pizzas
+        this.currentAmountOfPizzas -= parcel.amountOfPizzas;
+
+        // Remove the parcel
+        this.currentParcels.remove(parcel);
     }
 
     /**
@@ -610,7 +614,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
     }
 
     public int getCapacityLeft() {
-        return new Double(this.getCapacity()).intValue() - this.currentCarriedPizzas;
+        return new Double(this.getCapacity()).intValue() - this.currentAmountOfPizzas;
     }
 
     public boolean hasPizzaParcel() {
@@ -622,7 +626,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
      */
     public void addPizzaParcel(PizzaParcel parcel) {
         this.currentParcels.add(parcel);
-        this.currentCarriedPizzas += parcel.amountOfPizzas;
+        this.currentAmountOfPizzas += parcel.amountOfPizzas;
         this.isAtPizzeria = false;
         System.out.println("Current parcels: " + this.currentParcels.size());
     }
@@ -646,7 +650,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
         System.out.println("deliveries = [" + deliveries + "]");
         List<Point> destinations = new LinkedList<>();
 
-        for (IntentionData data: deliveries) {
+        for (IntentionData data : deliveries) {
 
             destinations.add(data.position);
         }
@@ -675,7 +679,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
     private void sendIntentionAntToChargingStation(Queue<Point> path) {
         List<IntentionData> deliveries = new LinkedList<>();
         deliveries.add(new IntentionData(this.chargingStationPosition, this.id,
-               0, 0, false));
+                0, 0, false));
 
         IntentionAnt ant = new IntentionAnt(new LinkedList<>(path), 0, false,
                 this.id, this, deliveries);
@@ -684,12 +688,12 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
         this.waitingForIntentionAnt++;
     }
 
-    private void sendIntentionAntForCurrentParcels(Queue<Point> path){
+    private void sendIntentionAntForCurrentParcels(Queue<Point> path) {
         System.out.println("RobotAgent.sendIntentionAntForCurrentParcels");
         System.out.println("path = [" + path + "]");
         List<IntentionData> deliveries = new LinkedList<>();
 
-        for (PizzaParcel parcel: this.currentParcels) {
+        for (PizzaParcel parcel : this.currentParcels) {
             deliveries.add(new IntentionData(parcel.getDeliveryLocation(), this.id,
                     parcel.deliveryTaskID, parcel.amountOfPizzas, false));
         }
