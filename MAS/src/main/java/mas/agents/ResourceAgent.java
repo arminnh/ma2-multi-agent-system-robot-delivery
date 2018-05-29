@@ -179,7 +179,7 @@ public class ResourceAgent implements CommUser, TickListener {
             if (deliveryData.position.equals(this.position) && deliveryData.deliveryTaskID != null) {
                 // Fetch the relevant DeliveryTask
                 DeliveryTask task = this.deliveryTasks.get(deliveryData.deliveryTaskID);
-
+                System.out.println("task = " + task);
                 // Check if a reservation can be updated or can be made (= if the task has pizzas to be delivered)
                 if(task != null){
                     boolean updated = this.updateReservation(task, deliveryData, timeLapse);
@@ -189,6 +189,8 @@ public class ResourceAgent implements CommUser, TickListener {
                         newDeliveriesData.add(deliveryData.copy(true));
 
                     } else {
+                        System.out.println("Not updated");
+                        System.out.println("#Pizza's " + deliveryData.pizzas + " pizzaleftfortask " + this.getPizzasLeftForDeliveryTask(task.id));
                         if(deliveryData.pizzas <= this.getPizzasLeftForDeliveryTask(task.id) &&
                                 this.getPizzasLeftForDeliveryTask(task.id) > 0) {
 

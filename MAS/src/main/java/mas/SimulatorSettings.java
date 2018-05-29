@@ -20,7 +20,7 @@ public class SimulatorSettings {
     public static final long TIME_ROAD_WORKS = 15000;
     public static final double PIZZA_AMOUNT_STD = 0.75;
     public static final double PIZZA_AMOUNT_MEAN = 4;
-    public static final int ALTERNATIVE_PATHS_TO_EXPLORE = 3;
+    public static final int ALTERNATIVE_PATHS_TO_EXPLORE = 1;
 
     public static final long INTENTION_RESERVATION_LIFETIME = 30000L; // 10 seconds
     public static final Long REFRESH_INTENTIONS = 20000L; // 4 seconds
