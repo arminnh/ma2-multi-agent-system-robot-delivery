@@ -150,6 +150,20 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
     }
 
     /**
+     * True if a connection towards the next move in the intention exists in the dynamic graph. Also true if the robot
+     * is not currently on a node, because then is is on a connection already.
+     */
+    private boolean existsConnectionForNextMove(Point nextPosition) {
+        if (!this.isOnNode || this.getPosition().get().equals(nextPosition)) {
+            return true;
+        }
+        if (this.intention.isPresent()) {
+            return this.dynamicGraph.hasConnection(this.getPosition().get(), nextPosition);
+        }
+        return false;
+    }
+
+    /**
      * Broadcasts an ant to CommUsers in the robots range. Throws an exception if the robot is not on a node, as
      * otherwise the ant could be sent to the ResourceAgent the robot was just on and then the path given to the ant
      * would not be correct.
@@ -181,7 +195,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
         this.reconsiderIntentions();
 
         // Make the robot do its next action
-        if (this.intention.isPresent() && !this.waitingForAnts()) {
+        if (this.intention.isPresent() && !this.waitingForAnts() && !this.isCharging) {
             this.doAction(time);
         }
 
@@ -666,13 +680,14 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
             }
 
             // Use the dynamic graph to check if the connection still exists (can disappear due to roadworks).
-            if (this.existsConnectionForNextMove()) {
+            if (this.existsConnectionForNextMove(nextPosition)) {
                 // Perform the actual move
                 MoveProgress progress = this.roadModel.moveTo(this, nextPosition, time);
 
                 this.battery.decreaseCapacity(progress.distance().doubleValue(SI.METER));
             } else {
-                throw new IllegalStateException("Trying to move towards position for which there is no connection.");
+                throw new IllegalStateException("Trying to move towards position for which there is no connection."
+                    + " position = " + this.getPosition().get() + ", nextPosition = " + nextPosition);
             }
         }
     }

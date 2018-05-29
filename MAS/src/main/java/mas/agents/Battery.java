@@ -18,18 +18,20 @@ public class Battery {
     }
 
     public boolean isAtMaxCapacity() {
-        return capacity == maxCapacity;
+        return capacity >= maxCapacity;
     }
 
     public void decreaseCapacity(double distance) {
-        if (capacity > 0) {
-            capacity -= distance;
+        capacity -= distance;
+        if (capacity < 0.0) {
+            capacity = 0.0;
         }
     }
 
     public void incrementCapacity() {
-        if (capacity < maxCapacity) {
-            capacity++;
+        capacity++;
+        if (capacity > maxCapacity) {
+            capacity = maxCapacity;
         }
     }
 }
