@@ -20,14 +20,12 @@ import mas.buildings.Pizzeria;
 import mas.buildings.RoadWorks;
 import mas.tasks.DeliveryTask;
 import mas.tasks.PizzaParcel;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.math3.random.RandomGenerator;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
 
 public class PizzeriaModel extends Model.AbstractModel<PizzeriaUser> {
 
@@ -37,6 +35,7 @@ public class PizzeriaModel extends Model.AbstractModel<PizzeriaUser> {
     private RandomGenerator rng;
     private Clock clock;
     private HashMap<Integer, DeliveryTask> deliveryTasks = new HashMap<>();
+    private HashMap<Point, ResourceAgent> resourceAgents = new HashMap<>();
 
     public PizzeriaModel(RoadModel roadModel, Clock clock) {
         this.roadModel = roadModel;
@@ -98,8 +97,7 @@ public class PizzeriaModel extends Model.AbstractModel<PizzeriaUser> {
         this.deliveryTasks.put(task.id, task);
         sim.register(task);
 
-        Set<ResourceAgent> agents = this.roadModel.getObjectsAt(task, ResourceAgent.class);
-        agents.iterator().next().addDeliveryTask(task);
+        this.resourceAgents.get(task.getPosition().get()).addDeliveryTask(task);
 
         eventDispatcher.dispatchEvent(new PizzeriaEvent(PizzeriaEventType.NEW_TASK, time, task, null, null));
     }
@@ -124,8 +122,7 @@ public class PizzeriaModel extends Model.AbstractModel<PizzeriaUser> {
 
         if (task.isFinished()) {
             // If all pizzas for a deliveryTask have been delivered, the deliveryTask can be removed from the RoadModel.
-            Set<ResourceAgent> agents = this.roadModel.getObjectsAt(task, ResourceAgent.class);
-            agents.iterator().next().removeDeliveryTask(task);
+            this.resourceAgents.get(task.getPosition().get()).removeDeliveryTask(task);
 
             eventDispatcher.dispatchEvent(new PizzeriaEvent(PizzeriaEventType.END_TASK, time, task, parcel, vehicle));
             this.roadModel.removeObject(task);
@@ -163,7 +160,10 @@ public class PizzeriaModel extends Model.AbstractModel<PizzeriaUser> {
     }
 
     public void createResourceAgent(Point position) {
-        sim.register(new ResourceAgent(position, this.sim.getRandomGenerator()));
+        ResourceAgent agent = new ResourceAgent(position);
+
+        this.resourceAgents.put(position, agent);
+        sim.register(agent);
     }
 
     public void newRoadWorks(long time) {
@@ -189,7 +189,7 @@ public class PizzeriaModel extends Model.AbstractModel<PizzeriaUser> {
 
             if (noRobots && noTasks && noOtherWorks && noPizzeria && noChargingStation) {
                 // Link the works to the resource agents of they are on.
-                ResourceAgent agent = this.roadModel.getObjectsAt(roadWorks, ResourceAgent.class).iterator().next();
+                ResourceAgent agent = this.resourceAgents.get(position);
                 agent.setRoadWorks(roadWorks);
 
                 // Remove the node the RoadWorks lie on from the GraphRoadModel
@@ -255,8 +255,7 @@ public class PizzeriaModel extends Model.AbstractModel<PizzeriaUser> {
     }
 
     public void finishRoadWorks(RoadWorks roadWorks) {
-        ResourceAgent agent = this.roadModel.getObjectsAt(roadWorks, ResourceAgent.class).iterator().next();
-
+        ResourceAgent agent = this.resourceAgents.get(roadWorks.position);
         // Add the connections that were removed
         this.addGraphConnectionsForNode(agent);
 
