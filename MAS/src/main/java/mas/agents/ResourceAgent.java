@@ -232,7 +232,7 @@ public class ResourceAgent implements CommUser, TickListener {
 
                     } else {
                         System.out.println("Not updated");
-                        System.out.println("#Pizza's " + deliveryData.pizzas + " pizzaleftfortask " + this.getPizzasLeftForDeliveryTask(task.id));
+                        System.out.println("#Pizza's " + deliveryData.pizzas + " pizzaleftfortask " + this.getPizzasLeftForDeliveryTask(task.id) + " taskID: " +deliveryData.deliveryTaskID + " pos: " + deliveryData.position) ;
                         if (deliveryData.pizzas <= this.getPizzasLeftForDeliveryTask(task.id) &&
                                 this.getPizzasLeftForDeliveryTask(task.id) > 0) {
 
@@ -242,6 +242,7 @@ public class ResourceAgent implements CommUser, TickListener {
                             newDeliveriesData.add(deliveryData.copy(true));
 
                         } else {
+                            System.out.println("Denied ant = [" + ant + "]" );
                             // A reservation could not be created, set 'confirmed' to true in the delivery data.
                             newDeliveriesData.add(deliveryData.copy(false));
                         }

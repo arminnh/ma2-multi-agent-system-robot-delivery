@@ -217,7 +217,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
 
     private void doAction(@NotNull TimeLapse time) {
         // TODO: something for intention messages here ??
-        if (!this.currentParcels.isEmpty() && !this.intention.isPresent()) {
+        if (!this.currentParcels.isEmpty() && !this.intention.isPresent() && !this.waitingForAnts()) {
             // We do have parcels but we don't have an intention!
             // This is because one of our reservations got dropped or the robot just charged!
             // 1. Recalculate the best path for our current parcels
@@ -244,7 +244,13 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
                     checkPathsForCurrentParcels();
                 } else {
                     // Otherwise, either go to a charging station to charge or a pizzeria to pick up a new parcel.
-                    toChargingStationOrPizzeria();
+                    //toChargingStationOrPizzeria();
+
+                    // Only explore new paths towards pizzeria if not already at pizzeria and not charging
+                    if (!this.isAtPizzeria && !this.isCharging && !this.goingToCharge) {
+                        explorePaths(this.pizzeriaPosition);
+                        this.goingToPizzeria = true;
+                    }
                 }
             }
         }
@@ -260,25 +266,6 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
         }
 
         this.explorePaths(deliveries);
-    }
-
-    private void toChargingStationOrPizzeria() {
-        System.out.println("RobotAgent.toChargingStationOrPizzeria");
-        // Check if the robot should go to a charging station
-        if (this.getRemainingBatteryCapacity() <= 35) {
-            System.out.println("GoingToCharge");
-            // TODO: maybe use the robot's idle timer to see if they have to recharge
-            this.goingToCharge = true;
-            ChargingStation station = this.roadModel.getObjectsOfType(ChargingStation.class).iterator().next();
-
-            explorePaths(station.getPosition());
-        }
-
-        // Only explore new paths towards pizzeria if not already at pizzeria and not charging
-        if (!this.isAtPizzeria && !this.isCharging && !this.goingToCharge) {
-            explorePaths(this.pizzeriaPosition);
-            this.goingToPizzeria = true;
-        }
     }
 
     private void evaluateDesiresAndStartExploration() {
@@ -321,7 +308,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
         }
 
         // If robot arrived at the destination of the intention, the intention will be empty
-        if (this.intention.get().isEmpty()) {
+        if (this.intention.get().isEmpty() && !this.waitingForAnts()) {
             System.out.println("intention is empty");
 
             this.intention = Optional.absent();
@@ -426,7 +413,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
 
                     this.addPizzaParcel(parcel);
                 } else {
-                    System.out.println("Reservation denied");
+                    System.out.println("Reservation denied: " + intentionData);
                     if (this.intention.isPresent()) {
                         // There was a reservation denied
                         // Get the correct parcel from our current parcels
@@ -489,13 +476,21 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
                 bestTime = ant.estimatedTime;
                 bestAnt = ant;
             }
+            if(ant.path.get(ant.path.size() - 1).equals(this.chargingStationPosition) && this.goingToCharge){
+                bestTime = ant.estimatedTime;
+                bestAnt = ant;
+                //System.out.println("PRIMETIME ant = " + ant);
+                //System.out.println(this.intendedArrivalTime);
+                // We break here because charging takes precedence over everything else.
+                break;
+            }
         }
 
         this.explorationAnts.clear();
 
         // If the new best path is better than the current one, update the intention of the robot.
-        if (!this.intention.isPresent() || bestTime < this.intendedArrivalTime) {
-
+        if (!this.intention.isPresent() || bestTime < this.intendedArrivalTime || this.goingToCharge){
+            this.intendedArrivalTime = bestTime;
             if (this.goingToPizzeria) {
                 this.intention = Optional.of(new LinkedList<>(bestAnt.path));
             } else {
@@ -524,6 +519,13 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
             if (this.metersMoved > 1.0) {
                 this.battery.decrementCapacity();
                 this.metersMoved -= 1.0;
+            }
+
+            if (this.getRemainingBatteryCapacity() <= 35 && !this.goingToCharge && this.isOnNode) {
+                System.out.println("I NEED CHARGING MOFOS");
+                // TODO: maybe use the robot's idle timer to see if they have to recharge
+                this.goingToCharge = true;
+                explorePaths(this.chargingStationPosition);
             }
         }
     }
@@ -796,43 +798,6 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
         return Lists.reverse(list);
     }
 
-    /**
-     * TODO: review this after our new tickImpl logic.
-     */
-    private void rechargeIfNecessary(Queue<Point> path, Point nextStartPos) {
-        // If estimatedTime of our path is more than our battery can take, recharge!
-        boolean canReachStation = false;
-        Queue<Point> newPath = null;
-
-        for (final ChargingStation station : this.roadModel.getObjectsOfType(ChargingStation.class)) {
-            Queue<Point> tempPath = new LinkedList<>(roadModel.getShortestPathTo(this, station.getPosition()));
-            if (newPath == null) {
-                newPath = tempPath;
-            }
-
-            // Check the path between our destination and the charging station
-            Queue<Point> fromDestToCharge = new LinkedList<>(roadModel.getShortestPathTo(nextStartPos, station.getPosition()));
-
-            // What is the total estimatedTime of our current path + moving from our current destination to the charging station?
-            double distToDestThenToChargeStation = Math.ceil(getDistanceOfPathInMeters(path) + getDistanceOfPathInMeters(fromDestToCharge));
-
-            // If our battery can handle this, then we can reach the station
-            if (new Double(distToDestThenToChargeStation).intValue() < this.getRemainingBatteryCapacity()) {
-                canReachStation = true;
-            }
-
-            if (getDistanceOfPathInMeters(newPath) > getDistanceOfPathInMeters(tempPath)) {
-                newPath = tempPath;
-            }
-        }
-
-        // If we cannot reach any station by first going to our destination and then going to a station
-        // We first need to pass through a station
-        if (!canReachStation) {
-            this.intention = Optional.of(newPath);
-            this.goingToCharge = true;
-        }
-    }
 
     private double getDistanceOfPathInMeters(Queue<Point> newPath) {
         return roadModel.getDistanceOfPath(newPath).doubleValue(SI.METER);
