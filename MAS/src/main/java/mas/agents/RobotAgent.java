@@ -222,15 +222,11 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
 
             if (m.getContents().getClass() == DesireAnt.class) {
                 this.handleDesireAntMessage(m);
-            }
 
-            // If an exploration ant has returned, store the explored path and its estimated cost.
-            if (m.getContents().getClass() == ExplorationAnt.class) {
+            } else if (m.getContents().getClass() == ExplorationAnt.class) {
                 this.handleExplorationAntMessage(m);
-            }
 
-            // Intention ant
-            if (m.getContents().getClass() == IntentionAnt.class) {
+            } else if (m.getContents().getClass() == IntentionAnt.class) {
                 this.handleIntentionAntMessage(m);
             }
         }
@@ -554,7 +550,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
      * Sends out ExplorationAnts to explore each of the given paths.
      */
     private void sendExplorationAnts(List<List<Point>> paths, List<IntentionData> intentionData) {
-        System.out.println("RobotAgent.sendExplorationAnts, paths: " + paths + ", intentionData: " + intentionData);
+        System.out.println("RobotAgent.sendExplorationAnts, intentionData: " + intentionData + ", paths: " + paths);
         // Send exploration messages over the found paths
         for (List<Point> path : paths) {
             this.broadcastAnt(
@@ -591,7 +587,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
      * Explores different paths towards multiple destinations to be followed sequentially.
      */
     private void explorePaths(List<IntentionData> intentionData) {
-        System.out.println("RobotAgent.explorePaths2, intentionData: " + intentionData);
+        System.out.println("RobotAgent.explorePaths2");
         List<Point> destinations = new LinkedList<>();
 
         for (IntentionData data : intentionData) {

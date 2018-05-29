@@ -23,10 +23,12 @@ public class ExplorationAnt extends MultiDestinationAnt {
     @Override
     public String toString() {
         return "ExplorationAnt {id: " + this.id +
-                ", isReturning: " + this.isReturning +
+                ", robotID: " + this.robotID +
                 ", estimatedTime: " + this.estimatedTime +
+                ", intentions: " + this.intentions +
                 ", path: " + this.path +
-                ", intentions: " + intentions +
+                ", pathIndex: " + this.pathIndex +
+                ", isReturning: " + this.isReturning +
                 "}";
     }
 
