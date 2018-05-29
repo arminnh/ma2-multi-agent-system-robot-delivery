@@ -9,7 +9,7 @@ public class SimulatorSettings {
     public static final int CITY_SIZE = 6;
     public static final int NUM_ROBOTS = 1;
     public static final int ROBOT_CAPACITY = 5;
-    public static final int BATTERY_CAPACITY = 100;
+    public static final double BATTERY_CAPACITY = 100.0;
     public static final int VEHICLE_LENGTH = 1;
     public static final double VEHICLE_SPEED_KMH = 10;
 

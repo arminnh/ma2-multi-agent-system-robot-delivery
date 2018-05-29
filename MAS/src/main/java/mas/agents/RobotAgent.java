@@ -56,7 +56,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
     private Point chargingStationPosition;
     private final int alternativePathsToExplore;
 
-    private boolean isOnNode = false;
+    private boolean isOnNode = true;
     private boolean isCharging = false;
     private boolean isAtPizzeria = true;
     private boolean goingToCharge = false;
@@ -140,7 +140,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
      * is not currently on a node, because then is is on a connection already.
      */
     private boolean existsConnectionForNextMove() {
-        if (!this.isOnNode) {
+        if (!this.isOnNode || this.getPosition().get().equals(this.intention.get().peek())) {
             return true;
         }
         if (this.intention.isPresent()) {
@@ -167,7 +167,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
      */
     @Override
     public void tickImpl(@NotNull TimeLapse time) {
-        if (!time.hasTimeLeft() || this.getRemainingBatteryCapacity() == 0) {
+        if (!time.hasTimeLeft() || this.getRemainingBatteryCapacityPercentage() == 0.0) {
             return;
         }
 
@@ -206,6 +206,10 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
                 }
             }
 
+            if (m.getContents().getClass() == DesireAnt.class) {
+                this.handleDesireAntMessage(m);
+            }
+
             // If an exploration ant has returned, store the explored path and its estimated cost.
             if (m.getContents().getClass() == ExplorationAnt.class) {
                 this.handleExplorationAntMessage(m);
@@ -214,10 +218,6 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
             // Intention ant
             if (m.getContents().getClass() == IntentionAnt.class) {
                 this.handleIntentionAntMessage(m);
-            }
-
-            if (m.getContents().getClass() == DesireAnt.class) {
-                this.handleDesireAntMessage(m);
             }
         }
     }
@@ -367,7 +367,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
         }
 
         // If the path the robot is currently trying to take does not exist anymore, remove the current intention.
-        if (!this.existsConnectionForNextMove()) {
+        if (this.intention.isPresent() && !this.existsConnectionForNextMove()) {
             System.out.println("RESET THE INTENTION BECAUSE THERE WAS NO CONNECTION");
             this.intention = Optional.absent();
         }
@@ -388,9 +388,9 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
 
             // If at pizzeria, ask for tasks.
             if (this.isAtPizzeria) {
-                System.out.println("SENT OUT DESIRE ANTS TO EXPLORE TASKS");
                 List<DeliveryTask> tasks = pizzeriaModel.getDeliveryTasks();
                 if (!tasks.isEmpty()) {
+                    System.out.println("SENT OUT DESIRE ANTS TO EXPLORE TASKS");
                     this.sendDesireAntsForTasks(tasks);
                     return;
                 }
@@ -402,16 +402,18 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
                 System.out.println("SENT OUT EXPLORATION ANTS TO GO TO PIZZERIA");
                 this.goingToPizzeria = true;
                 this.explorePaths(this.pizzeriaPosition);
+                return;
             }
 
         } else {
             // Else, check if there is a better or more important intention.
 
             // Check if need to charge
-            if (this.getRemainingBatteryCapacity() <= 35 && !this.goingToCharge && !this.isCharging && this.isOnNode) {
+            if (this.getRemainingBatteryCapacityPercentage() <= 0.35 && !this.goingToCharge && !this.isCharging && this.isOnNode) {
                 System.out.println("SET ROBOT TO GO TO CHARGE");
                 this.goingToCharge = true;
                 this.explorePaths(this.chargingStationPosition);
+                return;
             }
         }
     }
@@ -605,7 +607,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
 
     private void handleExplorationAntMessage(Message m) {
         ExplorationAnt ant = (ExplorationAnt) m.getContents();
-        System.out.println("Robot " + this.id + " got ExplorationAnt: " + ant);
+        System.out.println("Robot " + this.id + " got ant: " + ant);
 
         this.explorationAnts.add(ant);
         this.waitingForExplorationAnts--;
@@ -613,7 +615,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
 
     private void handleDesireAntMessage(Message m) {
         DesireAnt ant = (DesireAnt) m.getContents();
-        System.out.println("Robot " + this.id + " got ExplorationAnt: " + ant);
+        System.out.println("Robot " + this.id + " got ant: " + ant);
 
         System.out.println("Got desire ant: " + ant);
         // Only store the ant if pizzas can be delivered for the task by this robot.
@@ -625,7 +627,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
 
     private void handleIntentionAntMessage(Message m) {
         IntentionAnt ant = (IntentionAnt) m.getContents();
-        System.out.println("Robot " + this.id + " got ExplorationAnt: " + ant);
+        System.out.println("Robot " + this.id + " got ant: " + ant);
 
         this.intentionAnts.add(ant);
         this.waitingForIntentionAnts--;
@@ -655,17 +657,20 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
     private void move(@NotNull TimeLapse time) {
         if (this.intention.isPresent()) {
             Queue<Point> path = this.intention.get();
-            this.isOnNode = this.getPosition().get().equals(path.peek());
-            Point nextPosition = this.isOnNode ? path.remove() : path.peek();
+            Point nextPosition = path.peek();
 
-            System.out.println("CURRENT POS: " + this.getPosition().get() + ", NEXT POS: " + path.peek() + ", CONNECTION EXISTS: " + this.dynamicGraph.hasConnection(this.getPosition().get(), path.peek()));
+            this.isOnNode = this.getPosition().get().equals(nextPosition);
+            if (this.isOnNode) {
+                // Remove the next position in the intention when that position has been reached.
+                path.remove();
+            }
 
             // Use the dynamic graph to check if the connection still exists (can disappear due to roadworks).
-            if (this.dynamicGraph.hasConnection(this.getPosition().get(), nextPosition)) {
+            if (this.existsConnectionForNextMove()) {
                 // Perform the actual move
                 MoveProgress progress = this.roadModel.moveTo(this, nextPosition, time);
 
-                this.battery.decrementCapacity(progress.distance().doubleValue(SI.METER));
+                this.battery.decreaseCapacity(progress.distance().doubleValue(SI.METER));
             } else {
                 throw new IllegalStateException("Trying to move towards position for which there is no connection.");
             }
@@ -738,10 +743,10 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
     }
 
     /**
-     * Returns the remaining capacity of the robots battery.
+     * Returns the remaining capacity of the robots battery as a percentage.
      */
-    public int getRemainingBatteryCapacity() {
-        return this.battery.getRemainingCapacity();
+    public double getRemainingBatteryCapacityPercentage() {
+        return this.battery.getRemainingCapacityPercentage();
     }
 
     /**

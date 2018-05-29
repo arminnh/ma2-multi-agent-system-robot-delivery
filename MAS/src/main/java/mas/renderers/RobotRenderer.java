@@ -38,7 +38,7 @@ public class RobotRenderer extends AbstractCanvasRenderer {
             }
 
             final Point p = robot.getPosition().get();
-            final int currentBattery = robot.getRemainingBatteryCapacity();
+            final double currentBattery = robot.getRemainingBatteryCapacityPercentage() * 100;
             final int x = vp.toCoordX(p.x) + X_OFFSET;
             final int y = vp.toCoordY(p.y) + Y_OFFSET;
 
@@ -54,10 +54,10 @@ public class RobotRenderer extends AbstractCanvasRenderer {
                     ROUND_RECT_ARC_HEIGHT
             );
 
-            if (currentBattery > 80) {
+            if (currentBattery > 80.0) {
                 gc.setBackground(gc.getDevice().getSystemColor(SWT.COLOR_GREEN));
 
-            } else if (currentBattery > 30) {
+            } else if (currentBattery > 30.0) {
                 gc.setBackground(gc.getDevice().getSystemColor(SWT.COLOR_YELLOW));
 
             } else {
@@ -67,7 +67,7 @@ public class RobotRenderer extends AbstractCanvasRenderer {
             gc.fillRoundRectangle(
                     x - extent.x / 2,
                     y - extent.y / 2,
-                    Math.max((extent.x + 2) * currentBattery / 100, 0),
+                    (int) Math.max((extent.x + 2) * currentBattery/100.0, 0),
                     extent.y + 2,
                     ROUND_RECT_ARC_HEIGHT, ROUND_RECT_ARC_HEIGHT
             );
@@ -75,7 +75,7 @@ public class RobotRenderer extends AbstractCanvasRenderer {
             gc.setForeground(gc.getDevice().getSystemColor(SWT.COLOR_BLACK));
 
             gc.drawText(
-                    Integer.toString(Math.max(currentBattery, 0)) + "%",
+                    Integer.toString((int) Math.round(currentBattery)) + "%",
                     x - extent.x / 2 + 1,
                     y - extent.y / 2 + 1,
                     true
