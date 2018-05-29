@@ -4,8 +4,6 @@ import com.github.rinde.rinsim.core.model.comm.CommDevice;
 import com.github.rinde.rinsim.core.model.comm.CommDeviceBuilder;
 import com.github.rinde.rinsim.core.model.comm.CommUser;
 import com.github.rinde.rinsim.core.model.comm.Message;
-import com.github.rinde.rinsim.core.model.road.RoadModel;
-import com.github.rinde.rinsim.core.model.road.RoadUser;
 import com.github.rinde.rinsim.core.model.time.TickListener;
 import com.github.rinde.rinsim.core.model.time.TimeLapse;
 import com.github.rinde.rinsim.geom.Point;
@@ -17,19 +15,15 @@ import mas.buildings.ChargingStation;
 import mas.buildings.RoadWorks;
 import mas.messages.*;
 import mas.tasks.DeliveryTask;
-import org.apache.commons.math3.random.RandomGenerator;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
-public class ResourceAgent implements CommUser, RoadUser, TickListener {
+public class ResourceAgent implements CommUser, TickListener {
 
-    private RoadModel roadModel;
-    private RandomGenerator rng;
     private CommDevice commDevice;
 
     public final Point position;
@@ -40,26 +34,14 @@ public class ResourceAgent implements CommUser, RoadUser, TickListener {
     private HashMap<Integer, DeliveryTask> deliveryTasks = new HashMap<>();
     private HashMap<Integer, List<DeliveryTaskReservation>> reservations = new HashMap<>();
 
-    public ResourceAgent(Point position, RandomGenerator rng) {
+    public ResourceAgent(Point position) {
         this.position = position;
-        this.rng = rng;
     }
 
     @Override
     public void setCommDevice(@NotNull CommDeviceBuilder builder) {
         builder.setMaxRange(2);
         this.commDevice = builder.build();
-    }
-
-    @Override
-    public void initRoadUser(@NotNull RoadModel model) {
-        roadModel = model;
-        roadModel.addObjectAt(this, this.position);
-
-        Set<ChargingStation> stations = roadModel.getObjectsAt(this, ChargingStation.class);
-        if (stations.size() > 0) {
-            this.chargingStation = Optional.of(stations.iterator().next());
-        }
     }
 
     @Override
