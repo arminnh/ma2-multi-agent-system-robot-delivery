@@ -7,7 +7,7 @@
 - Intention ant terugsturen (OK?)
 - Reservations laten expiren (OK?)
 - Scenario's
-- Robots effectief meerdere pizza's laten meeNpakken van meerdere tasks
+- Robots effectief meerdere pizza's laten meepakken van meerdere tasks
 
 
 ## 26/05

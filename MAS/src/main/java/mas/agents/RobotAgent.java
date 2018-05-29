@@ -124,18 +124,20 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
     }
 
     private List<DesireAnt> getHighestDesires() {
-        System.out.println("RobotAgent.getHighestDesires: " + this.desires);
+        System.out.println("RobotAgent.getHighestDesires: " + this.desires.size());
 
         List<DesireAnt> bestTasks = new LinkedList<>();
         int remainingCapacity = this.getCapacityLeft();
-
+        System.out.println("remainingCapacity = " + remainingCapacity);
         // Get all tasks with highest score sorted in descending
         for (Map.Entry<DesireAnt, Long> entry : sortMapDescending(this.desires)) {
-            int capacity = Math.min(remainingCapacity, entry.getValue().intValue());
-
+            System.out.println("entry.getKey().pizzas = " + entry.getKey().pizzas);
+            int capacity = Math.min(remainingCapacity, entry.getKey().pizzas);
+            System.out.println("capacity = " + capacity);
             if (capacity > 0) {
                 bestTasks.add(entry.getKey());
                 remainingCapacity -= capacity;
+                System.out.println("remainingCapacity = " + remainingCapacity);
             } else {
                 break;
             }
@@ -285,7 +287,9 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
         List<DesireAnt> bestTasks = getHighestDesires();
         List<IntentionData> intentionData = new LinkedList<>();
         System.out.println("BestTasks " + bestTasks);
-
+        System.out.println("Remaining ants " + this.waitingForDesireAnts);
+        System.out.println("Amount of desires: "+ this.desires.size());
+        System.out.println("Best tasks: " + bestTasks.size());
         int remainingCapacity = this.getCapacityLeft();
         for (DesireAnt ant : bestTasks) {
             Point destination = ant.path.get(ant.path.size() - 1);
@@ -345,6 +349,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
             this.commDevice.broadcast(desireAnt);
             this.waitingForDesireAnts++;
         }
+        System.out.println("Sent out " + this.waitingForDesireAnts);
     }
 
     @Override
