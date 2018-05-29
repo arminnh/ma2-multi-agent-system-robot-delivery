@@ -9,15 +9,15 @@ import java.util.stream.Collectors;
 public class MultiDestinationAnt extends Ant {
     public final List<IntentionData> deliveries;
 
-    public MultiDestinationAnt(int id, List<Point> path, long estimatedTime, boolean isReturning, Integer robotID, CommUser robot, List<IntentionData> intentions) {
-        super(id, path, estimatedTime, isReturning, robotID, robot);
+    public MultiDestinationAnt(int id, List<Point> path, long estimatedTime, boolean isReturning, Integer robotID, CommUser robot, Integer pathIndex, List<IntentionData> intentions) {
+        super(id, path, estimatedTime, isReturning, robotID, robot, pathIndex);
 
         this.deliveries = intentions;
     }
 
     public MultiDestinationAnt(List<Point> path, long estimatedTime, boolean isReturning,
-                               Integer robotID, CommUser robot, List<IntentionData> intentions) {
-        super(path, estimatedTime, isReturning, robotID, robot);
+                               Integer robotID, CommUser robot, Integer pathIndex, List<IntentionData> intentions) {
+        super(path, estimatedTime, isReturning, robotID, robot, pathIndex);
 
         this.deliveries = intentions;
     }

@@ -15,8 +15,8 @@ public class IntentionAnt extends MultiDestinationAnt {
     public final boolean toChargingStation;
     public final boolean toDeliveryTask;
 
-    public IntentionAnt(int id, List<Point> path, long estimatedTime, boolean isReturning, Integer robotID, CommUser robot, List<IntentionData> intentions){
-        super(id, path, estimatedTime, isReturning, robotID, robot, intentions);
+    public IntentionAnt(int id, List<Point> path, long estimatedTime, boolean isReturning, Integer robotID, CommUser robot, Integer pathIndex, List<IntentionData> intentions){
+        super(id, path, estimatedTime, isReturning, robotID, robot, pathIndex, intentions);
 
         if(intentions != null){
             for(IntentionData d: intentions){
@@ -33,8 +33,8 @@ public class IntentionAnt extends MultiDestinationAnt {
         this.toChargingStation = !this.toDeliveryTask;
     }
 
-    public IntentionAnt(List<Point> path, long estimatedTime, boolean isReturning, Integer robotID, CommUser robot, List<IntentionData> intentions) {
-        super(path, estimatedTime, isReturning, robotID, robot, intentions);
+    public IntentionAnt(List<Point> path, long estimatedTime, boolean isReturning, Integer robotID, CommUser robot, Integer pathIndex, List<IntentionData> intentions) {
+        super(path, estimatedTime, isReturning, robotID, robot, pathIndex, intentions);
         System.out.println("path = [" + path + "], estimatedTime = [" + estimatedTime + "], isReturning = [" + isReturning + "], robotID = [" + robotID + "], robot = [" + robot + "], intentions = [" + intentions + "]");
         System.out.println(intentions.get(0).deliveryTaskID);
         if(intentions != null){
@@ -52,11 +52,11 @@ public class IntentionAnt extends MultiDestinationAnt {
         this.toChargingStation = !this.toDeliveryTask;
     }
 
-    public IntentionAnt copy(List<Point> path, boolean isReturning, List<IntentionData> deliveries) {
-        return new IntentionAnt(this.id, path, this.estimatedTime, isReturning, this.robotID, this.robot, deliveries);
+    public IntentionAnt copy(List<Point> path, boolean isReturning, List<IntentionData> deliveries, Integer pathIndex) {
+        return new IntentionAnt(this.id, path, this.estimatedTime, isReturning, this.robotID, this.robot, pathIndex, deliveries);
     }
 
-    public IntentionAnt copy(long estimatedTime) {
-        return new IntentionAnt(this.id, this.path, estimatedTime, this.isReturning, this.robotID, this.robot, this.deliveries);
+    public IntentionAnt copy(long estimatedTime, Integer pathIndex) {
+        return new IntentionAnt(this.id, this.path, estimatedTime, this.isReturning, this.robotID, this.robot, pathIndex, this.deliveries);
     }
 }

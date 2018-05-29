@@ -117,7 +117,7 @@ public class ResourceAgent implements CommUser, RoadUser, TickListener {
 
         if (ant.hasReachedDestination(this.position)) {
             if (ant.isReturning) {
-                this.commDevice.send(ant.copy(Lists.reverse(ant.path), true, null, null), ant.robot);
+                this.commDevice.send(ant.copy(Lists.reverse(ant.path), true, null, null, 0), ant.robot);
             } else {
                 DeliveryTask task = this.deliveryTasks.get(ant.deliveryTaskID);
 
@@ -130,7 +130,7 @@ public class ResourceAgent implements CommUser, RoadUser, TickListener {
                 }
 
                 DesireAnt newAnt = ant.copy(Lists.reverse(ant.path),
-                        true, score, amount);
+                        true, score, amount, 0);
                 sendAntToNextHop(newAnt);
             }
         } else {
@@ -147,15 +147,15 @@ public class ResourceAgent implements CommUser, RoadUser, TickListener {
         if (ant.hasReachedDestination(this.position)) {
             if (ant.isReturning) {
                 // The ant reached the RobotAgent.
-                this.commDevice.send(ant.copy(Lists.reverse(ant.path), null, null), ant.robot);
+                this.commDevice.send(ant.copy(Lists.reverse(ant.path), null, null, 0), ant.robot);
             } else {
                 // Create new list of IntentionData for next ant
                 List<IntentionData> newDeliveriesData = updateExplorationAntDeliveryData(ant);
 
                 if (ant.hasReachedFinalDestination(this.position)) {
-                    sendAntToNextHop(ant.copy(Lists.reverse(ant.path), true, newDeliveriesData));
+                    sendAntToNextHop(ant.copy(Lists.reverse(ant.path), true, newDeliveriesData, 0));
                 } else {
-                    sendAntToNextHop(ant.copy(ant.path, false, newDeliveriesData));
+                    sendAntToNextHop(ant.copy(ant.path, false, newDeliveriesData, ant.pathIndex));
                 }
             }
 
@@ -171,7 +171,7 @@ public class ResourceAgent implements CommUser, RoadUser, TickListener {
         if (ant.hasReachedDestination(this.position)) {
             if (ant.isReturning) {
                 System.out.println("ant.isReturning = " + ant.isReturning);
-                this.commDevice.send(ant.copy(Lists.reverse(ant.path), true, ant.deliveries), ant.robot);
+                this.commDevice.send(ant.copy(Lists.reverse(ant.path), true, ant.deliveries, 0), ant.robot);
             } else {
                 if (ant.toChargingStation) {
                     System.out.println("ant.toChargingStation = " + ant.toChargingStation);
@@ -232,16 +232,16 @@ public class ResourceAgent implements CommUser, RoadUser, TickListener {
 
         // Send the ants
         if (ant.hasReachedFinalDestination(this.position)) {
-            this.sendAntToNextHop(ant.copy(Lists.reverse(ant.path), true, newDeliveriesData));
+            this.sendAntToNextHop(ant.copy(Lists.reverse(ant.path), true, newDeliveriesData, 0));
         } else {
-            this.sendAntToNextHop(ant.copy(ant.path, false, newDeliveriesData));
+            this.sendAntToNextHop(ant.copy(ant.path, false, newDeliveriesData, ant.pathIndex));
         }
     }
 
     private void handleIntentionAntForChargingStation(IntentionAnt ant) {
         if (this.chargingStation.isPresent()) {
             System.out.println(this.chargingStation.get());
-            this.sendAntToNextHop(ant.copy(Lists.reverse(ant.path), true, ant.deliveries));
+            this.sendAntToNextHop(ant.copy(Lists.reverse(ant.path), true, ant.deliveries, 0));
             // TODO: charging logic
         } else {
             System.err.println("ANT ARRIVED AT DESTINATION WHILE GOING TO CHARGING STATION, BUT THERE WAS NO CHARGING STATION");
@@ -308,6 +308,8 @@ public class ResourceAgent implements CommUser, RoadUser, TickListener {
     }
 
     private void sendAntToNextHop(Ant ant) {
+        System.out.println("ResourceAgent.sendAntToNextHop");
+        System.out.println("ant = [" + ant + "]");
         if (ant.path.size() == 0) {
             System.out.println("CANNOT SEND ANT TO NEXT HOP FOR EMPTY PATH");
         }
@@ -322,16 +324,15 @@ public class ResourceAgent implements CommUser, RoadUser, TickListener {
             // TODO: calculate new estimated time based on this_location -> next_location
         }
 
-        int nextPositionIndex = ant.path.indexOf(this.position) + 1;
+        int nextPositionIndex = ant.pathIndex + 1;
         Point nextPosition = ant.path.get(nextPositionIndex);
-
         for (ResourceAgent neighbor : this.neighbors) {
             if (neighbor.getPosition().get().equals(nextPosition)) {
                 if(neighbor.hasRoadWorks()){
                     estimatedTime += SimulatorSettings.TIME_ROAD_WORKS;
                 }
 
-                ant = ant.copy(estimatedTime);
+                ant = ant.copy(estimatedTime, nextPositionIndex);
 
                 this.commDevice.send(ant, neighbor);
             }

@@ -62,7 +62,7 @@ public class AStar {
                     List<Point> l2 = getShortestPath(graph, weights, start, dest);
 
                     concat.addAll(l1);
-                    concat.addAll(l2);
+                    concat.addAll(l2.subList(1, l2.size()));
                     return concat;
                 } else {
                     return reconstruct_path(cameFrom, current);

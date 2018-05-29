@@ -301,9 +301,9 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
         }
 
         explorePaths(intentionData);
-        if (intentionData.size() > 1) {
+        /*if (intentionData.size() > 1) {
             explorePaths(Lists.reverse(intentionData));
-        }
+        }*/
         this.desires.clear();
     }
 
@@ -344,7 +344,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
             List<Point> destinations = new LinkedList<>(Arrays.asList(task.getPosition().get()));
             List<Point> path = this.getAlternativePaths(1, this.getPosition().get(), destinations).get(0);
 
-            DesireAnt desireAnt = new DesireAnt(path, 0, false, this.id, this, null, task.id, 0);
+            DesireAnt desireAnt = new DesireAnt(path, 0, false, this.id, this, 0,null, task.id, 0);
 
             this.commDevice.broadcast(desireAnt);
             this.waitingForDesireAnts++;
@@ -658,7 +658,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
     private void sendIntentionAnt(ExplorationAnt explorationAnt) {
 
         IntentionAnt ant = new IntentionAnt(explorationAnt.path, 0, false, this.id, this,
-                explorationAnt.deliveries);
+                0,explorationAnt.deliveries);
         this.waitingForIntentionAnt++;
 
         this.commDevice.broadcast(ant);
@@ -673,7 +673,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
                 0, 0, false));
 
         IntentionAnt ant = new IntentionAnt(new LinkedList<>(path), 0, false,
-                this.id, this, deliveries);
+                this.id, this,0, deliveries);
 
         this.commDevice.broadcast(ant);
         this.waitingForIntentionAnt++;
@@ -689,7 +689,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
         }
 
         IntentionAnt ant = new IntentionAnt(new LinkedList<>(path), 0, false,
-                this.id, this, deliveries);
+                this.id, this, 0, deliveries);
         this.commDevice.broadcast(ant);
         this.waitingForIntentionAnt++;
         System.out.println("[OUT] RobotAgent.sendIntentionAntForCurrentParcels");
@@ -704,7 +704,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
         // Send exploration messages over the found paths
         for (List<Point> path : paths) {
             this.commDevice.broadcast(
-                    new ExplorationAnt(path, 0, false, this.id, this, intentionData)
+                    new ExplorationAnt(path, 0, false, this.id, this, 0, intentionData)
             );
             this.waitingForExplorationAnts++;
         }

@@ -12,23 +12,24 @@ import java.util.List;
  */
 public class ExplorationAnt extends MultiDestinationAnt {
 
-    public ExplorationAnt(int id, List<Point> path, long estimatedTime, boolean isReturning, Integer robotID, CommUser robot, List<IntentionData> deliveries) {
-        super(id, path, estimatedTime, isReturning, robotID, robot, deliveries);
+    public ExplorationAnt(int id, List<Point> path, long estimatedTime, boolean isReturning, Integer robotID, CommUser robot, Integer pathIndex, List<IntentionData> deliveries) {
+        super(id, path, estimatedTime, isReturning, robotID, robot,pathIndex, deliveries);
     }
 
-    public ExplorationAnt(List<Point> path, long estimatedTime, boolean isReturning, Integer robotID, CommUser robot, List<IntentionData> deliveries) {
-        super(path, estimatedTime, isReturning, robotID, robot, deliveries);
+    public ExplorationAnt(List<Point> path, long estimatedTime, boolean isReturning, Integer robotID, CommUser robot, Integer pathIndex, List<IntentionData> deliveries) {
+        super(path, estimatedTime, isReturning, robotID, robot, pathIndex, deliveries);
     }
 
-    public ExplorationAnt copy(List<Point> p, Boolean returning, List<IntentionData> deliveries) {
+    public ExplorationAnt copy(List<Point> p, Boolean returning, List<IntentionData> deliveries, Integer pathIndex) {
         p = (p != null) ? p : this.path;
         returning = (returning != null) ? returning : this.isReturning;
         deliveries = (deliveries != null) ? deliveries : this.deliveries;
+        pathIndex = (pathIndex != null) ? pathIndex : this.pathIndex;
 
-        return new ExplorationAnt(this.id, p, this.estimatedTime, returning, this.robotID, this.robot, deliveries);
+        return new ExplorationAnt(this.id, p, this.estimatedTime, returning, this.robotID, this.robot, pathIndex, deliveries);
     }
 
-    public ExplorationAnt copy(long estimatedTime) {
-        return new ExplorationAnt(this.id, this.path, estimatedTime, this.isReturning, this.robotID, this.robot, this.deliveries);
+    public ExplorationAnt copy(long estimatedTime, Integer pathIndex) {
+        return new ExplorationAnt(this.id, this.path, estimatedTime, this.isReturning, this.robotID, this.robot, pathIndex, this.deliveries);
     }
 }
