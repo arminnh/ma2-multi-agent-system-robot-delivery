@@ -17,9 +17,9 @@ public class Battery {
         return capacity == maxCapacity;
     }
 
-    public void decrementCapacity() {
+    public void decrementCapacity(double distance) {
         if (capacity > 0) {
-            capacity--;
+            capacity -= distance;
         }
     }
 

@@ -2,7 +2,7 @@ package mas;
 
 public class SimulatorSettings {
     public static final long TICK_LENGTH = 100L;
-    public static final int SIM_SPEEDUP = 2;
+    public static final int SIM_SPEEDUP = 1;
     public static final int WINDOW_WIDTH = 1200;
     public static final int WINDOW_HEIGHT = 800;
 

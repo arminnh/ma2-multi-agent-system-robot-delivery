@@ -52,24 +52,24 @@ public class IntentionAnt extends MultiDestinationAnt {
         this.toChargingStation = !this.toDeliveryTask;
     }
 
-    public IntentionAnt copy(List<Point> path, boolean isReturning, List<IntentionData> deliveries, Integer pathIndex) {
-        return new IntentionAnt(this.id, path, this.estimatedTime, isReturning, this.robotID, this.robot, pathIndex, deliveries);
-    }
-
-    public IntentionAnt copy(long estimatedTime, Integer pathIndex) {
-        return new IntentionAnt(this.id, this.path, estimatedTime, this.isReturning, this.robotID, this.robot, pathIndex, this.deliveries);
-    }
-
     @Override
     public String toString() {
-        return "{id: " + this.id +
+        return "IntentionAnt {id: " + this.id +
                 ", toDeliveryTask: " + this.toDeliveryTask +
                 ", toChargingStation: " + this.toChargingStation +
                 ", isReturning: " + this.isReturning +
                 ", estimatedTime: " + this.estimatedTime +
                 ", path: " + this.path +
-                ", deliveries: " + this.deliveries +
+                ", intentions: " + this.intentions +
                 "}";
+    }
+
+    public IntentionAnt copy(List<Point> path, boolean isReturning, List<IntentionData> deliveries, Integer pathIndex) {
+        return new IntentionAnt(this.id, path, this.estimatedTime, isReturning, this.robotID, this.robot, pathIndex, deliveries);
+    }
+
+    public IntentionAnt copy(long estimatedTime, Integer pathIndex) {
+        return new IntentionAnt(this.id, this.path, estimatedTime, this.isReturning, this.robotID, this.robot, pathIndex, this.intentions);
     }
 
 }

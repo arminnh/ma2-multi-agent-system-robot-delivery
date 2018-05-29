@@ -27,7 +27,7 @@ public class DesireAnt extends Ant {
 
     @Override
     public String toString() {
-        return "{id: " + this.id +
+        return "DesireAnt {id: " + this.id +
                 ", deliveryTaskID: " + this.deliveryTaskID +
                 ", pizzas: " + this.pizzas +
                 ", isReturning: " + this.isReturning +

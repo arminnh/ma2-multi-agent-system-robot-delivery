@@ -20,16 +20,26 @@ public class ExplorationAnt extends MultiDestinationAnt {
         super(path, estimatedTime, isReturning, robotID, robot, pathIndex, deliveries);
     }
 
+    @Override
+    public String toString() {
+        return "ExplorationAnt {id: " + this.id +
+                ", isReturning: " + this.isReturning +
+                ", estimatedTime: " + this.estimatedTime +
+                ", path: " + this.path +
+                ", intentions: " + intentions +
+                "}";
+    }
+
     public ExplorationAnt copy(List<Point> p, Boolean returning, List<IntentionData> deliveries, Integer pathIndex) {
         p = (p != null) ? p : this.path;
         returning = (returning != null) ? returning : this.isReturning;
-        deliveries = (deliveries != null) ? deliveries : this.deliveries;
+        deliveries = (deliveries != null) ? deliveries : this.intentions;
         pathIndex = (pathIndex != null) ? pathIndex : this.pathIndex;
 
         return new ExplorationAnt(this.id, p, this.estimatedTime, returning, this.robotID, this.robot, pathIndex, deliveries);
     }
 
     public ExplorationAnt copy(long estimatedTime, Integer pathIndex) {
-        return new ExplorationAnt(this.id, this.path, estimatedTime, this.isReturning, this.robotID, this.robot, pathIndex, this.deliveries);
+        return new ExplorationAnt(this.id, this.path, estimatedTime, this.isReturning, this.robotID, this.robot, pathIndex, this.intentions);
     }
 }
