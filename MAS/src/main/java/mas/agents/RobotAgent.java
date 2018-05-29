@@ -194,6 +194,11 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
         // Check if the current intentions should be replaced.
         this.reconsiderIntentions();
 
+        System.out.println("Intention: " + this.intention);
+        System.out.println("isCharging: " + this.isCharging + ", goingToCharge: " + this.goingToCharge);
+        System.out.println("isAtPizzeria: " + this.isAtPizzeria + ", goingToPizzeria: " + this.goingToPizzeria);
+        System.out.println("waiting: " + this.waitingForAnts() + ", intention: " + this.waitingForIntentionAnts);
+
         // Make the robot do its next action
         if (this.intention.isPresent() && !this.waitingForAnts() && !this.isCharging) {
             this.doAction(time);
@@ -325,44 +330,33 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
 
         } else {
             for (IntentionData intentionData : ant.intentions) {
+                // If a reservation has been confirmed, create a new parcel if necessary
+                if (intentionData.reservationConfirmed) {
+                    if (this.getParcelForDeliveryTaskID(intentionData.deliveryTaskID) == null) {
+                        PizzaParcel parcel = this.pizzeriaModel.newPizzaParcel(intentionData.deliveryTaskID,
+                                this.getPosition().get(), intentionData.pizzas, time.getStartTime());
 
-                // Check that the reservation is confirmed and that the robot does not already carry a parcel for the task.
-                if (intentionData.reservationConfirmed && this.getParcelForDeliveryTaskID(intentionData) == null) {
-                    PizzaParcel parcel = this.pizzeriaModel.newPizzaParcel(intentionData.deliveryTaskID,
-                            this.getPosition().get(), intentionData.pizzas, time.getStartTime());
+                        this.pdpModel.pickup(this, parcel, time);
 
-                    this.pdpModel.pickup(this, parcel, time);
-
-                    this.addPizzaParcel(parcel);
+                        this.addPizzaParcel(parcel);
+                    }
                 } else {
-                    // A reservation was denied or has expired, if the robot is carrying the parcel for
-                    // the reservation, make it drop the parcel.
-                    System.out.println("Reservation denied: " + intentionData);
+                    // A reservation was denied or has expired, if the robot is carrying the parcel for the reservation,
+                    // make it drop the parcel.
+                    PizzaParcel dropParcel = this.getParcelForDeliveryTaskID(intentionData.deliveryTaskID);
 
-                    if (this.intention.isPresent()) {
-                        PizzaParcel dropParcel = this.getParcelForDeliveryTaskID(intentionData);
-                        System.out.println("dropParcel = " + dropParcel + " goingToChargeStation " + this.goingToCharge);
+                    if (dropParcel != null) {
+                        System.out.println("Dropping parcel!!" + dropParcel);
+                        this.intention = Optional.absent();
+                        this.dropParcel(dropParcel, time);
 
-                        if (dropParcel != null) {
-                            System.out.println("Dropping parcel!!");
-                            this.intention = Optional.absent();
-
-                            System.out.println("intention = " + this.intention);
-                            this.dropParcel(dropParcel, time);
-
-                        } else if (goingToCharge) {
-                            this.intention = Optional.absent();
-                            this.goingToCharge = false;
-                        }
                     }
                 }
             }
 
             if (this.hasPizzaParcel()) {
-                System.out.println("Got parcel, setting intention " + ant.path);
+                System.out.println("Has PizzaParcel, setting intention to " + ant.path);
                 this.intention = Optional.of(new LinkedList<>(ant.path));
-            } else {
-                System.out.println("RobotAgent.handleIntentionAntMessage: ????????????????????????????????");
             }
         }
     }
@@ -644,19 +638,16 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
     }
 
     @Nullable
-    private PizzaParcel getParcelForDeliveryTaskID(IntentionData intentionData) {
+    private PizzaParcel getParcelForDeliveryTaskID(int deliveryTaskID) {
         System.out.println("RobotAgent.getParcelForDeliveryTaskID");
-        PizzaParcel removeParcel = null;
 
         for (PizzaParcel p : this.currentParcels) {
-            System.out.println("p.deliveryTaskID: " + p.deliveryTaskID + " intentionData.deliveryTaskID: " + intentionData.deliveryTaskID);
-            if (p.deliveryTaskID == intentionData.deliveryTaskID) {
-
-                removeParcel = p;
+            if (p.deliveryTaskID == deliveryTaskID) {
+                return p;
             }
         }
 
-        return removeParcel;
+        return null;
     }
 
     /**

@@ -171,7 +171,7 @@ public class ResourceAgent implements CommUser, TickListener {
 
     private void handleExplorationAnt(Message m) {
         ExplorationAnt ant = (ExplorationAnt) m.getContents();
-        System.out.println("Exploration ant at " + this.position + ":" + ant);
+        System.out.println("Exploration ant at " + this.position + ": " + ant);
 
         // Check if the ant reached its current destination. Once the ant reached the original destination, the
         // destination and path are reversed towards the RobotAgent that sent the ant.
@@ -197,7 +197,7 @@ public class ResourceAgent implements CommUser, TickListener {
 
     private void handleIntentionAnt(Message m, TimeLapse timeLapse) {
         IntentionAnt ant = (IntentionAnt) m.getContents();
-        System.out.println("Intention ant at " + this.position + ":" + ant);
+        System.out.println("Intention ant at " + this.position + ": " + ant);
 
         if (ant.hasReachedDestination(this.position)) {
             if (ant.isReturning) {
