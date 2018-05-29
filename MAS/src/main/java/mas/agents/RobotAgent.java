@@ -540,6 +540,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
 
             this.pdpModel.deliver(this, parcel, time);
             this.pizzeriaModel.deliverPizzaParcel(this, parcel, time.getEndTime());
+            System.out.println("[INFO] Delivered "+ parcel.amountOfPizzas +" pizzas. Current capacity left:" + this.currentParcels.size());
         } else {
             System.err.println("TRYING TO DELIVER FROM WRONG POSITION");
         }

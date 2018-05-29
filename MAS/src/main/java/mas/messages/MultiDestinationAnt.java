@@ -23,7 +23,7 @@ public class MultiDestinationAnt extends Ant {
     }
 
     public boolean hasReachedDestination(Point p) {
-        System.out.println("MultiDestinationAnt.hasReachedDestination, estimatedTime: " + this.estimatedTime + ", path: " + this.path);
+        System.out.println("MultiDestinationAnt.hasReachedDestination, estimatedTime: " + this.estimatedTime + ", path: " + this.path + ", deliveries: " + this.deliveries + " returning: "+ isReturning);
         if (this.isReturning) {
             return super.hasReachedDestination(p);
         } else {

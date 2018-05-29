@@ -90,6 +90,7 @@ public class PizzaDeliverySimulator {
         ListenableGraph<LengthData> staticGraph = CityGraphCreator.createGraph(SimulatorSettings.CITY_SIZE, SimulatorSettings.VEHICLE_LENGTH);
         ListenableGraph<LengthData> dynamicGraph = CityGraphCreator.createGraph(SimulatorSettings.CITY_SIZE, SimulatorSettings.VEHICLE_LENGTH);
 
+
         // initialize a new Simulator instance
         final Simulator sim = Simulator.builder()
                 // set the length of a simulation 'tick'
