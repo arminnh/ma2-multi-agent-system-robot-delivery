@@ -9,7 +9,6 @@ import com.github.rinde.rinsim.core.model.time.TimeLapse;
 import com.github.rinde.rinsim.geom.Point;
 import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
-import mas.messages.IntentionData;
 import mas.SimulatorSettings;
 import mas.buildings.ChargingStation;
 import mas.buildings.RoadWorks;
@@ -24,14 +23,15 @@ import java.util.stream.Collectors;
 
 public class ResourceAgent implements CommUser, TickListener {
 
-    private CommDevice commDevice;
-
     public final Point position;
+    private CommDevice commDevice;
     private boolean first_tick = true;
+
     private List<ResourceAgent> neighbors = new LinkedList<>();
     private Optional<RoadWorks> roadWorks = Optional.absent();
     private Optional<ChargingStation> chargingStation = Optional.absent();
     private HashMap<Integer, DeliveryTask> deliveryTasks = new HashMap<>();
+
     private HashMap<Integer, List<DeliveryTaskReservation>> reservations = new HashMap<>();
 
     public ResourceAgent(Point position) {
@@ -53,6 +53,48 @@ public class ResourceAgent implements CommUser, TickListener {
         return this.neighbors;
     }
 
+    public void setRoadWorks(RoadWorks roadWorks) {
+        this.roadWorks = Optional.of(roadWorks);
+    }
+
+    public Optional<RoadWorks> getRoadWorks() {
+        return roadWorks;
+    }
+
+    public boolean hasRoadWorks() {
+        return this.roadWorks.isPresent();
+    }
+
+    public void removeRoadWorks() {
+        this.roadWorks = Optional.absent();
+    }
+
+    public void setChargingStation(ChargingStation chargingStation) {
+        this.chargingStation = Optional.of(chargingStation);
+    }
+
+    public void addDeliveryTask(DeliveryTask task) {
+        this.deliveryTasks.put(task.id, task);
+        this.reservations.put(task.id, new LinkedList<>());
+    }
+
+    public void removeDeliveryTask(DeliveryTask task) {
+        this.deliveryTasks.remove(task.id);
+        this.reservations.remove(task.id);
+    }
+
+    private int getPizzasLeftForDeliveryTask(Integer deliveryTaskID) {
+        DeliveryTask task = this.deliveryTasks.get(deliveryTaskID);
+        List<DeliveryTaskReservation> reservations = this.reservations.get(deliveryTaskID);
+
+        int pizzasInReservations = 0;
+        for (DeliveryTaskReservation r : reservations) {
+            pizzasInReservations += r.pizzaAmount;
+        }
+
+        return task.getPizzasRemaining() - pizzasInReservations;
+    }
+
     @Override
     public void tick(@NotNull TimeLapse timeLapse) {
         if (first_tick) {
@@ -68,12 +110,12 @@ public class ResourceAgent implements CommUser, TickListener {
     private void evaporateReservations(@NotNull TimeLapse timeLapse) {
         // evaporates reservations
         //System.out.println("It is now: " + timeLapse.getStartTime());
-        for(Integer k1: this.reservations.keySet()){
+        for (Integer k1 : this.reservations.keySet()) {
             //System.out.println("Resv for " + k1 + " is " + this.reservations.get(k1).size());
             int oldSize = this.reservations.get(k1).size();
             this.reservations.get(k1).removeIf(r -> r.evaporationTimestamp < timeLapse.getStartTime());
             //System.out.println("Updated Resv for " + k1 + " is " + this.reservations.get(k1).size());
-            if(oldSize > this.reservations.get(k1).size()){
+            if (oldSize > this.reservations.get(k1).size()) {
                 System.out.println("Evaporation!");
             }
         }
@@ -106,7 +148,7 @@ public class ResourceAgent implements CommUser, TickListener {
                 // Calculate distance
                 int amount = 0;
                 Long score = 0L;
-                if(task != null){
+                if (task != null) {
                     amount = this.getPizzasLeftForDeliveryTask(task.id);
                     score = task.getScore();
                 }
@@ -152,7 +194,7 @@ public class ResourceAgent implements CommUser, TickListener {
 
         if (ant.hasReachedDestination(this.position)) {
             if (ant.isReturning) {
-                System.out.println("ant.isReturning = " + ant.isReturning);
+                System.out.println("ant.isReturning = ey manneke das altijd true he hier" + ant.isReturning);
                 this.commDevice.send(ant.copy(Lists.reverse(ant.path), true, ant.deliveries, 0), ant.robot);
             } else {
                 if (ant.toChargingStation) {
@@ -181,7 +223,7 @@ public class ResourceAgent implements CommUser, TickListener {
                 DeliveryTask task = this.deliveryTasks.get(deliveryData.deliveryTaskID);
                 System.out.println("task = " + task);
                 // Check if a reservation can be updated or can be made (= if the task has pizzas to be delivered)
-                if(task != null){
+                if (task != null) {
                     boolean updated = this.updateReservation(task, deliveryData, timeLapse);
 
                     if (updated) {
@@ -191,7 +233,7 @@ public class ResourceAgent implements CommUser, TickListener {
                     } else {
                         System.out.println("Not updated");
                         System.out.println("#Pizza's " + deliveryData.pizzas + " pizzaleftfortask " + this.getPizzasLeftForDeliveryTask(task.id));
-                        if(deliveryData.pizzas <= this.getPizzasLeftForDeliveryTask(task.id) &&
+                        if (deliveryData.pizzas <= this.getPizzasLeftForDeliveryTask(task.id) &&
                                 this.getPizzasLeftForDeliveryTask(task.id) > 0) {
 
                             createReservation(timeLapse, deliveryData, task);
@@ -204,7 +246,7 @@ public class ResourceAgent implements CommUser, TickListener {
                             newDeliveriesData.add(deliveryData.copy(false));
                         }
                     }
-                }else{
+                } else {
                     // Task has already been handled by other robot.
                     newDeliveriesData.add(deliveryData.copy(false));
                 }
@@ -245,7 +287,7 @@ public class ResourceAgent implements CommUser, TickListener {
                 System.out.println("updateExplorationAntDeliveryData for task " + task);
                 Integer newPizzaAmount = 0;
 
-                if(this.deliveryTasks.containsKey(deliveryData.deliveryTaskID)){
+                if (this.deliveryTasks.containsKey(deliveryData.deliveryTaskID)) {
                     newPizzaAmount = Math.min(this.getPizzasLeftForDeliveryTask(task.id), deliveryData.pizzas);
                 }
 
@@ -268,7 +310,7 @@ public class ResourceAgent implements CommUser, TickListener {
                 task.id, deliveryData.pizzas, evaporationTimestamp
         );
 
-        System.out.println("Reservation " + task.id + " "+  deliveryData.robotID+" "+ deliveryData.pizzas + " " + evaporationTimestamp);
+        System.out.println("Reservation " + task.id + " " + deliveryData.robotID + " " + deliveryData.pizzas + " " + evaporationTimestamp);
         this.reservations.get(task.id).add(reservation);
     }
 
@@ -297,7 +339,7 @@ public class ResourceAgent implements CommUser, TickListener {
         if (ant.path.size() == 0) {
             System.out.println("CANNOT SEND ANT TO NEXT HOP FOR EMPTY PATH");
         }
-        if(ant.path.size() == 1){
+        if (ant.path.size() == 1) {
             this.commDevice.send(ant, ant.robot);
             return;
         }
@@ -312,7 +354,7 @@ public class ResourceAgent implements CommUser, TickListener {
         Point nextPosition = ant.path.get(nextPositionIndex);
         for (ResourceAgent neighbor : this.neighbors) {
             if (neighbor.getPosition().get().equals(nextPosition)) {
-                if(neighbor.hasRoadWorks()){
+                if (neighbor.hasRoadWorks()) {
                     estimatedTime += SimulatorSettings.TIME_ROAD_WORKS;
                 }
 
@@ -323,45 +365,7 @@ public class ResourceAgent implements CommUser, TickListener {
         }
     }
 
-    public boolean hasRoadWorks(){
-        return this.roadWorks.isPresent();
-    }
-
-    private int getPizzasLeftForDeliveryTask(Integer deliveryTaskID) {
-        DeliveryTask task = this.deliveryTasks.get(deliveryTaskID);
-        List<DeliveryTaskReservation> reservations = this.reservations.get(deliveryTaskID);
-
-        int pizzasInReservations = 0;
-        for (DeliveryTaskReservation r : reservations) {
-            pizzasInReservations += r.pizzaAmount;
-        }
-
-        return task.getPizzasRemaining() - pizzasInReservations;
-    }
-
     @Override
     public void afterTick(TimeLapse timeLapse) {
-    }
-
-    public void addDeliveryTask(DeliveryTask task) {
-        this.deliveryTasks.put(task.id, task);
-        this.reservations.put(task.id, new LinkedList<>());
-    }
-
-    public void removeDeliveryTask(DeliveryTask task) {
-        this.deliveryTasks.remove(task.id);
-        this.reservations.remove(task.id);
-    }
-
-    public void setRoadWorks(RoadWorks roadWorks) {
-        this.roadWorks = Optional.of(roadWorks);
-    }
-
-    public void removeRoadWorks() {
-        this.roadWorks = Optional.absent();
-    }
-
-    public Optional<RoadWorks> getRoadWorks() {
-        return roadWorks;
     }
 }

@@ -37,6 +37,8 @@ public class PizzeriaModel extends Model.AbstractModel<PizzeriaUser> {
     private DynamicGraphRoadModelImpl dynamicGraphRoadModel;
     private RandomGenerator rng;
     private Clock clock;
+    private HashMap<Point, Pizzeria> pizzerias = new HashMap<>();
+    private HashMap<Point, ChargingStation> chargingStations = new HashMap<>();
     private HashMap<Integer, DeliveryTask> deliveryTasks = new HashMap<>();
     private HashMap<Point, ResourceAgent> resourceAgents = new HashMap<>();
 
@@ -74,7 +76,11 @@ public class PizzeriaModel extends Model.AbstractModel<PizzeriaUser> {
     }
 
     public Pizzeria openPizzeria() {
-        Pizzeria pizzeria = new Pizzeria(this.roadModel.getRandomPosition(rng));
+        Point position = this.roadModel.getRandomPosition(rng);
+
+        Pizzeria pizzeria = new Pizzeria(position);
+
+        this.pizzerias.put(position, pizzeria);
         this.sim.register(pizzeria);
 
         this.eventDispatcher.dispatchEvent(new PizzeriaEvent(
@@ -89,7 +95,20 @@ public class PizzeriaModel extends Model.AbstractModel<PizzeriaUser> {
                 PizzeriaEventType.CLOSE_PIZZERIA, 0, null, null, null
         ));
 
+        this.pizzerias.remove(pizzeria.getPosition());
         this.sim.unregister(pizzeria);
+    }
+
+    public ChargingStation openChargingStation() {
+        Point position = roadModel.getRandomPosition(sim.getRandomGenerator());
+        int capacity = new Double(SimulatorSettings.NUM_ROBOTS * 0.3).intValue();
+
+        ChargingStation chargingStation = new ChargingStation(position, capacity);
+
+        this.chargingStations.put(position, chargingStation);
+        sim.register(chargingStation);
+
+        return chargingStation;
     }
 
     public List<DeliveryTask> getDeliveryTasks() {
@@ -187,6 +206,10 @@ public class PizzeriaModel extends Model.AbstractModel<PizzeriaUser> {
 
     public void createResourceAgent(Point position) {
         ResourceAgent agent = new ResourceAgent(position);
+
+        if (this.chargingStations.containsKey(position)) {
+            agent.setChargingStation(this.chargingStations.get(position));
+        }
 
         this.resourceAgents.put(position, agent);
         this.sim.register(agent);

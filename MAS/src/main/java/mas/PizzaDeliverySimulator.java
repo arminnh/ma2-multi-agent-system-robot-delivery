@@ -120,11 +120,7 @@ public class PizzaDeliverySimulator {
         final Pizzeria pizzeria = pizzeriaModel.openPizzeria();
 
         // Create charging station
-        ChargingStation chargingStation = new ChargingStation(
-                roadModel.getRandomPosition(sim.getRandomGenerator()),
-                new Double(SimulatorSettings.NUM_ROBOTS * 0.3).intValue()
-        );
-        sim.register(chargingStation);
+        final ChargingStation chargingStation = pizzeriaModel.openChargingStation();
 
         // Create robots
         for (int i = 0; i < SimulatorSettings.NUM_ROBOTS; i++) {
