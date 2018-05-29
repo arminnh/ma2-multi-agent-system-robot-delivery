@@ -6,6 +6,7 @@ import com.github.rinde.rinsim.core.model.pdp.Parcel;
 import com.github.rinde.rinsim.core.model.pdp.ParcelDTO;
 import com.github.rinde.rinsim.core.model.road.DynamicGraphRoadModelImpl;
 import com.github.rinde.rinsim.core.model.road.RoadModel;
+import com.github.rinde.rinsim.core.model.road.RoadUser;
 import com.github.rinde.rinsim.core.model.time.Clock;
 import com.github.rinde.rinsim.event.EventAPI;
 import com.github.rinde.rinsim.event.EventDispatcher;
@@ -32,6 +33,8 @@ public class PizzeriaModel extends Model.AbstractModel<PizzeriaUser> {
     private final EventDispatcher eventDispatcher;
     private Simulator sim;
     private RoadModel roadModel;
+    private ListenableGraph dynamicGraph;
+    private DynamicGraphRoadModelImpl dynamicGraphRoadModel;
     private RandomGenerator rng;
     private Clock clock;
     private HashMap<Integer, DeliveryTask> deliveryTasks = new HashMap<>();
@@ -39,7 +42,8 @@ public class PizzeriaModel extends Model.AbstractModel<PizzeriaUser> {
 
     public PizzeriaModel(RoadModel roadModel, Clock clock) {
         this.roadModel = roadModel;
-        eventDispatcher = new EventDispatcher(PizzeriaEventType.values());
+
+        this.eventDispatcher = new EventDispatcher(PizzeriaEventType.values());
         this.clock = clock;
     }
 
@@ -50,6 +54,8 @@ public class PizzeriaModel extends Model.AbstractModel<PizzeriaUser> {
     public void setSimulator(Simulator sim, RandomGenerator rng) {
         this.sim = sim;
         this.rng = rng;
+        this.dynamicGraphRoadModel = this.sim.getModelProvider().getModel(DynamicGraphRoadModelImpl.class);
+        this.dynamicGraph = this.dynamicGraphRoadModel.getGraph();
     }
 
     public EventAPI getEventAPI() {
@@ -71,7 +77,7 @@ public class PizzeriaModel extends Model.AbstractModel<PizzeriaUser> {
         Pizzeria pizzeria = new Pizzeria(this.roadModel.getRandomPosition(rng));
         this.sim.register(pizzeria);
 
-        eventDispatcher.dispatchEvent(new PizzeriaEvent(
+        this.eventDispatcher.dispatchEvent(new PizzeriaEvent(
                 PizzeriaEventType.NEW_PIZZERIA, 0, null, null, null
         ));
 
@@ -79,7 +85,7 @@ public class PizzeriaModel extends Model.AbstractModel<PizzeriaUser> {
     }
 
     public void closePizzeria(Pizzeria pizzeria) {
-        eventDispatcher.dispatchEvent(new PizzeriaEvent(
+        this.eventDispatcher.dispatchEvent(new PizzeriaEvent(
                 PizzeriaEventType.CLOSE_PIZZERIA, 0, null, null, null
         ));
 
@@ -93,13 +99,35 @@ public class PizzeriaModel extends Model.AbstractModel<PizzeriaUser> {
     public void createNewDeliveryTask(RandomGenerator rng, double pizzaMean, double pizzaStd, long time) {
         int pizzaAmount = 1; //(int) (rng.nextGaussian() * pizzaStd + pizzaMean);
 
-        DeliveryTask task = new DeliveryTask(roadModel.getRandomPosition(rng), pizzaAmount, time, clock);
-        this.deliveryTasks.put(task.id, task);
-        sim.register(task);
+        // Try to place the task on the graph up to 3 times.
+        int attempts = 3;
 
-        this.resourceAgents.get(task.getPosition().get()).addDeliveryTask(task);
+        while (attempts-- > 0) {
+            // Create a random position on the graph.
+            Point position = roadModel.getRandomPosition(rng);
 
-        eventDispatcher.dispatchEvent(new PizzeriaEvent(PizzeriaEventType.NEW_TASK, time, task, null, null));
+            // Can only create a DeliveryTask on an empty node or a node that contains only a robot.
+            boolean canCreate = true;
+            for (RoadUser roadUser : this.dynamicGraphRoadModel.getRoadUsersOnNode(position)) {
+                if (roadUser.getClass() != RobotAgent.class) {
+                    canCreate = false;
+                    break;
+                }
+            }
+
+            if (canCreate) {
+                DeliveryTask task = new DeliveryTask(position, pizzaAmount, time, clock);
+
+                this.deliveryTasks.put(task.id, task);
+                this.sim.register(task);
+
+                // Link the task to the resource agent it was put on.
+                this.resourceAgents.get(position).addDeliveryTask(task);
+
+                this.eventDispatcher.dispatchEvent(new PizzeriaEvent(PizzeriaEventType.NEW_TASK, time, task, null, null));
+            }
+        }
+
     }
 
     public PizzaParcel newPizzaParcel(int deliveryTaskID, Point startPosition, int pizzaAmount, long time) {
@@ -110,7 +138,7 @@ public class PizzeriaModel extends Model.AbstractModel<PizzeriaUser> {
                 .buildDTO();
 
         PizzaParcel parcel = new PizzaParcel(pdto, task, pizzaAmount, time);
-        sim.register(parcel);
+        this.sim.register(parcel);
 
         return parcel;
     }
@@ -121,21 +149,19 @@ public class PizzeriaModel extends Model.AbstractModel<PizzeriaUser> {
         task.deliverPizzas(parcel.amountOfPizzas);
 
         if (task.isFinished()) {
-            // If all pizzas for a deliveryTask have been delivered, the deliveryTask can be removed from the RoadModel.
+            // If all pizzas for a deliveryTask have been delivered, the deliveryTask can be removed from lists that hold it.
             this.resourceAgents.get(task.getPosition().get()).removeDeliveryTask(task);
-
-            eventDispatcher.dispatchEvent(new PizzeriaEvent(PizzeriaEventType.END_TASK, time, task, parcel, vehicle));
-            this.roadModel.removeObject(task);
             this.deliveryTasks.remove(task.id);
+            this.eventDispatcher.dispatchEvent(new PizzeriaEvent(PizzeriaEventType.END_TASK, time, task, parcel, vehicle));
+            this.roadModel.removeObject(task);
 
             // Unregister the task from the simulator
-            //
             //this.sim.unregister(task);
         }
     }
 
     public void dropPizzaParcel(RobotAgent robot, PizzaParcel parcel, long time) {
-        eventDispatcher.dispatchEvent(new PizzeriaEvent(
+        this.eventDispatcher.dispatchEvent(new PizzeriaEvent(
                 PizzeriaEventType.DROP_PARCEL, time, null, parcel, robot
         ));
 
@@ -145,7 +171,7 @@ public class PizzeriaModel extends Model.AbstractModel<PizzeriaUser> {
 
     public void robotArrivedAtChargingStation(RobotAgent r, ChargingStation cs) {
         if (cs.addRobot(r)) {
-            eventDispatcher.dispatchEvent(new PizzeriaEvent(
+            this.eventDispatcher.dispatchEvent(new PizzeriaEvent(
                     PizzeriaEventType.ROBOT_AT_CHARGING_STATION, 0, null, null, null
             ));
         }
@@ -154,7 +180,7 @@ public class PizzeriaModel extends Model.AbstractModel<PizzeriaUser> {
     public void robotLeftChargingStation(RobotAgent r, ChargingStation cs) {
         cs.removeRobot(r);
 
-        eventDispatcher.dispatchEvent(new PizzeriaEvent(
+        this.eventDispatcher.dispatchEvent(new PizzeriaEvent(
                 PizzeriaEventType.ROBOT_LEAVING_CHARGING_STATION, 0, null, null, null
         ));
     }
@@ -163,54 +189,43 @@ public class PizzeriaModel extends Model.AbstractModel<PizzeriaUser> {
         ResourceAgent agent = new ResourceAgent(position);
 
         this.resourceAgents.put(position, agent);
-        sim.register(agent);
+        this.sim.register(agent);
     }
 
     public void newRoadWorks(long time) {
         // Road works can only be set on positions where there is no robot, building, or delivery task.
-        // Try to create new road works up to 3 times.
+        // Try to create new road works up to 5 times.
         int attempts = 5;
 
         while (attempts-- > 0) {
             // Find a new random position.
             Point position = this.roadModel.getRandomPosition(this.rng);
 
-            RoadWorks roadWorks = new RoadWorks(position, time + SimulatorSettings.TIME_ROAD_WORKS);
+            // Check if the position is free.
+            if (this.dynamicGraphRoadModel.getRoadUsersOnNode(position).isEmpty()) {
 
-            // First, register the works on the road
-            this.sim.register(roadWorks);
+                RoadWorks roadWorks = new RoadWorks(position, time + SimulatorSettings.TIME_ROAD_WORKS);
 
-            // If there is is nothing else on the position, set link to the relevant resource agent and fire an event
-            boolean noRobots = this.roadModel.getObjectsAt(roadWorks, RobotAgent.class).isEmpty();
-            boolean noTasks = this.roadModel.getObjectsAt(roadWorks, DeliveryTask.class).isEmpty();
-            boolean noOtherWorks = this.roadModel.getObjectsAt(roadWorks, RoadWorks.class).size() == 1;
-            boolean noPizzeria = this.roadModel.getObjectsAt(roadWorks, Pizzeria.class).isEmpty();
-            boolean noChargingStation = this.roadModel.getObjectsAt(roadWorks, ChargingStation.class).isEmpty();
+                // First, register the works on the road.
+                this.sim.register(roadWorks);
 
-            if (noRobots && noTasks && noOtherWorks && noPizzeria && noChargingStation) {
-                // Link the works to the resource agents of they are on.
+                // Link the works to the resource agent they are on.
                 ResourceAgent agent = this.resourceAgents.get(position);
                 agent.setRoadWorks(roadWorks);
 
-                // Remove the node the RoadWorks lie on from the GraphRoadModel
+                // Remove the all graph connections the node is in that can be removed.
                 this.removeGraphConnectionsForNode(agent);
 
-                eventDispatcher.dispatchEvent(new PizzeriaEvent(
+                this.eventDispatcher.dispatchEvent(new PizzeriaEvent(
                         PizzeriaEventType.STARTED_ROADWORKS, 0, null, null, null
                 ));
 
                 return;
-            } else {
-                // The road works should not be added to the environment, unregister it
-                this.sim.unregister(roadWorks);
             }
         }
     }
 
     private void removeGraphConnectionsForNode(ResourceAgent resourceAgent) {
-        final DynamicGraphRoadModelImpl g = sim.getModelProvider().getModel(DynamicGraphRoadModelImpl.class);
-        ListenableGraph graph = g.getGraph();
-
         // Remove all connections to neighbors for which the connections in both ways can be removed.
         for (ResourceAgent neighbor : resourceAgent.getNeighbors()) {
             // TODO: fetch all robots and check that their positions do not lie in (resourceAgent.position, neighbor.position)
@@ -218,18 +233,21 @@ public class PizzeriaModel extends Model.AbstractModel<PizzeriaUser> {
             // Try to remove the connection in one way, then try to remove it in the other.
             // If the connection cannot be removed in both ways, make sure they both are still in the graph afterwards.
             try {
-                Connection c1 = graph.getConnection(resourceAgent.position, neighbor.position);
-                Connection c2 = graph.getConnection(neighbor.position, resourceAgent.position);
+                Connection c1 = this.dynamicGraph.getConnection(resourceAgent.position, neighbor.position);
+                Connection c2 = this.dynamicGraph.getConnection(neighbor.position, resourceAgent.position);
 
-                System.out.println("road user: " + g.hasRoadUserOn(resourceAgent.position, neighbor.position) + ", " + g.hasRoadUserOn(neighbor.position, resourceAgent.position));
+                System.out.println(
+                        "road user: " + this.dynamicGraphRoadModel.hasRoadUserOn(resourceAgent.position, neighbor.position)
+                        + ", " + this.dynamicGraphRoadModel.hasRoadUserOn(neighbor.position, resourceAgent.position)
+                );
 
-                graph.removeConnection(c1.from(), c1.to());
+                this.dynamicGraph.removeConnection(c1.from(), c1.to());
 
                 try {
-                    graph.removeConnection(c2.from(), c2.to());
+                    this.dynamicGraph.removeConnection(c2.from(), c2.to());
                 } catch (IllegalStateException | IllegalArgumentException e) {
                     // Removing connection c2 caused an exception, add c1 back to the graph.
-                    graph.addConnection(c1.from(), c1.to());
+                    this.dynamicGraph.addConnection(c1.from(), c1.to());
                 }
 
             } catch (IllegalStateException | IllegalArgumentException e) {
@@ -239,14 +257,11 @@ public class PizzeriaModel extends Model.AbstractModel<PizzeriaUser> {
     }
 
     private void addGraphConnectionsForNode(ResourceAgent resourceAgent) {
-        final DynamicGraphRoadModelImpl g = sim.getModelProvider().getModel(DynamicGraphRoadModelImpl.class);
-        ListenableGraph graph = g.getGraph();
-
         for (ResourceAgent neighbor : resourceAgent.getNeighbors()) {
             if (!neighbor.getRoadWorks().isPresent()) {
                 try {
-                    graph.addConnection(resourceAgent.position, neighbor.position);
-                    graph.addConnection(neighbor.position, resourceAgent.position);
+                    this.dynamicGraph.addConnection(resourceAgent.position, neighbor.position);
+                    this.dynamicGraph.addConnection(neighbor.position, resourceAgent.position);
                 } catch (IllegalArgumentException e) {
                     // Connection already exists
                 }
@@ -262,7 +277,7 @@ public class PizzeriaModel extends Model.AbstractModel<PizzeriaUser> {
         // Unlink the road works from the resource agent they are linked to.
         agent.removeRoadWorks();
 
-        eventDispatcher.dispatchEvent(new PizzeriaEvent(
+        this.eventDispatcher.dispatchEvent(new PizzeriaEvent(
                 PizzeriaEventType.FINISHED_ROADWORKS, 0, null, null, null
         ));
 
