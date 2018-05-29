@@ -75,7 +75,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
     private Optional<Long> nextIntentionAntsUpdate = Optional.absent();
     private Optional<Long> nextExplorationAntsUpdate = Optional.absent();
     private Point chargingStationPosition;
-    private boolean isAtNode;
+    private boolean isOnNode = false;
 
     public RobotAgent(
             int id,
@@ -179,7 +179,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
     private void resendAnts(TimeLapse time) {
         // If intention is present, send out intention ants for refresh.
         // Also, can only send ants when there is some battery left.
-        if (this.intention.isPresent() && this.getCapacityLeft() > 0) {
+        if (this.intention.isPresent() && this.getCapacityLeft() > 0 && this.isOnNode) {
 
             if (this.nextIntentionAntsUpdate.isPresent() && this.nextIntentionAntsUpdate.get() < time.getEndTime()
                     && this.waitingForIntentionAnt == 0 && !this.goingToPizzeria) {
@@ -514,8 +514,10 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
 
             if (!this.getPosition().get().equals(this.intention.get().peek())) {
                 progress = this.roadModel.moveTo(this, this.intention.get().peek(), time);
+                this.isOnNode = false;
             } else {
                 progress = this.roadModel.moveTo(this, this.intention.get().remove(), time);
+                this.isOnNode = true;
             }
 
             this.metersMoved += progress.distance().doubleValue(SI.METER);
@@ -673,7 +675,9 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
         deliveries.add(new IntentionData(this.chargingStationPosition, this.id,
                 0, 0, false));
 
-        IntentionAnt ant = new IntentionAnt(new LinkedList<>(path), 0, false,
+        LinkedList<Point> pathWithCurrentPos = new LinkedList<>(path);
+        pathWithCurrentPos.add(0, this.getPosition().get());
+        IntentionAnt ant = new IntentionAnt(pathWithCurrentPos, 0, false,
                 this.id, this,0, deliveries);
 
         this.commDevice.broadcast(ant);
@@ -689,7 +693,9 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
                     parcel.deliveryTaskID, parcel.amountOfPizzas, false));
         }
 
-        IntentionAnt ant = new IntentionAnt(new LinkedList<>(path), 0, false,
+        LinkedList<Point> pathWithCurrentPos = new LinkedList<>(path);
+        pathWithCurrentPos.add(0, this.getPosition().get());
+        IntentionAnt ant = new IntentionAnt(pathWithCurrentPos, 0, false,
                 this.id, this, 0, deliveries);
         this.commDevice.broadcast(ant);
         this.waitingForIntentionAnt++;
