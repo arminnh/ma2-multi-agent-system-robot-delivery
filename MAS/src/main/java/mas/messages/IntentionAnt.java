@@ -2,6 +2,7 @@ package mas.messages;
 
 import com.github.rinde.rinsim.core.model.comm.CommUser;
 import com.github.rinde.rinsim.geom.Point;
+import sun.plugin.dom.exception.InvalidStateException;
 
 import java.util.List;
 
@@ -35,16 +36,12 @@ public class IntentionAnt extends MultiDestinationAnt {
 
     public IntentionAnt(List<Point> path, long estimatedTime, boolean isReturning, Integer robotID, CommUser robot, Integer pathIndex, List<IntentionData> intentions) {
         super(path, estimatedTime, isReturning, robotID, robot, pathIndex, intentions);
-        System.out.println("path = [" + path + "], estimatedTime = [" + estimatedTime + "], isReturning = [" + isReturning + "], robotID = [" + robotID + "], robot = [" + robot + "], intentions = [" + intentions + "]");
-        System.out.println(intentions.get(0).deliveryTaskID);
+        //System.out.println("Creating IntentionAnt path = [" + path + "], estimatedTime = [" + estimatedTime + "], isReturning = [" + isReturning + "], robotID = [" + robotID + "], robot = [" + robot + "], intentions = [" + intentions + "]");
+        //System.out.println(intentions.get(0).deliveryTaskID);
         if(intentions != null){
             for(IntentionData d: intentions){
                 if(d.position == null){
-                    try {
-                        throw new Exception("null poss");
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
+                     throw new InvalidStateException("null poss");
                 }
             }
         }

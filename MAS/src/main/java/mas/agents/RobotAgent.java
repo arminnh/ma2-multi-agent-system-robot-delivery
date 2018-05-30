@@ -325,7 +325,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
         IntentionAnt ant = this.intentionAnts.remove(0);
 
         if (ant.toChargingStation) {
-            System.out.println("GOING TO CHARGE, this.hasPizzaParcel() = " + this.hasPizzaParcel() + ", this.intention = " + this.intention);
+            System.out.println("SET TO GO CHARGE, this.hasPizzaParcel() = " + this.hasPizzaParcel() + ", this.intention = " + this.intention);
             this.intention = Optional.of(new LinkedList<>(ant.path));
 
         } else {
@@ -379,6 +379,11 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
         // If no intention is present, should decide on a new one.
         // Only search for new intentions when not waiting for ants.
         if (!this.intention.isPresent() && !this.waitingForAnts()) {
+            // If robot was going to charge, explore paths towards charging station
+            if(this.goingToCharge){
+                this.explorePaths(this.chargingStationPosition);
+                return;
+            }
 
             // If robot is carrying PizzaParcels, explore paths to deliver the parcels.
             if (!this.currentParcels.isEmpty()) {
