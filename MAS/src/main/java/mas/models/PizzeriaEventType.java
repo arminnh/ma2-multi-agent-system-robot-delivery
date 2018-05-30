@@ -21,11 +21,6 @@ public enum PizzeriaEventType {
     NEW_PIZZERIA,
 
     /**
-     * Indicates that a {@link mas.buildings.Pizzeria} has closed
-     */
-    CLOSE_PIZZERIA,
-
-    /**
      * Indicates that a new {@link} has opened
      */
     STARTED_ROADWORKS,

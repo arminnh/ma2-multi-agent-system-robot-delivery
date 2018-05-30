@@ -8,7 +8,7 @@ public class PizzaParcel extends Parcel {
     public final DeliveryTask deliveryTask;
     public final int amountOfPizzas;
     // the time at which the PizzaParcel was created
-    public final long start_time;
+    public final long startTime;
     public int deliveryTaskID;
 
     public PizzaParcel(ParcelDTO parcelDto, DeliveryTask deliveryTask, int pizzaAmount, long time) {
@@ -16,7 +16,7 @@ public class PizzaParcel extends Parcel {
 
         this.deliveryTask = deliveryTask;
         this.amountOfPizzas = pizzaAmount;
-        this.start_time = time;
+        this.startTime = time;
         this.deliveryTaskID = deliveryTask.id;
     }
 }

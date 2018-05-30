@@ -100,15 +100,6 @@ public class PizzeriaModel extends AbstractModel<PizzeriaUser> {
         return pizzeria;
     }
 
-    public void closePizzeria(Pizzeria pizzeria) {
-        this.eventDispatcher.dispatchEvent(new PizzeriaEvent(
-                PizzeriaEventType.CLOSE_PIZZERIA, 0, null, null, null
-        ));
-
-        this.pizzerias.remove(pizzeria.getPosition());
-        this.sim.unregister(pizzeria);
-    }
-
     public ChargingStation openChargingStation() {
         Point position = roadModel.getRandomPosition(sim.getRandomGenerator());
 
@@ -204,20 +195,18 @@ public class PizzeriaModel extends AbstractModel<PizzeriaUser> {
     public void robotArrivedAtChargingStation(RobotAgent r, ChargingStation cs) {
         if (cs.addRobot(r)) {
             this.eventDispatcher.dispatchEvent(new PizzeriaEvent(
-                    PizzeriaEventType.ROBOT_AT_CHARGING_STATION, 0, null, null, null
+                    PizzeriaEventType.ROBOT_AT_CHARGING_STATION, 0, null, null, r
             ));
         }
     }
 
     public void robotLeftChargingStation(RobotAgent r, ChargingStation cs) {
-        cs.removeRobot(r);
-        this.resourceAgents.get(cs.getPosition()).dropReservation(r);
-
         this.eventDispatcher.dispatchEvent(new PizzeriaEvent(
-                PizzeriaEventType.ROBOT_LEAVING_CHARGING_STATION, 0, null, null, null
+                PizzeriaEventType.ROBOT_LEAVING_CHARGING_STATION, 0, null, null, r
         ));
 
-
+        cs.removeRobot(r);
+        this.resourceAgents.get(cs.getPosition()).dropReservation(r);
     }
 
     public void createResourceAgent(Point position) {
@@ -252,8 +241,6 @@ public class PizzeriaModel extends AbstractModel<PizzeriaUser> {
                 ResourceAgent agent = this.resourceAgents.get(position);
                 agent.setRoadWorks(roadWorks);
 
-                System.out.println("position = " + position);
-
                 // Remove the all graph connections the node is in that can be removed.
                 this.removeGraphConnectionsForNode(agent);
 
@@ -272,8 +259,6 @@ public class PizzeriaModel extends AbstractModel<PizzeriaUser> {
             // Try to remove the connection in one direction, then try to remove it in the other.
             // If the connection cannot be removed in both ways, make sure they both are still in the graph afterwards.
             if (this.dynamicGraph.hasConnection(resourceAgent.position, neighbor.position)) {
-                System.out.println("CONNECTIONS: " + this.dynamicGraph.getNumberOfConnections());
-
                 try {
                     this.dynamicGraph.removeConnection(resourceAgent.position, neighbor.position);
 
@@ -288,8 +273,6 @@ public class PizzeriaModel extends AbstractModel<PizzeriaUser> {
                     // Removing connection c1 caused an exception, nothing to do.
                     this.dynamicGraph.addConnection(resourceAgent.position, neighbor.position);
                 }
-
-                System.out.println("CONNECTIONS: " + this.dynamicGraph.getNumberOfConnections());
             }
         }
     }
@@ -308,22 +291,18 @@ public class PizzeriaModel extends AbstractModel<PizzeriaUser> {
     }
 
     public void finishRoadWorks(RoadWorks roadWorks) {
+        this.eventDispatcher.dispatchEvent(new PizzeriaEvent(
+                PizzeriaEventType.FINISHED_ROADWORKS, 0, null, null, null
+        ));
+
         ResourceAgent agent = this.resourceAgents.get(roadWorks.position);
+
         // Add the connections that were removed
         this.addGraphConnectionsForNode(agent);
 
         // Unlink the road works from the resource agent they are linked to.
         agent.removeRoadWorks();
-
-        this.eventDispatcher.dispatchEvent(new PizzeriaEvent(
-                PizzeriaEventType.FINISHED_ROADWORKS, 0, null, null, null
-        ));
-
         // Unregister the works from the simulator
         this.sim.unregister(roadWorks);
-    }
-
-    public Long getCurrentTime() {
-        return clock.getCurrentTime();
     }
 }

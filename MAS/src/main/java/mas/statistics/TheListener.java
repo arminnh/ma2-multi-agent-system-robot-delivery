@@ -23,10 +23,10 @@ import mas.agents.RobotAgent;
 import mas.models.PizzeriaEvent;
 import mas.models.PizzeriaEventType;
 import mas.tasks.PizzaParcel;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
-import static com.google.common.base.Verify.verify;
 import static com.google.common.collect.Maps.newLinkedHashMap;
 
 
@@ -49,6 +49,7 @@ public class TheListener implements Listener {
     public int totalPizzas;
     public int totalParcels; // The total number of parcels in the scenario. SCENARIOOO??
     public int acceptedParcels; // Same as totalPickups. The total number of parcels that were actually added in the model.
+    public int droppedParcels;
     public long totalPizzaTravelTime;
     // vehicles
     public int totalVehicles;
@@ -117,7 +118,7 @@ public class TheListener implements Listener {
     }
 
     @Override
-    public void handleEvent(Event e) {
+    public void handleEvent(@NotNull Event e) {
         if (e.getEventType() == Clock.ClockEventType.STARTED) {
             startTimeReal = System.currentTimeMillis();
             startTimeSim = clock.getCurrentTime();
@@ -128,10 +129,9 @@ public class TheListener implements Listener {
             simulationTime = clock.getCurrentTime() - startTimeSim;
 
         } else if (e.getEventType() == GenericRoadModel.RoadEventType.MOVE) {
-            verify(e instanceof MoveEvent);
             final MoveEvent me = (MoveEvent) e;
-
             MovingRoadUser mru = (MovingRoadUser) me.roadUser;
+
             double moveDistance = me.pathProgress.distance().getValue();
             if (!distanceMap.containsKey(mru)) {
                 distanceMap.put(mru, moveDistance);
@@ -165,7 +165,6 @@ public class TheListener implements Listener {
             }
 
         } else if (e.getEventType() == PDPModelEventType.START_PICKUP) {
-            verify(e instanceof PDPModelEvent);
             final PDPModelEvent pme = (PDPModelEvent) e;
             final Parcel p = pme.parcel;
             final Vehicle v = pme.vehicle;
@@ -179,10 +178,11 @@ public class TheListener implements Listener {
             }
 
         } else if (e.getEventType() == PDPModelEventType.END_PICKUP) {
-            totalPickups++;
-
             final PDPModelEvent pme = (PDPModelEvent) e;
             RobotAgent r = (RobotAgent) pme.vehicle;
+            assert r != null;
+
+            totalPickups++;
             if (r.timestampIdle.isPresent()) {
                 totalIdleTime += pme.time - r.timestampIdle.get();
                 r.timestampIdle = Optional.absent();
@@ -190,11 +190,8 @@ public class TheListener implements Listener {
 
         } else if (e.getEventType() == PDPModelEventType.START_DELIVERY) {
             final PDPModelEvent pme = (PDPModelEvent) e;
-
             final Parcel p = pme.parcel;
-            final Vehicle v = pme.vehicle;
             assert p != null;
-            assert v != null;
 
             final long latestBeginTime = p.getDeliveryTimeWindow().end() - p.getDeliveryDuration();
             if (pme.time > latestBeginTime) {
@@ -203,11 +200,12 @@ public class TheListener implements Listener {
             }
 
         } else if (e.getEventType() == PDPModelEventType.END_DELIVERY) {
-            totalDeliveries++;
             final PDPModelEvent pme = (PDPModelEvent) e;
             final PizzaParcel p = (PizzaParcel) pme.parcel;
+            assert p != null;
 
-            totalPizzaTravelTime += clock.getCurrentTime() - p.start_time;
+            totalDeliveries++;
+            totalPizzaTravelTime += clock.getCurrentTime() - p.startTime;
             pizzas -= p.amountOfPizzas;
 
         } else if (e.getEventType() == ScenarioController.EventType.SCENARIO_EVENT) {
@@ -222,16 +220,25 @@ public class TheListener implements Listener {
             }
 
         } else if (e.getEventType() == PDPModelEventType.NEW_PARCEL) {
-            acceptedParcels++;
-
             PDPModelEvent pme = (PDPModelEvent) e;
             PizzaParcel p = (PizzaParcel) pme.parcel;
+            assert p != null;
+
+            acceptedParcels++;
             pizzas += p.amountOfPizzas;
             totalPizzas += pizzas;
 
+        } else if (e.getEventType() == PizzeriaEventType.DROP_PARCEL) {
+            PizzeriaEvent pe = (PizzeriaEvent) e;
+            PizzaParcel p = (PizzaParcel) pe.parcel;
+            assert p != null;
+
+            pizzas -= p.amountOfPizzas;
+            droppedParcels += p.amountOfPizzas;
+
         } else if (e.getEventType() == PDPModelEventType.NEW_VEHICLE) {
-            verify(e instanceof PDPModelEvent);
             final PDPModelEvent ev = (PDPModelEvent) e;
+
             lastArrivalTimeAtDepot.put(ev.vehicle, clock.getCurrentTime());
             totalVehicles++;
 
@@ -240,17 +247,14 @@ public class TheListener implements Listener {
             totalTasks++;
 
         } else if (e.getEventType() == PizzeriaEventType.END_TASK) {
+            final PizzeriaEvent ev = (PizzeriaEvent) e;
+
             tasks--;
             totalTasksFinished++;
-
-            final PizzeriaEvent ev = (PizzeriaEvent) e;
-            totalTaskWaitingTime += clock.getCurrentTime() - ev.deliveryTask.start_time;
+            totalTaskWaitingTime += clock.getCurrentTime() - ev.deliveryTask.startTime;
 
         } else if (e.getEventType() == PizzeriaEventType.NEW_PIZZERIA) {
             pizzerias++;
-
-        } else if (e.getEventType() == PizzeriaEventType.CLOSE_PIZZERIA) {
-            pizzerias--;
 
         } else if (e.getEventType() == PizzeriaEventType.STARTED_ROADWORKS) {
             roadWorks++;
@@ -267,7 +271,7 @@ public class TheListener implements Listener {
 
         } else {
             try {
-                throw new Exception("Unkown Event Type: " + e.toString());
+                throw new Exception("Unknown Event Type: " + e.toString());
             } catch (Exception e1) {
                 e1.printStackTrace();
             }

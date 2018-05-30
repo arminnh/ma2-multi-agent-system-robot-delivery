@@ -7,20 +7,21 @@ import javax.measure.unit.Unit;
 
 public class StatisticsDTO extends com.github.rinde.rinsim.pdptw.common.StatisticsDTO {
 
-    public long tasksWaitingTime;
-    public long totalTasksWaitingTime;
-    public int vehiclesIdle;
-    public long totalIdleTime;
-    public long totalChargingTime;
-    public int tasks;
-    public int totalTasks;
-    public int totalTasksFinished;
-    public int pizzas;
-    public int totalPizzas;
-    public double avgPizzasPerRobot;
-    public int pizzerias;
-    public int roadWorks;
-    public int totalRoadWorks;
+    public final int droppedParcels;
+    public final long tasksWaitingTime;
+    public final long totalTasksWaitingTime;
+    public final int vehiclesIdle;
+    public final long totalIdleTime;
+    public final long totalChargingTime;
+    public final int tasks;
+    public final int totalTasks;
+    public final int totalTasksFinished;
+    public final int pizzas;
+    public final int totalPizzas;
+    public final double avgPizzasPerRobot;
+    public final int pizzerias;
+    public final int roadWorks;
+    public final int totalRoadWorks;
 
     /**
      * Create a new statistics object.
@@ -34,6 +35,7 @@ public class StatisticsDTO extends com.github.rinde.rinsim.pdptw.common.Statisti
             int totalDeliveries,
             int totalParcels,
             int acceptedParcels,
+            int droppedParcels,
             long pickupTardiness,
             long deliveryTardiness,
             long computationTime,
@@ -79,6 +81,7 @@ public class StatisticsDTO extends com.github.rinde.rinsim.pdptw.common.Statisti
                 distanceUnit,
                 speedUnit
         );
+        this.droppedParcels = droppedParcels;
         this.tasksWaitingTime = tasksWaitingTime;
         this.totalTasksWaitingTime = totalTasksWaitingTime;
         this.vehiclesIdle = vehiclesIdle;
