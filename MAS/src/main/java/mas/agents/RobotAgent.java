@@ -475,7 +475,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
                             Optional.of(time.getStartTime() + SimulatorSettings.REFRESH_EXPLORATIONS);
 
                 } else if (this.nextExplorationAntsUpdate.get() < time.getEndTime()) {
-                    this.nextIntentionAntsUpdate = Optional.absent();
+                    this.nextExplorationAntsUpdate = Optional.absent();
 
                     if (this.goingToPizzeria) {
                         System.out.println("RobotAgent.resendAnts goingToPizzeria");
@@ -500,11 +500,13 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
     private void resendIntentionAnts() {
         System.out.println("RobotAgent.resendIntentionAnts, " + this.id);
         LinkedList<Point> pathWithCurrentPos = new LinkedList<>(this.intention.get());
-        pathWithCurrentPos.add(0, this.getPosition().get());
+        if(!pathWithCurrentPos.get(0).equals(this.getPosition().get())){
+            pathWithCurrentPos.add(0, this.getPosition().get());
+        }
         List<IntentionData> intentions = new LinkedList<>();
 
         // If robot is carrying parcels, set up intentions for delivery tasks
-        if (this.currentParcels.size() > 0) {
+        if (this.currentParcels.size() > 0 && !this.goingToCharge) {
             for (PizzaParcel parcel : this.currentParcels) {
                 intentions.add(new IntentionData(parcel.getDeliveryLocation(), this.id,
                         parcel.deliveryTaskID, parcel.amountOfPizzas, false));
