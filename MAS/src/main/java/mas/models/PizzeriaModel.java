@@ -93,10 +93,6 @@ public class PizzeriaModel extends AbstractModel<PizzeriaUser> {
         this.pizzerias.put(position, pizzeria);
         this.sim.register(pizzeria);
 
-        this.eventDispatcher.dispatchEvent(new PizzeriaEvent(
-                PizzeriaEventType.NEW_PIZZERIA, 0, null, null, null
-        ));
-
         return pizzeria;
     }
 

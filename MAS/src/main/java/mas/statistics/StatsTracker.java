@@ -48,7 +48,7 @@ public final class StatsTracker extends AbstractModelVoid implements StatsProvid
                 NEW_VEHICLE);
 
         this.pizzeriaModel.getEventAPI().addListener(theListener, ROBOT_AT_CHARGING_STATION,
-                ROBOT_LEAVING_CHARGING_STATION, NEW_PIZZERIA, STARTED_ROADWORKS, NEW_TASK, END_TASK,
+                ROBOT_LEAVING_CHARGING_STATION, STARTED_ROADWORKS, NEW_TASK, END_TASK,
                 FINISHED_ROADWORKS, DROP_PARCEL);
 
         this.roadModel.getEventAPI().addListener(theListener, MOVE);
@@ -126,7 +126,6 @@ public final class StatsTracker extends AbstractModelVoid implements StatsProvid
                 tl.pizzas,
                 tl.totalPizzas,
                 avgPizzasPerRobot,
-                tl.pizzerias,
                 tl.roadWorks,
                 tl.totalRoadWorks
         );

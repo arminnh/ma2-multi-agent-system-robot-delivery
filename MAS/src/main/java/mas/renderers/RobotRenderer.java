@@ -55,9 +55,9 @@ public class RobotRenderer extends AbstractCanvasRenderer {
 
         gc.setForeground(gc.getDevice().getSystemColor(SWT.COLOR_RED));
         gc.drawText(
-                "Ants",
-                x-10,
-                y-15,
+                "Waiting ants",
+                x-40,
+                y,
                 true
         );
     }

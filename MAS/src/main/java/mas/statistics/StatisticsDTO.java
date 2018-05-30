@@ -19,7 +19,6 @@ public class StatisticsDTO extends com.github.rinde.rinsim.pdptw.common.Statisti
     public final int pizzas;
     public final int totalPizzas;
     public final double avgPizzasPerRobot;
-    public final int pizzerias;
     public final int roadWorks;
     public final int totalRoadWorks;
 
@@ -57,7 +56,6 @@ public class StatisticsDTO extends com.github.rinde.rinsim.pdptw.common.Statisti
             int pizzas,
             int totalPizzas,
             double avgPizzasPerRobot,
-            int pizzerias,
             int roadWorks,
             int totalRoadWorks
     ) {
@@ -93,7 +91,6 @@ public class StatisticsDTO extends com.github.rinde.rinsim.pdptw.common.Statisti
         this.pizzas = pizzas;
         this.totalPizzas = totalPizzas;
         this.avgPizzasPerRobot = avgPizzasPerRobot;
-        this.pizzerias = pizzerias;
         this.roadWorks = roadWorks;
         this.totalRoadWorks = totalRoadWorks;
     }

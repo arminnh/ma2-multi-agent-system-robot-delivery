@@ -16,11 +16,6 @@ public enum PizzeriaEventType {
     END_TASK,
 
     /**
-     * Indicates that a new {@link mas.buildings.Pizzeria} has opened
-     */
-    NEW_PIZZERIA,
-
-    /**
      * Indicates that a new {@link} has opened
      */
     STARTED_ROADWORKS,

@@ -36,8 +36,6 @@ public class TheListener implements Listener {
     public final Map<MovingRoadUser, Long> lastArrivalTimeAtDepot;
     private final Clock clock;
     private final EventDispatcher eventDispatcher;
-    // pizzerias
-    public int pizzerias;
     // tasks
     public int tasks;
     public int totalTasks;
@@ -77,8 +75,6 @@ public class TheListener implements Listener {
     TheListener(Clock clock, EventDispatcher eventDispatcher) {
         this.clock = clock;
         this.eventDispatcher = eventDispatcher;
-
-        pizzerias = 0;
 
         tasks = 0;
         totalTasks = 0;
@@ -252,9 +248,6 @@ public class TheListener implements Listener {
             tasks--;
             totalTasksFinished++;
             totalTaskWaitingTime += clock.getCurrentTime() - ev.deliveryTask.startTime;
-
-        } else if (e.getEventType() == PizzeriaEventType.NEW_PIZZERIA) {
-            pizzerias++;
 
         } else if (e.getEventType() == PizzeriaEventType.STARTED_ROADWORKS) {
             roadWorks++;
