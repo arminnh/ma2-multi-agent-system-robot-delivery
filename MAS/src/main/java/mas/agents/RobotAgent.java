@@ -307,6 +307,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
         // If the new best path is better than the current one, update the intention of the robot.
         if (!this.intention.isPresent() || bestTime < this.intendedArrivalTime || this.goingToCharge) {
             this.intendedArrivalTime = bestTime;
+
             if (this.goingToPizzeria) {
                 this.intention = Optional.of(new LinkedList<>(bestAnt.path));
             } else {
@@ -325,7 +326,10 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
 
         if (ant.toChargingStation) {
             System.out.println("SET TO GO CHARGE, this.hasPizzaParcel() = " + this.hasPizzaParcel() + ", this.intention = " + this.intention);
-            this.intention = Optional.of(new LinkedList<>(ant.path));
+            if(ant.intentions.get(0).reservationConfirmed){
+                this.intention = Optional.of(new LinkedList<>(ant.path));
+
+            }
 
         } else {
             for (IntentionData intentionData : ant.intentions) {
@@ -422,6 +426,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
                 System.out.println("SET ROBOT TO GO TO CHARGE");
                 this.intention = Optional.absent();
                 this.goingToCharge = true;
+                this.goingToPizzeria = false;
                 this.explorePaths(this.chargingStationPosition);
                 return;
             }
@@ -567,11 +572,26 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
      */
     private void sendIntentionAnt(ExplorationAnt explorationAnt) {
 
-        IntentionAnt ant = new IntentionAnt(explorationAnt.path, 0, false, this.id, this,
+        List<Point> shorterPath = shortenExplorationAntPath(explorationAnt.path, explorationAnt.intentions);
+        IntentionAnt ant = new IntentionAnt(shorterPath, 0, false, this.id, this,
                 0, explorationAnt.intentions);
         this.waitingForIntentionAnts++;
 
         this.broadcastAnt(ant);
+    }
+
+    private List<Point> shortenExplorationAntPath(List<Point> path, List<IntentionData> intentions) {
+        int max_index = 0;
+
+        for(IntentionData intention: intentions){
+            int currentFirstIndex = path.indexOf(intention.position);
+            if(currentFirstIndex > max_index){
+                max_index = currentFirstIndex;
+            }
+        }
+        
+        // Last index is exclusive
+        return path.subList(0, max_index+1);
     }
 
     /**
