@@ -236,6 +236,8 @@ public class PizzeriaModel extends Model.AbstractModel<PizzeriaUser> {
                 ResourceAgent agent = this.resourceAgents.get(position);
                 agent.setRoadWorks(roadWorks);
 
+                System.out.println("position = " + position);
+
                 // Remove the all graph connections the node is in that can be removed.
                 this.removeGraphConnectionsForNode(agent);
 
@@ -251,30 +253,27 @@ public class PizzeriaModel extends Model.AbstractModel<PizzeriaUser> {
     private void removeGraphConnectionsForNode(ResourceAgent resourceAgent) {
         // Remove all connections to neighbors for which the connections in both ways can be removed.
         for (ResourceAgent neighbor : resourceAgent.getNeighbors()) {
-            // TODO: fetch all robots and check that their positions do not lie in (resourceAgent.position, neighbor.position)
-
-            // Try to remove the connection in one way, then try to remove it in the other.
+            // Try to remove the connection in one direction, then try to remove it in the other.
             // If the connection cannot be removed in both ways, make sure they both are still in the graph afterwards.
-            try {
-                Connection c1 = this.dynamicGraph.getConnection(resourceAgent.position, neighbor.position);
-                Connection c2 = this.dynamicGraph.getConnection(neighbor.position, resourceAgent.position);
-
-                System.out.println(
-                        "road user: " + this.dynamicGraphRoadModel.hasRoadUserOn(resourceAgent.position, neighbor.position)
-                        + ", " + this.dynamicGraphRoadModel.hasRoadUserOn(neighbor.position, resourceAgent.position)
-                );
-
-                this.dynamicGraph.removeConnection(c1.from(), c1.to());
+            if (this.dynamicGraph.hasConnection(resourceAgent.position, neighbor.position)) {
+                System.out.println("CONNECTIONS: " + this.dynamicGraph.getNumberOfConnections());
 
                 try {
-                    this.dynamicGraph.removeConnection(c2.from(), c2.to());
+                    this.dynamicGraph.removeConnection(resourceAgent.position, neighbor.position);
+
+                    try {
+                        this.dynamicGraph.removeConnection(neighbor.position, resourceAgent.position);
+                    } catch (IllegalStateException | IllegalArgumentException e) {
+                        // Removing connection c2 caused an exception, add c1 back to the graph.
+                        this.dynamicGraph.addConnection(resourceAgent.position, neighbor.position);
+                        this.dynamicGraph.addConnection(neighbor.position, resourceAgent.position);
+                    }
                 } catch (IllegalStateException | IllegalArgumentException e) {
-                    // Removing connection c2 caused an exception, add c1 back to the graph.
-                    this.dynamicGraph.addConnection(c1.from(), c1.to());
+                    // Removing connection c1 caused an exception, nothing to do.
+                    this.dynamicGraph.addConnection(resourceAgent.position, neighbor.position);
                 }
 
-            } catch (IllegalStateException | IllegalArgumentException e) {
-                // Removing connection c1 caused an exception, nothing to do.
+                System.out.println("CONNECTIONS: " + this.dynamicGraph.getNumberOfConnections());
             }
         }
     }
