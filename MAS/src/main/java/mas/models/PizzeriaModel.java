@@ -108,6 +108,7 @@ public class PizzeriaModel extends Model.AbstractModel<PizzeriaUser> {
         this.chargingStations.put(position, chargingStation);
         sim.register(chargingStation);
 
+
         return chargingStation;
     }
 
@@ -198,10 +199,13 @@ public class PizzeriaModel extends Model.AbstractModel<PizzeriaUser> {
 
     public void robotLeftChargingStation(RobotAgent r, ChargingStation cs) {
         cs.removeRobot(r);
+        this.resourceAgents.get(cs.getPosition()).dropReservation(r);
 
         this.eventDispatcher.dispatchEvent(new PizzeriaEvent(
                 PizzeriaEventType.ROBOT_LEAVING_CHARGING_STATION, 0, null, null, null
         ));
+
+
     }
 
     public void createResourceAgent(Point position) {

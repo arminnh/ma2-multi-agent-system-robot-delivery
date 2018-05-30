@@ -50,7 +50,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
     private ListenableGraph<LengthData> staticGraph;
     private ListenableGraph<LengthData> dynamicGraph;
 
-    private int id = -1;
+    public final int id;
     private Battery battery;
     private Point pizzeriaPosition;
     private Point chargingStationPosition;

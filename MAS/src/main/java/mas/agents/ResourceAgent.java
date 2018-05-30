@@ -32,7 +32,8 @@ public class ResourceAgent implements CommUser, TickListener {
     private Optional<ChargingStation> chargingStation = Optional.absent();
     private HashMap<Integer, DeliveryTask> deliveryTasks = new HashMap<>();
 
-    private HashMap<Integer, List<DeliveryTaskReservation>> reservations = new HashMap<>();
+    private HashMap<Integer, List<DeliveryTaskReservation>> deliveryReservations = new HashMap<>();
+    private List<ChargingStationReservation> chargingStationReservations = new LinkedList<>();
 
     public ResourceAgent(Point position) {
         this.position = position;
@@ -75,17 +76,17 @@ public class ResourceAgent implements CommUser, TickListener {
 
     public void addDeliveryTask(DeliveryTask task) {
         this.deliveryTasks.put(task.id, task);
-        this.reservations.put(task.id, new LinkedList<>());
+        this.deliveryReservations.put(task.id, new LinkedList<>());
     }
 
     public void removeDeliveryTask(DeliveryTask task) {
         this.deliveryTasks.remove(task.id);
-        this.reservations.remove(task.id);
+        this.deliveryReservations.remove(task.id);
     }
 
     private int getPizzasLeftForDeliveryTask(Integer deliveryTaskID) {
         DeliveryTask task = this.deliveryTasks.get(deliveryTaskID);
-        List<DeliveryTaskReservation> reservations = this.reservations.get(deliveryTaskID);
+        List<DeliveryTaskReservation> reservations = this.deliveryReservations.get(deliveryTaskID);
 
         int pizzasInReservations = 0;
         for (DeliveryTaskReservation r : reservations) {
@@ -130,16 +131,20 @@ public class ResourceAgent implements CommUser, TickListener {
     }
 
     /**
-     * Evaporates reservations
+     * Evaporates deliveryReservations
      */
     private void evaporateReservations(@NotNull TimeLapse timeLapse) {
-        for (Integer k1 : this.reservations.keySet()) {
-            int oldSize = this.reservations.get(k1).size();
-            this.reservations.get(k1).removeIf(r -> r.evaporationTimestamp < timeLapse.getStartTime());
-            if (oldSize > this.reservations.get(k1).size()) {
+        // Remove delivery task reservations
+        for (Integer k1 : this.deliveryReservations.keySet()) {
+            int oldSize = this.deliveryReservations.get(k1).size();
+            this.deliveryReservations.get(k1).removeIf(r -> r.evaporationTimestamp < timeLapse.getStartTime());
+            if (oldSize > this.deliveryReservations.get(k1).size()) {
                 System.out.println("Evaporation!");
             }
         }
+
+        // Remove charging station reservations
+        this.chargingStationReservations.removeIf(r -> r.evaporationTimestamp < timeLapse.getStartTime());
     }
 
     private void handleDesireAnt(Message m) {
@@ -204,7 +209,7 @@ public class ResourceAgent implements CommUser, TickListener {
                 this.commDevice.send(ant.copy(Lists.reverse(ant.path), true, ant.intentions, 0), ant.robot);
             } else {
                 if (ant.toChargingStation) {
-                    this.handleIntentionAntForChargingStation(ant);
+                    this.handleIntentionAntForChargingStation(timeLapse, ant);
                 } else {
                     this.handleIntentionAntForDeliveryTask(timeLapse, ant);
                 }
@@ -226,7 +231,7 @@ public class ResourceAgent implements CommUser, TickListener {
                 System.out.println("task = " + task);
                 // Check if a reservation can be updated or can be made (= if the task has pizzas to be delivered)
                 if (task != null) {
-                    boolean updated = this.updateReservation(task, intentionData, timeLapse);
+                    boolean updated = this.updateDeliveryReservation(task, intentionData, timeLapse);
 
                     if (updated) {
                         // The reservation has been updated, set 'confirmed' to true in the delivery data.
@@ -266,10 +271,35 @@ public class ResourceAgent implements CommUser, TickListener {
         }
     }
 
-    private void handleIntentionAntForChargingStation(IntentionAnt ant) {
+    private void handleIntentionAntForChargingStation(TimeLapse timeLapse, IntentionAnt ant) {
         if (this.chargingStation.isPresent()) {
+            List<IntentionData> newDeliveriesData = new LinkedList<>();
+            if(ant.intentions.size() > 1){
+                throw new IllegalStateException("Ant has more than 1 intention while going to chargingstation: " + ant);
+            }
+
+            IntentionData intentionData = ant.intentions.get(0);
+
+            boolean update = updateChargingReservation(intentionData, timeLapse);
+            if(update){
+                newDeliveriesData.add(intentionData.copy(true));
+            }else {
+                // We have less reservations than the total capacity of the charging station
+                if (this.chargingStationReservations.size() < this.chargingStation.get().getCapacity()) {
+                    // Confirm the reservation
+                    newDeliveriesData.add(new IntentionData(intentionData.position, intentionData.robotID,
+                            intentionData.deliveryTaskID, 0, true));
+
+                    // Add new reservation to the list
+                    ChargingStationReservation resv = new ChargingStationReservation(ant.robotID, timeLapse.getEndTime() + SimulatorSettings.INTENTION_RESERVATION_LIFETIME);
+                    this.chargingStationReservations.add(resv);
+                } else {
+                    newDeliveriesData.add(intentionData);
+                }
+            }
+
             System.out.println("ResourceAgent.handleIntentionAntForChargingStation: " + this.chargingStation.get());
-            this.sendAntToNextHop(ant.copy(Lists.reverse(ant.path), true, ant.intentions, 0));
+            this.sendAntToNextHop(ant.copy(Lists.reverse(ant.path), true, newDeliveriesData, 0));
         } else {
             throw new IllegalStateException("Ant arrived at destination with `toChargingStation = true`," +
                     "but there is no charging station at destination");
@@ -293,6 +323,7 @@ public class ResourceAgent implements CommUser, TickListener {
                     newPizzaAmount = Math.min(this.getPizzasLeftForDeliveryTask(task.id), intentionData.pizzas);
                 }
 
+                // The confirm of an exploration ant doesn't matter so we can just set it on false
                 newDeliveriesData.add(new IntentionData(intentionData.position, intentionData.robotID,
                         intentionData.deliveryTaskID, newPizzaAmount, false));
 
@@ -313,12 +344,12 @@ public class ResourceAgent implements CommUser, TickListener {
         );
 
         System.out.println("Reservation " + task.id + ": " + intentionData + ", evaporation at: " + evaporationTimestamp);
-        this.reservations.get(task.id).add(reservation);
+        this.deliveryReservations.get(task.id).add(reservation);
     }
 
-    private boolean updateReservation(DeliveryTask task, IntentionData intentionData, TimeLapse timeLapse) {
+    private boolean updateDeliveryReservation(DeliveryTask task, IntentionData intentionData, TimeLapse timeLapse) {
         // If the reservation has already been made by the same robot, update it.
-        List<DeliveryTaskReservation> reservations = this.reservations.get(task.id).stream()
+        List<DeliveryTaskReservation> reservations = this.deliveryReservations.get(task.id).stream()
                 .filter(r -> r.deliveryTaskID == intentionData.deliveryTaskID && r.robotID == intentionData.robotID)
                 .collect(Collectors.toList());
 
@@ -327,8 +358,26 @@ public class ResourceAgent implements CommUser, TickListener {
             DeliveryTaskReservation r = reservations.get(0);
             DeliveryTaskReservation new_reservation = r.copy(timeLapse.getEndTime() + SimulatorSettings.INTENTION_RESERVATION_LIFETIME);
 
-            this.reservations.get(task.id).remove(r);
-            this.reservations.get(task.id).add(new_reservation);
+            this.deliveryReservations.get(task.id).remove(r);
+            this.deliveryReservations.get(task.id).add(new_reservation);
+            return true;
+        }
+
+        return false;
+    }
+
+    private boolean updateChargingReservation(IntentionData intentionData, TimeLapse timeLapse){
+        List<ChargingStationReservation> reservations = this.chargingStationReservations.stream()
+                .filter(r -> r.robotID == intentionData.robotID)
+                .collect(Collectors.toList());
+
+        if (reservations.size() > 0) {
+            // Update the timer.
+            ChargingStationReservation r = reservations.get(0);
+            ChargingStationReservation new_reservation = r.copy(timeLapse.getEndTime() + SimulatorSettings.INTENTION_RESERVATION_LIFETIME);
+
+            this.chargingStationReservations.remove(r);
+            this.chargingStationReservations.add(new_reservation);
             return true;
         }
 
@@ -372,5 +421,9 @@ public class ResourceAgent implements CommUser, TickListener {
         if(!sendOutAnt){
             throw new IllegalStateException("Ant didn't get send: " + ant);
         }
+    }
+
+    public void dropReservation(RobotAgent agent) {
+        this.chargingStationReservations.removeIf(r -> r.robotID == agent.id);
     }
 }
