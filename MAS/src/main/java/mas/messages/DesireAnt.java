@@ -32,6 +32,7 @@ public class DesireAnt extends Ant {
                 ", pizzas: " + this.pizzas +
                 ", isReturning: " + this.isReturning +
                 ", estimatedTime: " + this.estimatedTime +
+                ", score: " + this.score +
                 ", path: " + this.path +
                 "}";
     }

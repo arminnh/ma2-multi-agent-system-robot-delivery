@@ -16,4 +16,9 @@ public class DeliveryTaskReservation {
     public DeliveryTaskReservation copy(long evaporationTimestamp) {
         return new DeliveryTaskReservation(this.robotID, this.deliveryTaskID, this.pizzaAmount, evaporationTimestamp);
     }
+
+    @Override
+    public String toString() {
+        return "DeliveryTaskReservation{robotID: " + this.robotID + ", pizzaAmount: " + this.pizzaAmount + "}";
+    }
 }

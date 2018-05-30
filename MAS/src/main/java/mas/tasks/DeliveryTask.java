@@ -36,10 +36,6 @@ public class DeliveryTask implements RoadUser {
         roadModel.addObjectAt(this, position);
     }
 
-    public Point getPosition() {
-        return this.position;
-    }
-
     @Override
     public String toString() {
         return "{id: " + this.id +
@@ -70,6 +66,11 @@ public class DeliveryTask implements RoadUser {
     }
 
     public Long getScore() {
+        // TODO: implement a good scoring function
+        // TODO: implement a good scoring function
+        // TODO: implement a good scoring function
+        // TODO: implement a good scoring function
+        // TODO: implement a good scoring function
         // TODO: implement a good scoring function
         // Suggestions:
         // - Use waiting time (OK)

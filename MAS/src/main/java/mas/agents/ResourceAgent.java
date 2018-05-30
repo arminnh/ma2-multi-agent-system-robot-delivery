@@ -158,15 +158,18 @@ public class ResourceAgent implements CommUser, TickListener {
                 DeliveryTask task = this.deliveryTasks.get(ant.deliveryTaskID);
 
                 // Calculate distance
-                int amount = 0;
+                int pizzas = 0;
                 Long score = 0L;
+
                 if (task != null) {
-                    amount = this.getPizzasLeftForDeliveryTask(task.id);
-                    score = task.getScore();
+                    pizzas = this.getPizzasLeftForDeliveryTask(task.id);
+                    if (pizzas > 0) {
+                        score = task.getScore();
+                    }
                 }
 
-                DesireAnt newAnt = ant.copy(Lists.reverse(ant.path),
-                        true, score, amount, 0);
+                DesireAnt newAnt = ant.copy(Lists.reverse(ant.path),true, score, pizzas, 0);
+
                 this.sendAntToNextHop(newAnt);
             }
         } else {
@@ -239,8 +242,8 @@ public class ResourceAgent implements CommUser, TickListener {
 
                     } else {
                         System.out.println("Not updated, Pizzas: " + intentionData.pizzas + ", Pizzas left for task: " + this.getPizzasLeftForDeliveryTask(task.id) + " taskID: " + intentionData.deliveryTaskID + " pos: " + intentionData.position);
-                        if (intentionData.pizzas <= this.getPizzasLeftForDeliveryTask(task.id) &&
-                                this.getPizzasLeftForDeliveryTask(task.id) > 0) {
+                        if (this.getPizzasLeftForDeliveryTask(task.id) > 0
+                                && intentionData.pizzas <= this.getPizzasLeftForDeliveryTask(task.id)) {
 
                             createReservation(timeLapse, intentionData, task);
 
@@ -346,8 +349,9 @@ public class ResourceAgent implements CommUser, TickListener {
                 task.id, intentionData.pizzas, evaporationTimestamp
         );
 
-        System.out.println("Reservation made for task " + task.id + ", evaporation at: " + evaporationTimestamp);
         this.deliveryReservations.get(task.id).add(reservation);
+        System.out.println("Reservation created for task " + task.id + ", evaporation at: " + evaporationTimestamp);
+        System.out.println("Reservation for task " + task.id + ": " + this.getReservationsForTask(task.id));
     }
 
     private boolean updateDeliveryReservation(DeliveryTask task, IntentionData intentionData, TimeLapse timeLapse) {
@@ -437,5 +441,9 @@ public class ResourceAgent implements CommUser, TickListener {
 
         return this.deliveryReservations.get(taskID).stream()
                 .filter(r -> r.robotID == robotID).count() != 0;
+    }
+
+    public List<DeliveryTaskReservation> getReservationsForTask(int taskID) {
+        return this.deliveryReservations.get(taskID);
     }
 }

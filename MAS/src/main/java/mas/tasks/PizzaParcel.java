@@ -19,4 +19,9 @@ public class PizzaParcel extends Parcel {
         this.startTime = time;
         this.deliveryTaskID = deliveryTask.id;
     }
+
+    @Override
+    public String toString() {
+        return "PizzaParcel{deliveryTaskID: " + this.deliveryTaskID + ", pizzas: " + this.amountOfPizzas + "}";
+    }
 }

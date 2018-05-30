@@ -32,9 +32,12 @@ import mas.tasks.DeliveryTask;
 import mas.tasks.PizzaParcel;
 import org.apache.commons.math3.random.RandomGenerator;
 import org.jetbrains.annotations.NotNull;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
+import javax.management.RuntimeErrorException;
 import javax.measure.unit.SI;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Implementation of a delivery robot.
@@ -334,12 +337,23 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
         }
 
         this.explorationAnts.clear();
+        if (bestAnt == null) {
+            return;
+        }
 
-        // If the new best path is better than the current one, update the intention of the robot.
-        if (!this.intention.isPresent() || bestTime < this.intendedArrivalTime || this.goingToCharge) {
-            this.intendedArrivalTime = bestTime;
-
+        // If exploration ants were sent while an intention was already present, then they were sent to find a better
+        // path for the current intention. => See if there is a new better path for the current intention.
+        if (this.intention.isPresent()) {
+            System.out.println("EXPLORED PATHS WHILE HAVING INTENTION, bestAnt = " + bestAnt);
+            if (bestTime < this.intendedArrivalTime) {
+                System.out.println("SET INTENTION TO BETTER PATH");
+                this.intendedArrivalTime = bestTime;
+                this.intention = Optional.of(new LinkedList<>(bestAnt.path));
+            }
+        } else {
+            // If no current intention and going to pizzeria, no need for intention ant. No reservations on pizzerias.
             if (this.goingToPizzeria) {
+                this.intendedArrivalTime = bestTime;
                 this.intention = Optional.of(new LinkedList<>(bestAnt.path));
             } else {
                 this.sendIntentionAnt(bestAnt);
@@ -612,14 +626,25 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
      * Sends out IntentionAnt to perform the intentions explored by an exploration ant.
      */
     private void sendIntentionAnt(ExplorationAnt explorationAnt) {
-        System.out.println("explorationAnt before send = " + explorationAnt);
+        // Only build IntentionAnt for the IntentionData that has pizzas > 0. When going to charge, pizzas should be 0.
+        List<IntentionData> intentions;
+        if (this.goingToCharge) {
+            intentions = explorationAnt.intentions;
+        } else {
+            intentions = explorationAnt.intentions.stream()
+                    .filter(i -> i.pizzas > 0)
+                    .collect(Collectors.toList());
+        }
 
-        IntentionAnt ant = new IntentionAnt(explorationAnt.path, 0, false, this.id, this,
-                0, explorationAnt.intentions);
-        this.waitingForIntentionAnts++;
+        // Only send IntentionAnt if intentions could be sent for reservations.
+        if (!intentions.isEmpty()) {
+            IntentionAnt ant = new IntentionAnt(explorationAnt.path, 0, false, this.id, this,
+                    0, intentions);
+            this.waitingForIntentionAnts++;
 
-        System.out.println("intentionant = " + ant);
-        this.broadcastAnt(ant);
+            System.out.println("Robot " + this.id + " sending IntentionAnt = " + ant);
+            this.broadcastAnt(ant);
+        }
     }
 
     /**

@@ -185,6 +185,8 @@ public class PizzeriaModel extends AbstractModel<PizzeriaUser> {
 
         ResourceAgent resourceAgent = this.resourceAgents.get(position);
 
+        System.out.println("pizzaParcel = " + pizzaParcel);
+
         // The two alternatives mentioned in the comment.
         if (resourceAgent.robotHasReservation(robot.id, task.id) ||
                 resourceAgent.getPizzasLeftForDeliveryTask(task.id) > pizzaParcel.amountOfPizzas) {
