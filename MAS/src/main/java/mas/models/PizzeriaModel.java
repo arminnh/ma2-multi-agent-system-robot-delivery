@@ -112,7 +112,7 @@ public class PizzeriaModel extends AbstractModel<PizzeriaUser> {
     public ChargingStation openChargingStation() {
         Point position = roadModel.getRandomPosition(sim.getRandomGenerator());
 
-        ChargingStation chargingStation = new ChargingStation(position, SimulatorSettings.CHARGINGSTATION_CAPACITY);
+        ChargingStation chargingStation = new ChargingStation(position, SimulatorSettings.CHARGING_STATION_CAPACITY);
 
         this.chargingStations.put(position, chargingStation);
         this.sim.register(chargingStation);

@@ -2,16 +2,17 @@ package mas;
 
 public class SimulatorSettings {
     public static final long TICK_LENGTH = 100L;
-    public static final int SIM_SPEEDUP = 1;
+    public static final int SIM_SPEEDUP = 40;
     public static final int WINDOW_WIDTH = 1200;
     public static final int WINDOW_HEIGHT = 800;
 
     public static final int CITY_SIZE = 6;
     public static final int NUM_ROBOTS = 2;
     public static final int ROBOT_CAPACITY = 5;
-    public static final double BATTERY_CAPACITY = 100.0;
+    public static final double BATTERY_CAPACITY = 2*CITY_SIZE*CITY_SIZE;
     public static final int VEHICLE_LENGTH = 1;
     public static final double VEHICLE_SPEED_KMH = 10;
+    public static final int CHARGING_STATION_CAPACITY = 1;
 
     public static final double PROB_NEW_PARCEL = .02;
     public static final double PROB_PIZZERIA_OPEN = .002;
@@ -25,5 +26,4 @@ public class SimulatorSettings {
     public static final long INTENTION_RESERVATION_LIFETIME = 30000L; // 10 seconds
     public static final Long REFRESH_INTENTIONS = 20000L; // 4 seconds
     public static final Long REFRESH_EXPLORATIONS = 200000L;
-    public static final int CHARGINGSTATION_CAPACITY = 1;
 }
