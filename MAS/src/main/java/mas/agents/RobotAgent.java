@@ -42,6 +42,8 @@ import java.util.*;
  */
 public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener, RandomUser, CommUser, PizzeriaUser {
 
+    private final int alternativePathsToExplore;
+    public Optional<Long> timestampIdle = Optional.absent();
     private RandomGenerator rng;
     private RoadModel roadModel;
     private PDPModel pdpModel;
@@ -52,16 +54,13 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
 
     public final int id;
     private Battery battery;
-    private Point pizzeriaPosition;
-    private Point chargingStationPosition;
-    private final int alternativePathsToExplore;
-
     private boolean isOnNode = true;
-    private boolean isCharging = false;
-    private boolean isAtPizzeria = true;
-    private boolean goingToCharge = false;
+    private Point pizzeriaPosition;
     private boolean goingToPizzeria = false;
-    public Optional<Long> timestampIdle = Optional.absent();
+    private boolean isAtPizzeria = true;
+    private Point chargingStationPosition;
+    private boolean goingToCharge = false;
+    private boolean isCharging = false;
     private Optional<ChargingStation> currentChargingStation = Optional.absent();
 
     private int currentAmountOfPizzas = 0;
@@ -380,7 +379,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
         // Only search for new intentions when not waiting for ants.
         if (!this.intention.isPresent() && !this.waitingForAnts()) {
             // If robot was going to charge, explore paths towards charging station
-            if(this.goingToCharge){
+            if (this.goingToCharge) {
                 this.explorePaths(this.chargingStationPosition);
                 return;
             }
@@ -397,7 +396,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
 
             // If at pizzeria, ask for tasks.
             if (this.isAtPizzeria) {
-                List<DeliveryTask> tasks = pizzeriaModel.getDeliveryTasks();
+                List<DeliveryTask> tasks = this.pizzeriaModel.getDeliveryTasks();
                 if (!tasks.isEmpty()) {
                     System.out.println("SENT OUT DESIRE ANTS TO EXPLORE TASKS");
                     this.sendDesireAntsForTasks(tasks);
@@ -416,10 +415,12 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
 
         } else {
             // Else, check if there is a better or more important intention.
+            // Remove the current intention if another one should be set up.
 
-            // Check if need to charge
+            // Check if need to charge.
             if (this.getRemainingBatteryCapacityPercentage() <= 0.35 && !this.goingToCharge && !this.isCharging && this.isOnNode) {
                 System.out.println("SET ROBOT TO GO TO CHARGE");
+                this.intention = Optional.absent();
                 this.goingToCharge = true;
                 this.explorePaths(this.chargingStationPosition);
                 return;
@@ -505,7 +506,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
     private void resendIntentionAnts() {
         System.out.println("RobotAgent.resendIntentionAnts, " + this.id);
         LinkedList<Point> pathWithCurrentPos = new LinkedList<>(this.intention.get());
-        if(!pathWithCurrentPos.get(0).equals(this.getPosition().get())){
+        if (!pathWithCurrentPos.get(0).equals(this.getPosition().get())) {
             pathWithCurrentPos.add(0, this.getPosition().get());
         }
         List<IntentionData> intentions = new LinkedList<>();
@@ -659,7 +660,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
 
     /**
      * Moves the robot along its intention.
-     *
+     * <p>
      * When the robot reaches the next position in its intention, that position is be removed from the intention.
      */
     private void move(@NotNull TimeLapse time) {
@@ -681,7 +682,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
                 this.battery.decreaseCapacity(progress.distance().doubleValue(SI.METER));
             } else {
                 throw new IllegalStateException("Trying to move towards position for which there is no connection."
-                    + " position = " + this.getPosition().get() + ", nextPosition = " + nextPosition);
+                        + " position = " + this.getPosition().get() + ", nextPosition = " + nextPosition);
             }
         }
     }
@@ -712,7 +713,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
 
     /**
      * Delivers a PizzaParcel for a certain DeliveryTask.
-     *
+     * <p>
      * Delivers the parcel in the PDPModel, decreases the amount of pizzas for the DeliveryTask in the PizzeriaModel,
      * and decreases the amount of pizzas held by the robot.
      */
