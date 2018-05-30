@@ -357,15 +357,20 @@ public class ResourceAgent implements CommUser, TickListener {
         int nextPositionIndex = ant.pathIndex + 1;
         Point nextPosition = ant.path.get(nextPositionIndex);
 
+        boolean sendOutAnt = false;
         for (ResourceAgent neighbor : this.neighbors) {
             if (neighbor.getPosition().get().equals(nextPosition)) {
                 if (neighbor.hasRoadWorks()) {
                     estimatedTime += SimulatorSettings.TIME_ROAD_WORKS;
                 }
                 ant = ant.copy(estimatedTime, nextPositionIndex);
-
+                sendOutAnt = true;
                 this.commDevice.send(ant, neighbor);
             }
+        }
+
+        if(!sendOutAnt){
+            throw new IllegalStateException("Ant didn't get send: " + ant);
         }
     }
 }
