@@ -122,7 +122,7 @@ public class PizzeriaModel extends AbstractModel<PizzeriaUser> {
     }
 
     public Optional<ChargingStation> getChargingStationAtPosition(Point position) {
-        return Optional.of(this.chargingStations.get(position));
+        return Optional.fromNullable(this.chargingStations.get(position));
     }
 
     public List<DeliveryTask> getDeliveryTasks() {
