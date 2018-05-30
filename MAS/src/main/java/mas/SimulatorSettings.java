@@ -2,12 +2,12 @@ package mas;
 
 public class SimulatorSettings {
     public static final long TICK_LENGTH = 100L;
-    public static final int SIM_SPEEDUP = 1;
+    public static final int SIM_SPEEDUP = 3;
     public static final int WINDOW_WIDTH = 1200;
     public static final int WINDOW_HEIGHT = 800;
 
-    public static final int CITY_SIZE = 5;
-    public static final int NUM_ROBOTS = 1;
+    public static final int CITY_SIZE = 8;
+    public static final int NUM_ROBOTS = 2;
     public static final int ROBOT_CAPACITY = 5;
     public static final double BATTERY_CAPACITY = 2*CITY_SIZE*CITY_SIZE;
     public static final int VEHICLE_LENGTH = 1;
@@ -17,7 +17,7 @@ public class SimulatorSettings {
     public static final double PROB_NEW_PARCEL = .02;
     public static final double PROB_PIZZERIA_OPEN = .002;
     public static final double PROB_PIZZERIA_CLOSE = .002;
-    public static final double PROB_NEW_ROAD_WORKS = 0.008;
+    public static final double PROB_NEW_ROAD_WORKS = 0.015;
     public static final long TIME_ROAD_WORKS = 15000;
     public static final double PIZZA_AMOUNT_STD = 0.75;
     public static final double PIZZA_AMOUNT_MEAN = 4;

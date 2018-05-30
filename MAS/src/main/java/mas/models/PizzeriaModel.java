@@ -157,7 +157,9 @@ public class PizzeriaModel extends AbstractModel<PizzeriaUser> {
     public PizzaParcel newPizzaParcel(int deliveryTaskID, Point startPosition, int pizzaAmount, long time) {
         DeliveryTask task = this.deliveryTasks.get(deliveryTaskID);
 
-        ParcelDTO pdto = Parcel.builder(startPosition, task.getPosition().get())
+        System.out.println("task " + deliveryTaskID + ", time " + time);
+
+        ParcelDTO pdto = Parcel.builder(startPosition, task.position)
                 .neededCapacity(pizzaAmount)
                 .buildDTO();
 
@@ -165,6 +167,31 @@ public class PizzeriaModel extends AbstractModel<PizzeriaUser> {
         this.sim.register(parcel);
 
         return parcel;
+    }
+
+    /**
+     * True if the robot can deliver the PizzaParcel.
+     * 1. If the robot has a reservation for the DeliveryTask
+     * 2. If there is an unreserved amount of pizzas for the DeliveryTask.
+     */
+    public boolean canDeliverPizzaParcel(RobotAgent robot, PizzaParcel pizzaParcel) {
+        Point position = robot.getPosition().get();
+        DeliveryTask task = pizzaParcel.deliveryTask;
+
+        // If robot is not on the location of the task, cannot deliver.
+        if (!position.equals(task.position)) {
+            return false;
+        }
+
+        ResourceAgent resourceAgent = this.resourceAgents.get(position);
+
+        // The two alternatives mentioned in the comment.
+        if (resourceAgent.robotHasReservation(robot.id, task.id) ||
+                resourceAgent.getPizzasLeftForDeliveryTask(task.id) > pizzaParcel.amountOfPizzas) {
+            return true;
+        }
+
+        return false;
     }
 
     public void deliverPizzaParcel(RobotAgent vehicle, PizzaParcel parcel, long time) {
@@ -175,7 +202,7 @@ public class PizzeriaModel extends AbstractModel<PizzeriaUser> {
         if (task.isFinished()) {
             // If all pizzas for a deliveryTask have been delivered, the deliveryTask can be removed from lists that hold it.
             this.eventDispatcher.dispatchEvent(new PizzeriaEvent(PizzeriaEventType.END_TASK, time, task, parcel, vehicle));
-            this.resourceAgents.get(task.getPosition().get()).removeDeliveryTask(task);
+            this.resourceAgents.get(task.position).removeDeliveryTask(task);
             this.deliveryTasks.remove(task.id);
             this.roadModel.removeObject(task);
 

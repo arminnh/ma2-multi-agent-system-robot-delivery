@@ -15,56 +15,38 @@ public class IntentionAnt extends MultiDestinationAnt {
     public final boolean toChargingStation;
     public final boolean toDeliveryTask;
 
-    public IntentionAnt(int id, List<Point> path, long estimatedTime, boolean isReturning, Integer robotID, CommUser robot, Integer pathIndex, List<IntentionData> intentions){
+    public IntentionAnt(int id, List<Point> path, long estimatedTime, boolean isReturning, int robotID, CommUser robot, int pathIndex, List<IntentionData> intentions) {
         super(id, path, estimatedTime, isReturning, robotID, robot, pathIndex, intentions);
 
-        if(intentions != null){
-            for(IntentionData d: intentions){
-                if(d.position == null){
-                    try {
-                        throw new Exception("null poss");
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-        }
-        this.toDeliveryTask = intentions != null && intentions.get(0).deliveryTaskID != null;
+        this.toDeliveryTask = intentions.get(0).deliveryTaskID != 0;
         this.toChargingStation = !this.toDeliveryTask;
     }
 
-    public IntentionAnt(List<Point> path, long estimatedTime, boolean isReturning, Integer robotID, CommUser robot, Integer pathIndex, List<IntentionData> intentions) {
+    public IntentionAnt(List<Point> path, long estimatedTime, boolean isReturning, int robotID, CommUser robot, int pathIndex, List<IntentionData> intentions) {
         super(path, estimatedTime, isReturning, robotID, robot, pathIndex, intentions);
-        //System.out.println("Creating IntentionAnt path = [" + path + "], estimatedTime = [" + estimatedTime + "], isReturning = [" + isReturning + "], robotID = [" + robotID + "], robot = [" + robot + "], intentions = [" + intentions + "]");
-        //System.out.println(intentions.get(0).deliveryTaskID);
-        if(intentions != null){
-            for(IntentionData d: intentions){
-                if(d.position == null){
-                     throw new IllegalStateException("null poss");
-                }
-            }
-        }
-        this.toDeliveryTask = intentions != null && intentions.get(0).deliveryTaskID != null;
+
+        this.toDeliveryTask = intentions.get(0).deliveryTaskID != 0;
         this.toChargingStation = !this.toDeliveryTask;
     }
 
     @Override
     public String toString() {
         return "IntentionAnt {id: " + this.id +
+                ", intentionSize: " + this.intentions.size() +
                 ", toDeliveryTask: " + this.toDeliveryTask +
                 ", toChargingStation: " + this.toChargingStation +
                 ", isReturning: " + this.isReturning +
                 ", estimatedTime: " + this.estimatedTime +
-                ", path: " + this.path +
                 ", intentions: " + this.intentions +
+                ", path: " + this.path +
                 "}";
     }
 
-    public IntentionAnt copy(List<Point> path, boolean isReturning, List<IntentionData> deliveries, Integer pathIndex) {
-        return new IntentionAnt(this.id, path, this.estimatedTime, isReturning, this.robotID, this.robot, pathIndex, deliveries);
+    public IntentionAnt copy(List<Point> path, boolean isReturning, List<IntentionData> intentions, int pathIndex) {
+        return new IntentionAnt(this.id, path, this.estimatedTime, isReturning, this.robotID, this.robot, pathIndex, intentions);
     }
 
-    public IntentionAnt copy(long estimatedTime, Integer pathIndex) {
+    public IntentionAnt copy(long estimatedTime, int pathIndex) {
         return new IntentionAnt(this.id, this.path, estimatedTime, this.isReturning, this.robotID, this.robot, pathIndex, this.intentions);
     }
 

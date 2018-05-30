@@ -4,19 +4,18 @@ import com.github.rinde.rinsim.core.model.road.RoadModel;
 import com.github.rinde.rinsim.core.model.road.RoadUser;
 import com.github.rinde.rinsim.core.model.time.Clock;
 import com.github.rinde.rinsim.geom.Point;
-import com.google.common.base.Optional;
 import org.jetbrains.annotations.NotNull;
 
 
 public class DeliveryTask implements RoadUser {
 
+    private static int idCounter = 1;
     // the time at which the DeliveryTask was created
     public final long startTime;
-    private Point position;
+    public final Point position;
+    public final int id;
     private int pizzasRequested;
     private int pizzasDelivered;
-    public final int id;
-    private static int idCounter = 1;
     private Clock clock;
 
     public DeliveryTask(Point position, int pizzasRequested, long time, Clock clock) {
@@ -28,7 +27,7 @@ public class DeliveryTask implements RoadUser {
         this.clock = clock;
     }
 
-    private int getNextID(){
+    private int getNextID() {
         return idCounter++;
     }
 
@@ -37,8 +36,8 @@ public class DeliveryTask implements RoadUser {
         roadModel.addObjectAt(this, position);
     }
 
-    public Optional<Point> getPosition() {
-        return Optional.of(this.position);
+    public Point getPosition() {
+        return this.position;
     }
 
     @Override

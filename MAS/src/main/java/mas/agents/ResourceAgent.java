@@ -84,7 +84,7 @@ public class ResourceAgent implements CommUser, TickListener {
         this.deliveryReservations.remove(task.id);
     }
 
-    private int getPizzasLeftForDeliveryTask(Integer deliveryTaskID) {
+    public int getPizzasLeftForDeliveryTask(Integer deliveryTaskID) {
         DeliveryTask task = this.deliveryTasks.get(deliveryTaskID);
         List<DeliveryTaskReservation> reservations = this.deliveryReservations.get(deliveryTaskID);
 
@@ -139,7 +139,7 @@ public class ResourceAgent implements CommUser, TickListener {
             int oldSize = this.deliveryReservations.get(k1).size();
             this.deliveryReservations.get(k1).removeIf(r -> r.evaporationTimestamp < timeLapse.getStartTime());
             if (oldSize > this.deliveryReservations.get(k1).size()) {
-                System.out.println("Evaporation!");
+                System.out.println("Evaporation of task " + k1 + " at " + timeLapse.getStartTime());
             }
         }
 
@@ -225,7 +225,7 @@ public class ResourceAgent implements CommUser, TickListener {
         List<IntentionData> newDeliveriesData = new LinkedList<>();
 
         for (IntentionData intentionData : ant.intentions) {
-            if (intentionData.position.equals(this.position) && intentionData.deliveryTaskID != null) {
+            if (intentionData.position.equals(this.position) && intentionData.deliveryTaskID != 0) {
                 // Fetch the relevant DeliveryTask
                 DeliveryTask task = this.deliveryTasks.get(intentionData.deliveryTaskID);
                 System.out.println("task = " + task);
@@ -314,7 +314,7 @@ public class ResourceAgent implements CommUser, TickListener {
         List<IntentionData> newDeliveriesData = new LinkedList<>();
 
         for (IntentionData intentionData : ant.intentions) {
-            if (intentionData.position == this.position && intentionData.deliveryTaskID != null) {
+            if (intentionData.position == this.position && intentionData.deliveryTaskID != 0) {
                 // Get the task with the correct deliveryTaskID
                 DeliveryTask task = this.deliveryTasks.get(intentionData.deliveryTaskID);
 
@@ -346,7 +346,7 @@ public class ResourceAgent implements CommUser, TickListener {
                 task.id, intentionData.pizzas, evaporationTimestamp
         );
 
-        System.out.println("Reservation " + task.id + ": " + intentionData + ", evaporation at: " + evaporationTimestamp);
+        System.out.println("Reservation made for task " + task.id + ", evaporation at: " + evaporationTimestamp);
         this.deliveryReservations.get(task.id).add(reservation);
     }
 
@@ -428,5 +428,14 @@ public class ResourceAgent implements CommUser, TickListener {
 
     public void dropReservation(RobotAgent agent) {
         this.chargingStationReservations.removeIf(r -> r.robotID == agent.id);
+    }
+
+    public boolean robotHasReservation(int robotID, int taskID) {
+        if (!this.deliveryReservations.containsKey(taskID)) {
+            return false;
+        }
+
+        return this.deliveryReservations.get(taskID).stream()
+                .filter(r -> r.robotID == robotID).count() != 0;
     }
 }

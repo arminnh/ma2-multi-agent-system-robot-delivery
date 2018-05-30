@@ -13,11 +13,11 @@ public class Ant implements MessageContents {
     public final int robotID;
     public final CommUser robot;
     public final boolean isReturning;
-    public final Integer pathIndex;
+    public final int pathIndex;
 
     private static int IDCounter = 1;
 
-    public Ant(int id, List<Point> path, long estimatedTime, boolean isReturning, Integer robotID, CommUser robot, Integer pathIndex) {
+    public Ant(int id, List<Point> path, long estimatedTime, boolean isReturning, int robotID, CommUser robot, int pathIndex) {
         this.id = id;
         this.robot = robot;
         this.isReturning = isReturning;
@@ -27,7 +27,7 @@ public class Ant implements MessageContents {
         this.pathIndex = pathIndex;
     }
 
-    public Ant(List<Point> path, long estimatedTime, boolean isReturning, Integer robotID, CommUser robot, Integer pathIndex) {
+    public Ant(List<Point> path, long estimatedTime, boolean isReturning, int robotID, CommUser robot, int pathIndex) {
         this.id = getNextID();
         this.robot = robot;
         this.isReturning = isReturning;
@@ -37,7 +37,7 @@ public class Ant implements MessageContents {
         this.pathIndex = pathIndex;
     }
 
-    public Ant copy(long estimatedTime, Integer pathIndex) {
+    public Ant copy(long estimatedTime, int pathIndex) {
         return new Ant(this.id, this.path, estimatedTime, this.isReturning, this.robotID, this.robot, pathIndex);
     }
 

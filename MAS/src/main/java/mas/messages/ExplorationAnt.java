@@ -12,23 +12,24 @@ import java.util.List;
  */
 public class ExplorationAnt extends MultiDestinationAnt {
 
-    public ExplorationAnt(int id, List<Point> path, long estimatedTime, boolean isReturning, Integer robotID, CommUser robot, Integer pathIndex, List<IntentionData> deliveries) {
+    public ExplorationAnt(int id, List<Point> path, long estimatedTime, boolean isReturning, int robotID, CommUser robot, int pathIndex, List<IntentionData> deliveries) {
         super(id, path, estimatedTime, isReturning, robotID, robot,pathIndex, deliveries);
     }
 
-    public ExplorationAnt(List<Point> path, long estimatedTime, boolean isReturning, Integer robotID, CommUser robot, Integer pathIndex, List<IntentionData> deliveries) {
+    public ExplorationAnt(List<Point> path, long estimatedTime, boolean isReturning, int robotID, CommUser robot, int pathIndex, List<IntentionData> deliveries) {
         super(path, estimatedTime, isReturning, robotID, robot, pathIndex, deliveries);
     }
 
     @Override
     public String toString() {
         return "ExplorationAnt {id: " + this.id +
+                ", intentionSize: " + this.intentions.size() +
                 ", robotID: " + this.robotID +
                 ", estimatedTime: " + this.estimatedTime +
-                ", intentions: " + this.intentions +
-                ", path: " + this.path +
                 ", pathIndex: " + this.pathIndex +
                 ", isReturning: " + this.isReturning +
+                ", intentions: " + this.intentions +
+                ", path: " + this.path +
                 "}";
     }
 
@@ -41,7 +42,7 @@ public class ExplorationAnt extends MultiDestinationAnt {
         return new ExplorationAnt(this.id, p, this.estimatedTime, returning, this.robotID, this.robot, pathIndex, deliveries);
     }
 
-    public ExplorationAnt copy(long estimatedTime, Integer pathIndex) {
+    public ExplorationAnt copy(long estimatedTime, int pathIndex) {
         return new ExplorationAnt(this.id, this.path, estimatedTime, this.isReturning, this.robotID, this.robot, pathIndex, this.intentions);
     }
 }

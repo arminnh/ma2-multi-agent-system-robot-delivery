@@ -8,17 +8,25 @@ import java.util.List;
 public class MultiDestinationAnt extends Ant {
     public final List<IntentionData> intentions;
 
-    public MultiDestinationAnt(int id, List<Point> path, long estimatedTime, boolean isReturning, Integer robotID, CommUser robot, Integer pathIndex, List<IntentionData> intentions) {
+    public MultiDestinationAnt(int id, List<Point> path, long estimatedTime, boolean isReturning, int robotID, CommUser robot, int pathIndex, List<IntentionData> intentions) {
         super(id, path, estimatedTime, isReturning, robotID, robot, pathIndex);
 
         this.intentions = intentions;
+        this.checkIntentions();
     }
 
     public MultiDestinationAnt(List<Point> path, long estimatedTime, boolean isReturning,
-                               Integer robotID, CommUser robot, Integer pathIndex, List<IntentionData> intentions) {
+                               int robotID, CommUser robot, int pathIndex, List<IntentionData> intentions) {
         super(path, estimatedTime, isReturning, robotID, robot, pathIndex);
 
         this.intentions = intentions;
+        this.checkIntentions();
+    }
+
+    private void checkIntentions() {
+        if (this.intentions == null) {
+            throw new IllegalArgumentException("Intentions for ant cannot be null.");
+        }
     }
 
     public boolean hasReachedDestination(Point currentPosition) {

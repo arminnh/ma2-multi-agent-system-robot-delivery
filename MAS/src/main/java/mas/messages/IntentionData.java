@@ -5,12 +5,16 @@ import com.github.rinde.rinsim.geom.Point;
 
 public class IntentionData {
     public final Point position;
-    public final Integer robotID;
-    public final Integer deliveryTaskID;
-    public final Integer pizzas;
+    public final int robotID;
+    public final int deliveryTaskID;
+    public final int pizzas;
     public final boolean reservationConfirmed;
 
-    public IntentionData(Point position, Integer robotID, Integer deliveryTaskID, Integer pizzas, boolean confirmed) {
+    public IntentionData(Point position, int robotID, int deliveryTaskID, int pizzas, boolean confirmed) {
+        if (position == null) {
+            throw new IllegalArgumentException("IntentionData's position cannot be null.");
+        }
+
         this.position = position;
         this.robotID = robotID;
         this.deliveryTaskID = deliveryTaskID;
