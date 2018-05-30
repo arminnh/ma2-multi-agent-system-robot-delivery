@@ -31,6 +31,10 @@ public class ChargingStation implements RoadUser, TickListener {
         this.chargingRobots = new ConcurrentLinkedDeque<>();
     }
 
+    public int getCapacity(){
+        return capacity;
+    }
+
     @Override
     public void initRoadUser(@NotNull RoadModel model) {
         this.roadModel = model;

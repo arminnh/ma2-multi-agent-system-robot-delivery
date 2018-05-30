@@ -111,12 +111,12 @@ public class PizzeriaModel extends AbstractModel<PizzeriaUser> {
 
     public ChargingStation openChargingStation() {
         Point position = roadModel.getRandomPosition(sim.getRandomGenerator());
-        int capacity = new Double(SimulatorSettings.NUM_ROBOTS * 0.3).intValue();
 
-        ChargingStation chargingStation = new ChargingStation(position, capacity);
+        ChargingStation chargingStation = new ChargingStation(position, SimulatorSettings.CHARGINGSTATION_CAPACITY);
 
         this.chargingStations.put(position, chargingStation);
         this.sim.register(chargingStation);
+
 
         return chargingStation;
     }
@@ -211,10 +211,13 @@ public class PizzeriaModel extends AbstractModel<PizzeriaUser> {
 
     public void robotLeftChargingStation(RobotAgent r, ChargingStation cs) {
         cs.removeRobot(r);
+        this.resourceAgents.get(cs.getPosition()).dropReservation(r);
 
         this.eventDispatcher.dispatchEvent(new PizzeriaEvent(
                 PizzeriaEventType.ROBOT_LEAVING_CHARGING_STATION, 0, null, null, null
         ));
+
+
     }
 
     public void createResourceAgent(Point position) {
