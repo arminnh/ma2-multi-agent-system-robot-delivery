@@ -28,6 +28,13 @@ public class Battery {
         }
     }
 
+    public void incrementCapacityWith(int amCap){
+        capacity += amCap;
+        if (capacity > maxCapacity) {
+            capacity = maxCapacity;
+        }
+    }
+
     public void incrementCapacity() {
         capacity++;
         if (capacity > maxCapacity) {

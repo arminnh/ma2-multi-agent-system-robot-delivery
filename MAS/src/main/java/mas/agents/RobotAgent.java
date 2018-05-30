@@ -42,6 +42,7 @@ import java.util.*;
  */
 public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener, RandomUser, CommUser, PizzeriaUser {
 
+    private boolean RESCUE_ME = false;
     private final int alternativePathsToExplore;
     public Optional<Long> timestampIdle = Optional.absent();
     private RandomGenerator rng;
@@ -75,6 +76,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
     private List<ExplorationAnt> explorationAnts = new LinkedList<>();
     private int waitingForExplorationAnts = 0;
     private Optional<Long> nextExplorationAntsUpdate = Optional.absent();
+    private long rescuedTime = 0;
 
     public RobotAgent(
             int id,
@@ -181,6 +183,12 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
     @Override
     public void tickImpl(@NotNull TimeLapse time) {
         if (!time.hasTimeLeft() || this.getRemainingBatteryCapacityPercentage() == 0.0) {
+            if(!this.RESCUE_ME){
+                this.RESCUE_ME = true;
+                setRescueTimer(time);
+            }else{
+                rechargeBatteryIfRescued(time);
+            }
             return;
         }
 
@@ -205,6 +213,17 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
 
         // Resend intention or exploration ants if necessary.
         this.resendAnts(time);
+    }
+
+    private void rechargeBatteryIfRescued(TimeLapse timeLapse) {
+        if(timeLapse.getStartTime() >= this.rescuedTime){
+            this.battery.incrementCapacityWith(SimulatorSettings.RESCUE_CAPACITY);
+            this.RESCUE_ME = false;
+        }
+    }
+
+    private void setRescueTimer(TimeLapse timeLapse) {
+        this.rescuedTime = timeLapse.getStartTime() + SimulatorSettings.RESCUE_DELAY;
     }
 
     @Override
