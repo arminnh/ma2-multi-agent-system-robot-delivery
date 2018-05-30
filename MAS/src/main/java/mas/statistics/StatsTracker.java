@@ -10,6 +10,7 @@ import com.github.rinde.rinsim.pdptw.common.StatsProvider;
 import com.github.rinde.rinsim.scenario.ScenarioController;
 import mas.models.PizzeriaModel;
 import mas.tasks.DeliveryTask;
+import org.jetbrains.annotations.NotNull;
 
 import static com.github.rinde.rinsim.core.model.pdp.PDPModel.PDPModelEventType.*;
 import static com.github.rinde.rinsim.core.model.road.GenericRoadModel.RoadEventType.MOVE;
@@ -29,18 +30,28 @@ public final class StatsTracker extends AbstractModelVoid implements StatsProvid
     private final TheListener theListener;
     private final Clock clock;
     private final RoadModel roadModel;
+    private final PizzeriaModel pizzeriaModel;
 
-    StatsTracker(ScenarioController scenContr, Clock c, RoadModel rm, PDPModel pm) {
-        clock = c;
-        roadModel = rm;
+    StatsTracker(ScenarioController scenContr, Clock c, PDPModel pm, PizzeriaModel pizzeriaModel, RoadModel rm) {
+        this.clock = c;
+        this.pizzeriaModel = pizzeriaModel;
+        this.roadModel = rm;
 
-        eventDispatcher = new EventDispatcher(StatsProvider.EventTypes.values());
-        theListener = new TheListener(clock, eventDispatcher);
+        this.eventDispatcher = new EventDispatcher(StatsProvider.EventTypes.values());
+
+        this.theListener = new TheListener(clock, eventDispatcher);
         //scenContr.getEventAPI().addListener(theListener, SCENARIO_STARTED, SCENARIO_FINISHED, SCENARIO_EVENT);
 
-        roadModel.getEventAPI().addListener(theListener, MOVE);
-        clock.getEventAPI().addListener(theListener, STARTED, STOPPED);
-        pm.getEventAPI().addListener(theListener, START_PICKUP, END_PICKUP, START_DELIVERY, END_DELIVERY, NEW_PARCEL, NEW_VEHICLE);
+        this.clock.getEventAPI().addListener(theListener, STARTED, STOPPED);
+
+        pm.getEventAPI().addListener(theListener, START_PICKUP, END_PICKUP, START_DELIVERY, END_DELIVERY, NEW_PARCEL,
+                NEW_VEHICLE);
+
+        this.pizzeriaModel.getEventAPI().addListener(theListener, ROBOT_AT_CHARGING_STATION,
+                ROBOT_LEAVING_CHARGING_STATION, NEW_PIZZERIA, STARTED_ROADWORKS, NEW_TASK, END_TASK, CLOSE_PIZZERIA,
+                FINISHED_ROADWORKS);
+
+        this.roadModel.getEventAPI().addListener(theListener, MOVE);
     }
 
     /**
@@ -48,11 +59,6 @@ public final class StatsTracker extends AbstractModelVoid implements StatsProvid
      */
     public static StatsTrackerBuilder builder() {
         return new StatsTrackerBuilder();
-    }
-
-    public void addDeliveryTaskModelListener(PizzeriaModel pizzeriaModel) {
-        pizzeriaModel.getEventAPI().addListener(theListener, ROBOT_AT_CHARGING_STATION, ROBOT_LEAVING_CHARGING_STATION,
-                NEW_PIZZERIA, STARTED_ROADWORKS, NEW_TASK, END_TASK, CLOSE_PIZZERIA, FINISHED_ROADWORKS);
     }
 
     @Override
@@ -85,7 +91,7 @@ public final class StatsTracker extends AbstractModelVoid implements StatsProvid
         int movedVehicles = tl.distanceMap.size();
         double avgPizzasPerRobot = (double) tl.pizzas / (tl.totalVehicles - tl.vehiclesIdle);
 
-        long tasksWaitingTime = this.roadModel.getObjectsOfType(DeliveryTask.class).stream()
+        long tasksWaitingTime = this.pizzeriaModel.getDeliveryTasks().stream()
                 .mapToLong(t -> t.getWaitingTime(clock.getCurrentTime()))
                 .sum();
 
@@ -125,8 +131,9 @@ public final class StatsTracker extends AbstractModelVoid implements StatsProvid
         );
     }
 
+    @NotNull
     @Override
-    public <U> U get(Class<U> clazz) {
-        return clazz.cast(this);
+    public <U> U get(Class<U> type) {
+        return type.cast(this);
     }
 }

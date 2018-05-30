@@ -1,18 +1,20 @@
 package mas.models;
 
 import com.github.rinde.rinsim.core.Simulator;
-import com.github.rinde.rinsim.core.model.Model;
+import com.github.rinde.rinsim.core.SimulatorAPI;
+import com.github.rinde.rinsim.core.model.Model.AbstractModel;
 import com.github.rinde.rinsim.core.model.pdp.Parcel;
 import com.github.rinde.rinsim.core.model.pdp.ParcelDTO;
+import com.github.rinde.rinsim.core.model.rand.RandomProvider;
 import com.github.rinde.rinsim.core.model.road.DynamicGraphRoadModelImpl;
 import com.github.rinde.rinsim.core.model.road.RoadModel;
 import com.github.rinde.rinsim.core.model.road.RoadUser;
 import com.github.rinde.rinsim.core.model.time.Clock;
 import com.github.rinde.rinsim.event.EventAPI;
 import com.github.rinde.rinsim.event.EventDispatcher;
-import com.github.rinde.rinsim.geom.Connection;
 import com.github.rinde.rinsim.geom.ListenableGraph;
 import com.github.rinde.rinsim.geom.Point;
+import com.google.common.base.Optional;
 import mas.SimulatorSettings;
 import mas.agents.ResourceAgent;
 import mas.agents.RobotAgent;
@@ -24,11 +26,12 @@ import mas.tasks.PizzaParcel;
 import org.apache.commons.math3.random.RandomGenerator;
 import org.jetbrains.annotations.NotNull;
 
+import javax.annotation.Nonnull;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
-public class PizzeriaModel extends Model.AbstractModel<PizzeriaUser> {
+public class PizzeriaModel extends AbstractModel<PizzeriaUser> {
 
     private final EventDispatcher eventDispatcher;
     private Simulator sim;
@@ -42,22 +45,29 @@ public class PizzeriaModel extends Model.AbstractModel<PizzeriaUser> {
     private HashMap<Integer, DeliveryTask> deliveryTasks = new HashMap<>();
     private HashMap<Point, ResourceAgent> resourceAgents = new HashMap<>();
 
-    public PizzeriaModel(RoadModel roadModel, Clock clock) {
+    public PizzeriaModel(Clock clock, RandomProvider provider, RoadModel roadModel, SimulatorAPI simAPI) {
+        this.clock = clock;
+        this.rng = provider.masterInstance();
         this.roadModel = roadModel;
+        this.sim = (Simulator) simAPI;
+
+        this.dynamicGraphRoadModel = (DynamicGraphRoadModelImpl) this.roadModel;
+        this.dynamicGraph = this.dynamicGraphRoadModel.getGraph();
 
         this.eventDispatcher = new EventDispatcher(PizzeriaEventType.values());
-        this.clock = clock;
     }
 
     public static PizzeriaModelBuilder builder() {
         return new PizzeriaModelBuilder();
     }
 
-    public void setSimulator(Simulator sim, RandomGenerator rng) {
-        this.sim = sim;
-        this.rng = rng;
-        this.dynamicGraphRoadModel = this.sim.getModelProvider().getModel(DynamicGraphRoadModelImpl.class);
-        this.dynamicGraph = this.dynamicGraphRoadModel.getGraph();
+    @Nonnull
+    @Override
+    public <U> U get(Class<U> type) {
+        if (type == PizzeriaModel.class) {
+            return type.cast(this);
+        }
+        throw new IllegalArgumentException();
     }
 
     public EventAPI getEventAPI() {
@@ -105,14 +115,18 @@ public class PizzeriaModel extends Model.AbstractModel<PizzeriaUser> {
         ChargingStation chargingStation = new ChargingStation(position, SimulatorSettings.CHARGINGSTATION_CAPACITY);
 
         this.chargingStations.put(position, chargingStation);
-        sim.register(chargingStation);
+        this.sim.register(chargingStation);
 
 
         return chargingStation;
     }
 
+    public Optional<ChargingStation> getChargingStationAtPosition(Point position) {
+        return Optional.of(this.chargingStations.get(position));
+    }
+
     public List<DeliveryTask> getDeliveryTasks() {
-        return new LinkedList<>(this.roadModel.getObjectsOfType(DeliveryTask.class));
+        return new LinkedList<>(this.deliveryTasks.values());
     }
 
     public void createNewDeliveryTask(RandomGenerator rng, double pizzaMean, double pizzaStd, long time) {
@@ -138,10 +152,9 @@ public class PizzeriaModel extends Model.AbstractModel<PizzeriaUser> {
                 DeliveryTask task = new DeliveryTask(position, pizzaAmount, time, clock);
 
                 this.deliveryTasks.put(task.id, task);
-                this.sim.register(task);
-
                 // Link the task to the resource agent it was put on.
                 this.resourceAgents.get(position).addDeliveryTask(task);
+                this.sim.register(task);
 
                 this.eventDispatcher.dispatchEvent(new PizzeriaEvent(PizzeriaEventType.NEW_TASK, time, task, null, null));
             }
@@ -169,9 +182,9 @@ public class PizzeriaModel extends Model.AbstractModel<PizzeriaUser> {
 
         if (task.isFinished()) {
             // If all pizzas for a deliveryTask have been delivered, the deliveryTask can be removed from lists that hold it.
+            this.eventDispatcher.dispatchEvent(new PizzeriaEvent(PizzeriaEventType.END_TASK, time, task, parcel, vehicle));
             this.resourceAgents.get(task.getPosition().get()).removeDeliveryTask(task);
             this.deliveryTasks.remove(task.id);
-            this.eventDispatcher.dispatchEvent(new PizzeriaEvent(PizzeriaEventType.END_TASK, time, task, parcel, vehicle));
             this.roadModel.removeObject(task);
 
             // Unregister the task from the simulator

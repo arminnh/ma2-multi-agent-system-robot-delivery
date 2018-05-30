@@ -2,7 +2,6 @@ package mas.messages;
 
 import com.github.rinde.rinsim.core.model.comm.CommUser;
 import com.github.rinde.rinsim.geom.Point;
-import sun.plugin.dom.exception.InvalidStateException;
 
 import java.util.List;
 
@@ -41,7 +40,7 @@ public class IntentionAnt extends MultiDestinationAnt {
         if(intentions != null){
             for(IntentionData d: intentions){
                 if(d.position == null){
-                     throw new InvalidStateException("null poss");
+                     throw new IllegalStateException("null poss");
                 }
             }
         }

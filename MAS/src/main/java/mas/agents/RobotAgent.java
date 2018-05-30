@@ -768,11 +768,16 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
         this.isCharging = true;
 
         // Find the charging station the robot arrived at.
-        Set<ChargingStation> stations = this.roadModel.getObjectsAt(this, ChargingStation.class);
-        ChargingStation station = stations.iterator().next();
+        Optional<ChargingStation> station = this.pizzeriaModel.getChargingStationAtPosition(this.getPosition().get());
 
-        pizzeriaModel.robotArrivedAtChargingStation(this, station);
-        this.currentChargingStation = Optional.of(station);
+        if (station.isPresent()) {
+            this.pizzeriaModel.robotArrivedAtChargingStation(this, station.get());
+            this.currentChargingStation = station;
+
+        } else {
+            throw new IllegalStateException("Trying to arrive at charging station but no station at position "
+                    + this.getPosition().get());
+        }
     }
 
     /**
