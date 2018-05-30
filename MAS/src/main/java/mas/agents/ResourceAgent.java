@@ -54,12 +54,12 @@ public class ResourceAgent implements CommUser, TickListener {
         return this.neighbors;
     }
 
-    public void setRoadWorks(RoadWorks roadWorks) {
-        this.roadWorks = Optional.of(roadWorks);
-    }
-
     public Optional<RoadWorks> getRoadWorks() {
         return roadWorks;
+    }
+
+    public void setRoadWorks(RoadWorks roadWorks) {
+        this.roadWorks = Optional.of(roadWorks);
     }
 
     public boolean hasRoadWorks() {
@@ -188,7 +188,7 @@ public class ResourceAgent implements CommUser, TickListener {
                 // Create new list of IntentionData for next ant
                 List<IntentionData> newDeliveriesData = this.updateExplorationAntIntentionData(ant);
 
-                if (ant.hasReachedDestination(this.position)) {
+                if (ant.hasReachedFinalDestination()) {
                     this.sendAntToNextHop(ant.copy(Lists.reverse(ant.path), true, newDeliveriesData, 0));
                 } else {
                     this.sendAntToNextHop(ant.copy(ant.path, false, newDeliveriesData, ant.pathIndex));
@@ -238,7 +238,7 @@ public class ResourceAgent implements CommUser, TickListener {
                         newDeliveriesData.add(intentionData.copy(true));
 
                     } else {
-                        System.out.println("Not updated, Pizzas: " + intentionData.pizzas + ", Pizzas left for task: " + this.getPizzasLeftForDeliveryTask(task.id) + " taskID: " +intentionData.deliveryTaskID + " pos: " + intentionData.position) ;
+                        System.out.println("Not updated, Pizzas: " + intentionData.pizzas + ", Pizzas left for task: " + this.getPizzasLeftForDeliveryTask(task.id) + " taskID: " + intentionData.deliveryTaskID + " pos: " + intentionData.position);
                         if (intentionData.pizzas <= this.getPizzasLeftForDeliveryTask(task.id) &&
                                 this.getPizzasLeftForDeliveryTask(task.id) > 0) {
 
@@ -248,7 +248,7 @@ public class ResourceAgent implements CommUser, TickListener {
                             newDeliveriesData.add(intentionData.copy(true));
 
                         } else {
-                            System.out.println("Denied ant = [" + ant + "]" );
+                            System.out.println("Denied ant = [" + ant + "]");
                             // A reservation could not be created, set 'confirmed' to true in the delivery data.
                             newDeliveriesData.add(intentionData.copy(false));
                         }
@@ -264,7 +264,7 @@ public class ResourceAgent implements CommUser, TickListener {
         }
 
         // Send the ants
-        if (ant.hasReachedDestination(this.position)) {
+        if (ant.hasReachedFinalDestination()) {
             this.sendAntToNextHop(ant.copy(Lists.reverse(ant.path), true, newDeliveriesData, 0));
         } else {
             this.sendAntToNextHop(ant.copy(ant.path, false, newDeliveriesData, ant.pathIndex));
@@ -274,16 +274,16 @@ public class ResourceAgent implements CommUser, TickListener {
     private void handleIntentionAntForChargingStation(TimeLapse timeLapse, IntentionAnt ant) {
         if (this.chargingStation.isPresent()) {
             List<IntentionData> newDeliveriesData = new LinkedList<>();
-            if(ant.intentions.size() > 1){
+            if (ant.intentions.size() > 1) {
                 throw new IllegalStateException("Ant has more than 1 intention while going to chargingstation: " + ant);
             }
 
             IntentionData intentionData = ant.intentions.get(0);
 
             boolean update = updateChargingReservation(intentionData, timeLapse);
-            if(update){
+            if (update) {
                 newDeliveriesData.add(intentionData.copy(true));
-            }else {
+            } else {
                 // We have less reservations than the total capacity of the charging station
                 System.out.println("this.chargingStationReservations.size() = " + this.chargingStationReservations.size());
                 System.out.println("this.chargingStation.get().getCapacity() = " + this.chargingStation.get().getCapacity());
@@ -295,7 +295,7 @@ public class ResourceAgent implements CommUser, TickListener {
                     // Add new reservation to the list
                     ChargingStationReservation resv = new ChargingStationReservation(ant.robotID, timeLapse.getEndTime() + SimulatorSettings.INTENTION_RESERVATION_LIFETIME);
                     this.chargingStationReservations.add(resv);
-                    System.out.println("Creating Reservation at charging station. " + this.chargingStationReservations.size() + "/ " +this.chargingStation.get().getCapacity()+ " resv in total.");
+                    System.out.println("Creating Reservation at charging station. " + this.chargingStationReservations.size() + "/ " + this.chargingStation.get().getCapacity() + " resv in total.");
                 } else {
                     newDeliveriesData.add(intentionData);
                 }
@@ -369,7 +369,7 @@ public class ResourceAgent implements CommUser, TickListener {
         return false;
     }
 
-    private boolean updateChargingReservation(IntentionData intentionData, TimeLapse timeLapse){
+    private boolean updateChargingReservation(IntentionData intentionData, TimeLapse timeLapse) {
         List<ChargingStationReservation> reservations = this.chargingStationReservations.stream()
                 .filter(r -> r.robotID == intentionData.robotID)
                 .collect(Collectors.toList());
@@ -409,20 +409,20 @@ public class ResourceAgent implements CommUser, TickListener {
         int nextPositionIndex = ant.pathIndex + 1;
         Point nextPosition = ant.path.get(nextPositionIndex);
 
-        boolean sendOutAnt = false;
+        boolean sentOutAnt = false;
         for (ResourceAgent neighbor : this.neighbors) {
             if (neighbor.getPosition().get().equals(nextPosition)) {
                 if (neighbor.hasRoadWorks()) {
                     estimatedTime += SimulatorSettings.TIME_ROAD_WORKS;
                 }
                 ant = ant.copy(estimatedTime, nextPositionIndex);
-                sendOutAnt = true;
+                sentOutAnt = true;
                 this.commDevice.send(ant, neighbor);
             }
         }
 
-        if(!sendOutAnt){
-            throw new IllegalStateException("Ant didn't get send: " + ant);
+        if (!sentOutAnt) {
+            throw new IllegalStateException("Ant didn't get sent: " + ant);
         }
     }
 

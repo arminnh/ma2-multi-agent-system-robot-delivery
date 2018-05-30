@@ -42,9 +42,10 @@ import java.util.*;
  */
 public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener, RandomUser, CommUser, PizzeriaUser {
 
-    private boolean RESCUE_ME = false;
+    public final int id;
     private final int alternativePathsToExplore;
     public Optional<Long> timestampIdle = Optional.absent();
+    private boolean RESCUE_ME = false;
     private RandomGenerator rng;
     private RoadModel roadModel;
     private PDPModel pdpModel;
@@ -52,8 +53,6 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
     private PizzeriaModel pizzeriaModel;
     private ListenableGraph<LengthData> staticGraph;
     private ListenableGraph<LengthData> dynamicGraph;
-
-    public final int id;
     private Battery battery;
     private boolean isOnNode = true;
     private Point pizzeriaPosition;
@@ -183,10 +182,10 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
     @Override
     public void tickImpl(@NotNull TimeLapse time) {
         if (!time.hasTimeLeft() || this.getRemainingBatteryCapacityPercentage() == 0.0) {
-            if(!this.RESCUE_ME){
+            if (!this.RESCUE_ME) {
                 this.RESCUE_ME = true;
                 setRescueTimer(time);
-            }else{
+            } else {
                 rechargeBatteryIfRescued(time);
             }
             return;
@@ -201,10 +200,8 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
         // Check if the current intentions should be replaced.
         this.reconsiderIntentions();
 
-        System.out.println("Intention: " + this.intention);
-        System.out.println("isCharging: " + this.isCharging + ", goingToCharge: " + this.goingToCharge);
-        System.out.println("isAtPizzeria: " + this.isAtPizzeria + ", goingToPizzeria: " + this.goingToPizzeria);
-        System.out.println("waiting: " + this.waitingForAnts() + ", intention: " + this.waitingForIntentionAnts);
+        System.out.println("\nIntention: " + this.intention + ", isCharging: " + this.isCharging + ",isAtPizzeria: " + this.isAtPizzeria + ", goingToCharge: " + this.goingToCharge + ", goingToPizzeria: " + this.goingToPizzeria);
+        System.out.println("Waiting for ants: desire: " + this.waitingForDesireAnts + ", exploration: " + this.waitingForExplorationAnts + ", intention: " + this.waitingForIntentionAnts);
 
         // Make the robot do its next action
         if (this.intention.isPresent() && !this.waitingForAnts() && !this.isCharging) {
@@ -216,7 +213,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
     }
 
     private void rechargeBatteryIfRescued(TimeLapse timeLapse) {
-        if(timeLapse.getStartTime() >= this.rescuedTime){
+        if (timeLapse.getStartTime() >= this.rescuedTime) {
             this.battery.incrementCapacityWith(SimulatorSettings.RESCUE_CAPACITY);
             this.RESCUE_ME = false;
         }
@@ -345,7 +342,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
 
         if (ant.toChargingStation) {
             System.out.println("SET TO GO CHARGE, this.hasPizzaParcel() = " + this.hasPizzaParcel() + ", this.intention = " + this.intention);
-            if(ant.intentions.get(0).reservationConfirmed){
+            if (ant.intentions.get(0).reservationConfirmed) {
                 this.intention = Optional.of(new LinkedList<>(ant.path));
 
             }
@@ -599,18 +596,23 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
         this.broadcastAnt(ant);
     }
 
+    /**
+     * Change the given path so that the subpath after the latest intention is removed.
+     */
     private List<Point> shortenExplorationAntPath(List<Point> path, List<IntentionData> intentions) {
         int max_index = 0;
 
-        for(IntentionData intention: intentions){
-            int currentFirstIndex = path.indexOf(intention.position);
-            if(currentFirstIndex > max_index){
-                max_index = currentFirstIndex;
+        for (IntentionData intention : intentions) {
+            if (intention.reservationConfirmed) {
+                int currentFirstIndex = path.indexOf(intention.position);
+                if (currentFirstIndex > max_index) {
+                    max_index = currentFirstIndex;
+                }
             }
         }
-        
+
         // Last index is exclusive
-        return path.subList(0, max_index+1);
+        return path.subList(0, max_index + 1);
     }
 
     /**

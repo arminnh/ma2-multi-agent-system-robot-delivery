@@ -148,6 +148,7 @@ public class PizzeriaModel extends AbstractModel<PizzeriaUser> {
                 this.sim.register(task);
 
                 this.eventDispatcher.dispatchEvent(new PizzeriaEvent(PizzeriaEventType.NEW_TASK, time, task, null, null));
+                return;
             }
         }
 

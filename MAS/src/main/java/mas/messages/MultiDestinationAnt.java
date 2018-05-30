@@ -4,7 +4,6 @@ import com.github.rinde.rinsim.core.model.comm.CommUser;
 import com.github.rinde.rinsim.geom.Point;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class MultiDestinationAnt extends Ant {
     public final List<IntentionData> intentions;
@@ -23,20 +22,28 @@ public class MultiDestinationAnt extends Ant {
     }
 
     public boolean hasReachedDestination(Point currentPosition) {
+        // If returning, only reached destination if at last point of path.
         if (this.isReturning) {
-            return super.hasReachedDestination();
-        } else {
-            if(this.intentions == null){
-                throw new IllegalStateException("Must have at least one intention in MultiDestinationAnt.");
-            }
-
-            for (IntentionData intention : this.intentions) {
-                if (intention.position.equals(currentPosition)) {
-                    return true;
-                }
-            }
-
-            return false;
+            return this.hasReachedFinalDestination();
         }
+
+        if (this.intentions == null) {
+            throw new IllegalStateException("Must have at least one intention in MultiDestinationAnt.");
+        }
+
+        // Otherwise, check if one of the intention's destination has been reached.
+        for (IntentionData intention : this.intentions) {
+            if (intention.position.equals(currentPosition)) {
+                return true;
+            }
+        }
+
+        // Finally, check if the end of the path has been reached. This is a fallback check.
+        return this.hasReachedFinalDestination();
+
+    }
+
+    public boolean hasReachedFinalDestination() {
+        return super.hasReachedDestination();
     }
 }
