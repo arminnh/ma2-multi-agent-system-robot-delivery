@@ -38,7 +38,7 @@ public class DeliveryTaskRenderer extends AbstractCanvasRenderer {
             }
 
             final Point p = task.getPosition().get();
-            final double pizzaAmount = task.getPizzasRequested();
+            final int pizzaAmount = task.getPizzasRequested();
             final int x = vp.toCoordX(p.x) + X_OFFSET;
             final int y = vp.toCoordY(p.y) + Y_OFFSET;
 
@@ -49,8 +49,8 @@ public class DeliveryTaskRenderer extends AbstractCanvasRenderer {
             gc.fillRoundRectangle(
                     x - extent.x / 2,
                     y - extent.y / 2,
-                    extent.x + 2,
-                    extent.y + 2,
+                    extent.x - 1,
+                    extent.y + 1,
                     ROUND_RECT_ARC_HEIGHT,
                     ROUND_RECT_ARC_HEIGHT
             );
@@ -58,8 +58,8 @@ public class DeliveryTaskRenderer extends AbstractCanvasRenderer {
             gc.setForeground(gc.getDevice().getSystemColor(SWT.COLOR_WHITE));
 
             gc.drawText(
-                    Double.toString(pizzaAmount),
-                    x - extent.x / 2 + 1,
+                    Integer.toString(pizzaAmount),
+                    x - extent.x / 2 - X_OFFSET,
                     y - extent.y / 2 + 1,
                     true
             );
