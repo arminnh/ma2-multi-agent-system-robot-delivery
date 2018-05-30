@@ -135,7 +135,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
         pizzeriaModel = model;
     }
 
-    private boolean waitingForAnts() {
+    public boolean waitingForAnts() {
         return this.waitingForExplorationAnts > 0 || this.waitingForIntentionAnts > 0 || this.waitingForDesireAnts > 0;
     }
 

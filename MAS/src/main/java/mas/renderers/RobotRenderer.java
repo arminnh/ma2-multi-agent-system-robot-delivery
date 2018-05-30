@@ -38,50 +38,73 @@ public class RobotRenderer extends AbstractCanvasRenderer {
             }
 
             final Point p = robot.getPosition().get();
-            final double currentBattery = robot.getRemainingBatteryCapacityPercentage() * 100;
-            final int x = vp.toCoordX(p.x) + X_OFFSET;
-            final int y = vp.toCoordY(p.y) + Y_OFFSET;
+            drawBattery(gc, vp, robot, p);
 
-            final org.eclipse.swt.graphics.Point extent = gc.textExtent(Integer.toString(100) + "%");
-            gc.setBackground(gc.getDevice().getSystemColor(SWT.COLOR_BLACK));
+            if(robot.waitingForAnts()){
+                drawWaitingForAnts(gc, vp, p);
 
-            gc.fillRoundRectangle(
-                    x - extent.x / 2,
-                    y - extent.y / 2,
-                    extent.x + 2,
-                    extent.y + 2,
-                    ROUND_RECT_ARC_HEIGHT,
-                    ROUND_RECT_ARC_HEIGHT
-            );
-
-            if (currentBattery > 80.0) {
-                gc.setBackground(gc.getDevice().getSystemColor(SWT.COLOR_GREEN));
-
-            } else if (currentBattery > 30.0) {
-                gc.setBackground(gc.getDevice().getSystemColor(SWT.COLOR_YELLOW));
-
-            } else {
-                gc.setBackground(gc.getDevice().getSystemColor(SWT.COLOR_RED));
             }
 
-            gc.fillRoundRectangle(
-                    x - extent.x / 2,
-                    y - extent.y / 2,
-                    (int) Math.max((extent.x + 2) * currentBattery/100.0, 0),
-                    extent.y + 2,
-                    ROUND_RECT_ARC_HEIGHT, ROUND_RECT_ARC_HEIGHT
-            );
-
-            gc.setForeground(gc.getDevice().getSystemColor(SWT.COLOR_BLACK));
-
-            gc.drawText(
-                    Integer.toString((int) Math.round(currentBattery)) + "%",
-                    x - extent.x / 2 + 1,
-                    y - extent.y / 2 + 1,
-                    true
-            );
         }
 
+    }
+
+    private void drawWaitingForAnts(GC gc, ViewPort vp, Point p) {
+        final int x = vp.toCoordX(p.x);
+        final int y = vp.toCoordY(p.y);
+
+        gc.setForeground(gc.getDevice().getSystemColor(SWT.COLOR_RED));
+        gc.drawText(
+                "Ants",
+                x-10,
+                y-15,
+                true
+        );
+    }
+
+    private void drawBattery(@NotNull GC gc, @NotNull ViewPort vp, RobotAgent robot, Point p) {
+        final double currentBattery = robot.getRemainingBatteryCapacityPercentage() * 100;
+        final int x = vp.toCoordX(p.x) + X_OFFSET;
+        final int y = vp.toCoordY(p.y) + Y_OFFSET;
+
+        final org.eclipse.swt.graphics.Point extent = gc.textExtent(Integer.toString(100) + "%");
+        gc.setBackground(gc.getDevice().getSystemColor(SWT.COLOR_BLACK));
+
+        gc.fillRoundRectangle(
+                x - extent.x / 2,
+                y - extent.y / 2,
+                extent.x + 2,
+                extent.y + 2,
+                ROUND_RECT_ARC_HEIGHT,
+                ROUND_RECT_ARC_HEIGHT
+        );
+
+        if (currentBattery > 80.0) {
+            gc.setBackground(gc.getDevice().getSystemColor(SWT.COLOR_GREEN));
+
+        } else if (currentBattery > 30.0) {
+            gc.setBackground(gc.getDevice().getSystemColor(SWT.COLOR_YELLOW));
+
+        } else {
+            gc.setBackground(gc.getDevice().getSystemColor(SWT.COLOR_RED));
+        }
+
+        gc.fillRoundRectangle(
+                x - extent.x / 2,
+                y - extent.y / 2,
+                (int) Math.max((extent.x + 2) * currentBattery/100.0, 0),
+                extent.y + 2,
+                ROUND_RECT_ARC_HEIGHT, ROUND_RECT_ARC_HEIGHT
+        );
+
+        gc.setForeground(gc.getDevice().getSystemColor(SWT.COLOR_BLACK));
+
+        gc.drawText(
+                Integer.toString((int) Math.round(currentBattery)) + "%",
+                x - extent.x / 2 + 1,
+                y - extent.y / 2 + 1,
+                true
+        );
     }
 }
 
