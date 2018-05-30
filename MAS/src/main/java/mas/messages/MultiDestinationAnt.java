@@ -22,29 +22,21 @@ public class MultiDestinationAnt extends Ant {
         this.intentions = intentions;
     }
 
-    public boolean hasReachedDestination(Point p) {
+    public boolean hasReachedDestination(Point currentPosition) {
         if (this.isReturning) {
-            return super.hasReachedDestination(p);
+            return super.hasReachedDestination();
         } else {
             if(this.intentions == null){
-                return false;
+                throw new IllegalStateException("Must have at least one intention in MultiDestinationAnt.");
             }
-            for (IntentionData delivery : this.intentions) {
-                if (delivery.position.equals(p)) {
+
+            for (IntentionData intention : this.intentions) {
+                if (intention.position.equals(currentPosition)) {
                     return true;
                 }
             }
+
             return false;
         }
-    }
-
-    public boolean hasReachedFinalDestination(Point p) {
-        return super.hasReachedDestination(p);
-    }
-
-    public List<IntentionData> getDeliveriesDataForPosition(Point p) {
-        return this.intentions.stream()
-                .filter(data -> data.position == p)
-                .collect(Collectors.toList());
     }
 }

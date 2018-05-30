@@ -151,7 +151,7 @@ public class ResourceAgent implements CommUser, TickListener {
         DesireAnt ant = (DesireAnt) m.getContents();
         System.out.println("Desire ant at " + this.position + ": " + ant);
 
-        if (ant.hasReachedDestination(this.position)) {
+        if (ant.hasReachedDestination()) {
             if (ant.isReturning) {
                 this.commDevice.send(ant.copy(Lists.reverse(ant.path), true, null, null, 0), ant.robot);
             } else {
@@ -188,7 +188,7 @@ public class ResourceAgent implements CommUser, TickListener {
                 // Create new list of IntentionData for next ant
                 List<IntentionData> newDeliveriesData = this.updateExplorationAntIntentionData(ant);
 
-                if (ant.hasReachedFinalDestination(this.position)) {
+                if (ant.hasReachedDestination(this.position)) {
                     this.sendAntToNextHop(ant.copy(Lists.reverse(ant.path), true, newDeliveriesData, 0));
                 } else {
                     this.sendAntToNextHop(ant.copy(ant.path, false, newDeliveriesData, ant.pathIndex));
@@ -264,7 +264,7 @@ public class ResourceAgent implements CommUser, TickListener {
         }
 
         // Send the ants
-        if (ant.hasReachedFinalDestination(this.position)) {
+        if (ant.hasReachedDestination(this.position)) {
             this.sendAntToNextHop(ant.copy(Lists.reverse(ant.path), true, newDeliveriesData, 0));
         } else {
             this.sendAntToNextHop(ant.copy(ant.path, false, newDeliveriesData, ant.pathIndex));

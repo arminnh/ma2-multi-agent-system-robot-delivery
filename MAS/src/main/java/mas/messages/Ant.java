@@ -41,7 +41,7 @@ public class Ant implements MessageContents {
         return new Ant(this.id, this.path, estimatedTime, this.isReturning, this.robotID, this.robot, pathIndex);
     }
 
-    public boolean hasReachedDestination(Point p) {
+    public boolean hasReachedDestination() {
         return this.pathIndex == this.path.size() - 1;
     }
 
