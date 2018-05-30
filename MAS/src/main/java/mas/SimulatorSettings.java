@@ -25,4 +25,5 @@ public class SimulatorSettings {
     public static final long INTENTION_RESERVATION_LIFETIME = 30000L; // 10 seconds
     public static final Long REFRESH_INTENTIONS = 20000L; // 4 seconds
     public static final Long REFRESH_EXPLORATIONS = 200000L;
+    public static final int CHARGINGSTATION_CAPACITY = 1;
 }

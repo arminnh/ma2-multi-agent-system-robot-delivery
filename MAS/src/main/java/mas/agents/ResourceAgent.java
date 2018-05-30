@@ -285,14 +285,17 @@ public class ResourceAgent implements CommUser, TickListener {
                 newDeliveriesData.add(intentionData.copy(true));
             }else {
                 // We have less reservations than the total capacity of the charging station
+                System.out.println("this.chargingStationReservations.size() = " + this.chargingStationReservations.size());
+                System.out.println("this.chargingStation.get().getCapacity() = " + this.chargingStation.get().getCapacity());
+
                 if (this.chargingStationReservations.size() < this.chargingStation.get().getCapacity()) {
                     // Confirm the reservation
-                    newDeliveriesData.add(new IntentionData(intentionData.position, intentionData.robotID,
-                            intentionData.deliveryTaskID, 0, true));
+                    newDeliveriesData.add(intentionData.copy(true));
 
                     // Add new reservation to the list
                     ChargingStationReservation resv = new ChargingStationReservation(ant.robotID, timeLapse.getEndTime() + SimulatorSettings.INTENTION_RESERVATION_LIFETIME);
                     this.chargingStationReservations.add(resv);
+                    System.out.println("Creating Reservation at charging station. " + this.chargingStationReservations.size() + "/ " +this.chargingStation.get().getCapacity()+ " resv in total.");
                 } else {
                     newDeliveriesData.add(intentionData);
                 }
