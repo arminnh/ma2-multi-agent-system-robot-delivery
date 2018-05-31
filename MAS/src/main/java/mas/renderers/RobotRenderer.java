@@ -44,8 +44,15 @@ public class RobotRenderer extends AbstractCanvasRenderer {
 
             drawBattery(x, y, gc, robot.getRemainingBatteryCapacityPercentage() * 100);
 
-            if(robot.waitingForAnts()){
-                drawWaitingForAnts(x, y, gc);
+            // Draw waiting for ants.
+            if (robot.waitingForAnts()) {
+                gc.setForeground(gc.getDevice().getSystemColor(SWT.COLOR_RED));
+                gc.drawText(
+                        "Waiting " + robot.getWaitingForAntsType() + " ants",
+                        x - 40,
+                        y + 12,
+                        true
+                );
             }
 
             if (robot.isIdle()) {
@@ -53,7 +60,7 @@ public class RobotRenderer extends AbstractCanvasRenderer {
                 gc.setForeground(gc.getDevice().getSystemColor(SWT.COLOR_GREEN));
                 gc.drawText(
                         "Idle: " + Double.toString(robot.getIdleTime() / 1000),
-                        x-40,
+                        x - 40,
                         y,
                         true
                 );
@@ -62,23 +69,13 @@ public class RobotRenderer extends AbstractCanvasRenderer {
                 gc.setForeground(gc.getDevice().getSystemColor(SWT.COLOR_GREEN));
                 gc.drawText(
                         "Arrive: " + Double.toString(robot.getIntendedArrivalTime() / 1000),
-                        x-40,
+                        x - 40,
                         y,
                         true
                 );
             }
         }
 
-    }
-
-    private void drawWaitingForAnts(int x, int y, GC gc) {
-        gc.setForeground(gc.getDevice().getSystemColor(SWT.COLOR_RED));
-        gc.drawText(
-                "Waiting ants",
-                x-40,
-                y+12,
-                true
-        );
     }
 
     private void drawBattery(int x, int y, @NotNull GC gc, double currentBattery) {
@@ -110,7 +107,7 @@ public class RobotRenderer extends AbstractCanvasRenderer {
         gc.fillRoundRectangle(
                 x - extent.x / 2,
                 y - extent.y / 2,
-                (int) Math.max((extent.x + 2) * currentBattery/100.0, 0),
+                (int) Math.max((extent.x + 2) * currentBattery / 100.0, 0),
                 extent.y + 2,
                 ROUND_RECT_ARC_HEIGHT, ROUND_RECT_ARC_HEIGHT
         );

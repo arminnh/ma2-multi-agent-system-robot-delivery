@@ -126,7 +126,7 @@ public class PizzaDeliverySimulator {
             // Robots start at the pizzeria
             sim.register(new RobotAgent(
                     getNextRobotID(), vdto, battery, staticGraph, pizzeria.getPosition(),
-                    SimulatorSettings.ALTERNATIVE_PATHS_TO_EXPLORE, chargingStation.getPosition())
+                    SimulatorSettings.ALTERNATIVE_PATHS_TO_EXPLORE, chargingStation.position)
             );
         }
 

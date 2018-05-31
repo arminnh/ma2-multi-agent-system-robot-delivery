@@ -16,13 +16,8 @@ import java.util.concurrent.ConcurrentLinkedDeque;
  */
 public class ChargingStation implements RoadUser, TickListener {
 
-    /**
-     * For isRegistered implementation, see PDPObjectImpl
-     */
-
-    private int capacity;
-    private Point position;
-    private RoadModel roadModel;
+    public final int capacity;
+    public final Point position;
     private Queue<RobotAgent> chargingRobots;
 
     public ChargingStation(Point position, int capacity) {
@@ -31,19 +26,9 @@ public class ChargingStation implements RoadUser, TickListener {
         this.chargingRobots = new ConcurrentLinkedDeque<>();
     }
 
-    public int getCapacity(){
-        return capacity;
-    }
-
     @Override
     public void initRoadUser(@NotNull RoadModel model) {
-        this.roadModel = model;
-
         model.addObjectAt(this, position);
-    }
-
-    public Point getPosition() {
-        return this.position;
     }
 
     @Override
@@ -52,7 +37,6 @@ public class ChargingStation implements RoadUser, TickListener {
             return;
         }
 
-        // At the moment we don't do anything concerning with the maximum amount of totalVehicles that can station here
         for (RobotAgent robot : this.chargingRobots) {
             robot.chargeBattery();
         }
@@ -64,11 +48,8 @@ public class ChargingStation implements RoadUser, TickListener {
     }
 
     synchronized public boolean addRobot(RobotAgent r) {
-        if (this.chargingRobots.contains(r)) {
-            return false;
-        }
+        return !this.chargingRobots.contains(r) && this.chargingRobots.add(r);
 
-        return this.chargingRobots.add(r);
     }
 
     public void removeRobot(RobotAgent r) {

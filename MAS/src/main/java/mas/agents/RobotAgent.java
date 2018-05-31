@@ -72,6 +72,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
     private Optional<Queue<Point>> intention = Optional.absent();
     private Optional<Long> nextIntentionAntsUpdate = Optional.absent();
     private HashMap<DesireAnt, Long> desireAnts = new HashMap<>();
+
     private int waitingForDesireAnts = 0;
     private List<ExplorationAnt> explorationAnts = new LinkedList<>();
     private int waitingForExplorationAnts = 0;
@@ -271,7 +272,8 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
             this.drainedBatteryRescueTime = Optional.of(timeLapse.getStartTime() + SimulatorSettings.BATTERY_RESCUE_DELAY);
         } else {
             if (timeLapse.getStartTime() >= this.drainedBatteryRescueTime.get()) {
-                this.battery.incrementCapacityWith(SimulatorSettings.BATTERY_RESCUE_CAPACITY);
+                this.battery.increaseCapacity(SimulatorSettings.BATTERY_CAPACITY);
+                this.drainedBatteryRescueTime = Optional.absent();
             }
         }
     }
@@ -445,7 +447,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
      */
     private void reconsiderIntentions() {
         // If already waiting for ants, new intentions are being looked for.
-        if (this.waitingForAnts()) {
+        if (this.waitingForAnts() || !this.isOnNode) {
             return;
         }
 
@@ -498,7 +500,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
             // Remove the current intention if another one should be set up.
 
             // Check if need to charge.
-            if (this.getRemainingBatteryCapacityPercentage() <= 0.35 && !this.goingToCharge && !this.isCharging && this.isOnNode) {
+            if (this.getRemainingBatteryCapacityPercentage() <= 0.3 && !this.goingToCharge && !this.isCharging) {
                 System.out.println("SET ROBOT TO GO TO CHARGE");
                 this.deleteIntention();
                 this.goingToCharge = true;
@@ -543,7 +545,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
             if (this.goingToCharge) {
                 this.arriveAtChargingStation();
             } else if (this.goingToPizzeria) {
-                this.arriveAtPizzeria(time);
+                this.arriveAtPizzeria();
             }
         }
     }
@@ -888,7 +890,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
      * Charges the battery of the robot.
      */
     public void chargeBattery() {
-        this.battery.incrementCapacity();
+        this.battery.increaseCapacity(SimulatorSettings.BATTERY_CHARGE_CAPACITY);
 
         if (this.battery.isAtMaxCapacity()) {
             this.isCharging = false;
@@ -900,7 +902,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
     /**
      * Sets the relevant variables for arriving at a Pizzeria.
      */
-    private void arriveAtPizzeria(@NotNull TimeLapse time) {
+    private void arriveAtPizzeria() {
         if (this.roadModel.getPosition(this).equals(this.pizzeriaPosition)) {
             System.out.println("User at pizzeria!");
             this.isAtPizzeria = true;
@@ -1026,5 +1028,16 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
         list.sort(Comparator.comparing(Map.Entry::getValue));
 
         return Lists.reverse(list);
+    }
+
+    public String getWaitingForAntsType() {
+        if (this.waitingForIntentionAnts > 0) {
+            return "i";
+        } else if (this.waitingForExplorationAnts > 0) {
+            return "e";
+        } else if (this.waitingForDesireAnts > 0) {
+            return "d";
+        }
+        return null;
     }
 }

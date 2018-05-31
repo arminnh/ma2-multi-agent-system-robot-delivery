@@ -7,44 +7,47 @@ import javax.measure.unit.Unit;
 
 
 public class SimulatorSettings {
-    public static final int SIM_SPEEDUP = 1;
+    // SIMULATOR
+    // Tick length = 1s, do not change this, probabilities for new parcel and new road works are done per tick.
+    public static final long TICK_LENGTH = 1000L;
+    public static final int SIM_SPEEDUP = 3;
     public static final int WINDOW_WIDTH = 1200;
     public static final int WINDOW_HEIGHT = 800;
 
-
-    // Tick length = 1s
-    public static final long TICK_LENGTH = 1000L;
-
-
+    // CITY AND ROBOTS
     public static final int CITY_SIZE = 5;
     public static final int NUM_ROBOTS = 1;
-    public static final int ROBOT_CAPACITY = 5;
-    public static final int CHARGING_STATION_CAPACITY = 3;
-    public static final double BATTERY_CAPACITY = 2*CITY_SIZE*CITY_SIZE;
-    // When a robot's battery dies because it didn't go to a charging station quickly enough and it gets recharged
-    // e.g. by some worker that went to the robot, then reset the battery capacity to 30%.
-    public static final double BATTERY_RESCUE_CAPACITY = BATTERY_CAPACITY*0.3;
-
-
-    // Other timings in milliseconds
-    // Want road works to stay for the time that a robot can do 15 moves to a next node
-    public static final long TIME_ROAD_WORKS = (long) ((15 * 2 / SimulatorSettings.VEHICLE_SPEED) * 1000);
-    // If a robot's battery dies because it didn't recharge fast enough, rescue it in an amount of time dependent
-    // on the size of the city.
-    public static final long BATTERY_RESCUE_DELAY = 30 * 1000;
-    // Lifetime of a reservation
-    public static final long INTENTION_RESERVATION_LIFETIME = 30000L;
-    public static final long REFRESH_INTENTIONS = 200000000000000000L;
-    public static final long REFRESH_EXPLORATIONS = 20000000000000000L;
-
     public static final int VEHICLE_LENGTH = 1;
-    public static final double VEHICLE_SPEED = 0.1;
+    public static final int NODE_DISTANCE = 2 * VEHICLE_LENGTH;
+    public static final double VEHICLE_SPEED = 1;
     public static final Unit<Length> DISTANCE_UNIT = SI.METER;
     public static final Unit<Velocity> SPEED_UNIT = SI.METRES_PER_SECOND;
+    public static final int ROBOT_CAPACITY = 5;
+    public static final int CHARGING_STATION_CAPACITY = 1;
+    // Make battery capacity relative to city size so that every node can be visited once before the battery is drained
+    public static final double BATTERY_CAPACITY = CITY_SIZE * CITY_SIZE * NODE_DISTANCE;
+    // Make the batteries be recharged with 1% every tick.
+    public static final double BATTERY_CHARGE_CAPACITY = 0.01 * BATTERY_CAPACITY;
+    // Paths to explore when using exploration ants
+    public static final int ALTERNATIVE_PATHS_TO_EXPLORE = 3;
 
-    public static final double PROB_NEW_PARCEL = .05;
-    public static final double PROB_NEW_ROAD_WORKS = 0.01;
+    // TIMINGS (IN MILLISECONDS)
+    // Let road works stay for a time relative to the size of the city
+    public static final long TIME_ROAD_WORKS = (long) ((CITY_SIZE * CITY_SIZE * NODE_DISTANCE) * 1000);
+    // If a robot's battery dies because it didn't recharge fast enough, rescue it in an amount of time dependent
+    // on the battery charge capacity. Larger battery takes longer to load. => make rescue delay 5 time longer than that
+    // as a punishment for draining the battery.
+    public static final long BATTERY_RESCUE_DELAY = (long) (5 * (BATTERY_CAPACITY / BATTERY_CHARGE_CAPACITY) * TICK_LENGTH);
+    // Lifetime of a reservation. Make it long enough so that the robot can make one revolution around the city block
+    public static final long INTENTION_RESERVATION_LIFETIME = (long) (4 * CITY_SIZE * NODE_DISTANCE / VEHICLE_SPEED) * 1000;
+    // Time to refresh intentions
+    public static final long REFRESH_INTENTIONS = (long) (0.5 * INTENTION_RESERVATION_LIFETIME);
+    // Time to refresh explorations
+    public static final long REFRESH_EXPLORATIONS = (long) (0.4 * INTENTION_RESERVATION_LIFETIME);
+
+    // PROBABILITIES
+    public static final double PROB_NEW_PARCEL = 0.002 * CITY_SIZE;
+    public static final double PROB_NEW_ROAD_WORKS = 0.003 * CITY_SIZE;
     public static final double PIZZA_AMOUNT_STD = 0.75;
     public static final double PIZZA_AMOUNT_MEAN = 4;
-    public static final int ALTERNATIVE_PATHS_TO_EXPLORE = 2;
 }

@@ -232,7 +232,7 @@ public class PizzeriaModel extends AbstractModel<PizzeriaUser> {
         ));
 
         cs.removeRobot(r);
-        this.resourceAgents.get(cs.getPosition()).dropReservation(r);
+        this.resourceAgents.get(cs.position).dropReservation(r);
     }
 
     public void createResourceAgent(Point position) {
@@ -246,11 +246,7 @@ public class PizzeriaModel extends AbstractModel<PizzeriaUser> {
         this.sim.register(agent);
     }
 
-    static int works = 0;
     synchronized public void newRoadWorks(long time) {
-        if (works == 1) {
-            return;
-        }
         // Road works can only be set on positions where there is no robot, building, or delivery task.
         // Try to create new road works up to 5 times.
         int attempts = 5;
@@ -277,7 +273,6 @@ public class PizzeriaModel extends AbstractModel<PizzeriaUser> {
                 this.eventDispatcher.dispatchEvent(new PizzeriaEvent(
                         PizzeriaEventType.STARTED_ROADWORKS, 0, null, null, null
                 ));
-                works = 1;
 
                 return;
             }
@@ -333,6 +328,7 @@ public class PizzeriaModel extends AbstractModel<PizzeriaUser> {
 
         // Unlink the road works from the resource agent they are linked to.
         agent.removeRoadWorks();
+
         // Unregister the works from the simulator
         this.sim.unregister(roadWorks);
     }

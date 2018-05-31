@@ -24,15 +24,8 @@ public class Battery {
         }
     }
 
-    public void incrementCapacityWith(double amount) {
+    public void increaseCapacity(double amount) {
         capacity += amount;
-        if (capacity > maxCapacity) {
-            capacity = maxCapacity;
-        }
-    }
-
-    public void incrementCapacity() {
-        capacity++;
         if (capacity > maxCapacity) {
             capacity = maxCapacity;
         }
