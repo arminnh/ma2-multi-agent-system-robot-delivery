@@ -3,6 +3,7 @@ package mas.experiments;
 import com.github.rinde.rinsim.core.model.comm.CommModel;
 import com.github.rinde.rinsim.core.model.pdp.DefaultPDPModel;
 import com.github.rinde.rinsim.core.model.road.RoadModelBuilders;
+import com.github.rinde.rinsim.core.model.time.TimeModel;
 import com.github.rinde.rinsim.experiment.Experiment;
 import com.github.rinde.rinsim.experiment.ExperimentResults;
 import com.github.rinde.rinsim.experiment.MASConfiguration;
@@ -69,7 +70,7 @@ public class ExperimentTest {
         String[] arguments = args;
 
         Vehicles.VehicleGenerator vehicleGenerator = getVehicleGenerator(1,
-                SimulatorSettings.ROBOT_CAPACITY, SimulatorSettings.VEHICLE_SPEED_KMH, PIZZERIA_LOC);
+                SimulatorSettings.ROBOT_CAPACITY, SimulatorSettings.VEHICLE_SPEED, PIZZERIA_LOC);
 
         LinkedList<Point> positions = new LinkedList<>();
         positions.add(PIZZERIA_LOC);
@@ -83,14 +84,16 @@ public class ExperimentTest {
             }
             availablePos.add(node);
         }
+
         Parcels.ParcelGenerator parcelGenerator = getParcelGenerator(availablePos);
 
         ScenarioGenerator generator = ScenarioGenerator.builder()
-                //.scenarioLength(END_TIME)
+                .scenarioLength(1000)
                 .setStopCondition(StatsStopConditions.timeOutEvent())
-                //.vehicles(vehicleGenerator)
+                .vehicles(vehicleGenerator)
                 .parcels(parcelGenerator)
                 .depots(depotGenerator)
+                .addModel(TimeModel.builder().withTickLength(SimulatorSettings.TICK_LENGTH))
                 .addModel(PizzeriaModel.builder())
                 .addModel(RoadModelBuilders.dynamicGraph(dynamicGraph)
                         .withDistanceUnit(SI.METER)
@@ -121,7 +124,7 @@ public class ExperimentTest {
                         // NOTE: this example uses 'namedHandler's for Depots and Parcels, while
                         // very useful for debugging these should not be used in production as
                         // these are not thread safe. Use the 'defaultHandler()' instead.
-                        .addEventHandler(AddDepotEvent.class, AddPizzeriaEvent.defaultHandler(CHARGING_STATION_CAP))
+                        .addEventHandler(AddDepotEvent.class, AddPizzeriaEvent.defaultHandler(CHARGING_STATION_CAP, STATIC_GRAPH, PIZZERIA_LOC, CHARGING_STATION_LOC))
 
                         .addEventHandler(AddParcelEvent.class, AddDeliveryTaskEvent.defaultHandler(STATIC_GRAPH, PIZZERIA_LOC, CHARGING_STATION_LOC))
                         // There is no default handle for vehicle events, here a non functioning
@@ -141,10 +144,9 @@ public class ExperimentTest {
                 // Adds the newly constructed scenario to the experiment. Every
                 // configuration will be run on every scenario.
                 .addScenarios(scenarios)
-
                 // The number of repetitions for each simulation. Each repetition will
                 // have a unique random seed that is given to the simulator.
-                .repeat(2)
+                .repeat(5)
 
                 // The master random seed from which all random seeds for the
                 // simulations will be drawn.
@@ -201,20 +203,18 @@ public class ExperimentTest {
     public static Depots.DepotGenerator getDepotGenerator(LinkedList<Point> points) {
 
         return Depots.builder()
-                .numerOfDepots(StochasticSuppliers.constant(2))
+                .numerOfDepots(StochasticSuppliers.constant(1))
                 .positions(StochasticSuppliers.fromIterable(points))
                 .build();
     }
 
     public static Parcels.ParcelGenerator getParcelGenerator(List<Point> p) {
-
         return new TestParcels(p);
-        /*
-       return Parcels.builder()
+
+        /*return Parcels.builder()
                .locations(new PizzaLocations(p))
                .neededCapacities(StochasticSuppliers.normal().mean(PIZZA_AMOUNT_MEAN).std(PIZZA_AMOUNT_STD).buildInteger())
-               .build();
-       */
+               .build();*/
     }
 }
 
