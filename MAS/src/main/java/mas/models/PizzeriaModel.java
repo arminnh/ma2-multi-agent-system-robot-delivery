@@ -185,7 +185,7 @@ public class PizzeriaModel extends AbstractModel<PizzeriaUser> {
 
         // The two alternatives mentioned in the comment.
         if (resourceAgent.robotHasReservation(robot.id, task.id) ||
-                resourceAgent.getPizzasLeftForDeliveryTask(task.id) > pizzaParcel.amountOfPizzas) {
+                resourceAgent.getPizzasLeftForDeliveryTask(task.id) >= pizzaParcel.amountOfPizzas) {
             return true;
         }
 
@@ -246,7 +246,11 @@ public class PizzeriaModel extends AbstractModel<PizzeriaUser> {
         this.sim.register(agent);
     }
 
-    synchronized  public void newRoadWorks(long time) {
+    static int works = 0;
+    synchronized public void newRoadWorks(long time) {
+        if (works == 1) {
+            return;
+        }
         // Road works can only be set on positions where there is no robot, building, or delivery task.
         // Try to create new road works up to 5 times.
         int attempts = 5;
@@ -273,6 +277,7 @@ public class PizzeriaModel extends AbstractModel<PizzeriaUser> {
                 this.eventDispatcher.dispatchEvent(new PizzeriaEvent(
                         PizzeriaEventType.STARTED_ROADWORKS, 0, null, null, null
                 ));
+                works = 1;
 
                 return;
             }

@@ -38,53 +38,52 @@ public class RobotRenderer extends AbstractCanvasRenderer {
             }
 
             final Point p = robot.getPosition().get();
-            drawBattery(gc, vp, robot, p);
-
-            if(robot.waitingForAnts()){
-                drawWaitingForAnts(gc, vp, p);
-            }
 
             final int x = vp.toCoordX(p.x);
             final int y = vp.toCoordY(p.y);
 
-            // Draw robot's estimated time of arrival
-            gc.setForeground(gc.getDevice().getSystemColor(SWT.COLOR_GREEN));
-            gc.drawText(
-                    Long.toString(robot.getIntendedArrivalTime()),
-                    x-40,
-                    y-12,
-                    true
-            );
+            drawBattery(x, y, gc, robot.getRemainingBatteryCapacityPercentage() * 100);
 
-            // Draw robot's idle time
-            gc.setForeground(gc.getDevice().getSystemColor(SWT.COLOR_DARK_BLUE));
-            gc.drawText(
-                    Long.toString(robot.getIdleTime()),
-                    x-40,
-                    y+12,
-                    true
-            );
+            if(robot.waitingForAnts()){
+                drawWaitingForAnts(x, y, gc);
+            }
+
+            if (robot.isIdle()) {
+                // Draw robot's idle time
+                gc.setForeground(gc.getDevice().getSystemColor(SWT.COLOR_GREEN));
+                gc.drawText(
+                        "Idle: " + Double.toString(robot.getIdleTime() / 1000),
+                        x-40,
+                        y,
+                        true
+                );
+            } else {
+                // Draw robot's estimated time of arrival
+                gc.setForeground(gc.getDevice().getSystemColor(SWT.COLOR_GREEN));
+                gc.drawText(
+                        "Arrive: " + Double.toString(robot.getIntendedArrivalTime() / 1000),
+                        x-40,
+                        y,
+                        true
+                );
+            }
         }
 
     }
 
-    private void drawWaitingForAnts(GC gc, ViewPort vp, Point p) {
-        final int x = vp.toCoordX(p.x);
-        final int y = vp.toCoordY(p.y);
-
+    private void drawWaitingForAnts(int x, int y, GC gc) {
         gc.setForeground(gc.getDevice().getSystemColor(SWT.COLOR_RED));
         gc.drawText(
                 "Waiting ants",
                 x-40,
-                y,
+                y+12,
                 true
         );
     }
 
-    private void drawBattery(@NotNull GC gc, @NotNull ViewPort vp, RobotAgent robot, Point p) {
-        final double currentBattery = robot.getRemainingBatteryCapacityPercentage() * 100;
-        final int x = vp.toCoordX(p.x) + X_OFFSET;
-        final int y = vp.toCoordY(p.y) + Y_OFFSET;
+    private void drawBattery(int x, int y, @NotNull GC gc, double currentBattery) {
+        x += X_OFFSET;
+        y += Y_OFFSET;
 
         final org.eclipse.swt.graphics.Point extent = gc.textExtent(Integer.toString(100) + "%");
         gc.setBackground(gc.getDevice().getSystemColor(SWT.COLOR_BLACK));

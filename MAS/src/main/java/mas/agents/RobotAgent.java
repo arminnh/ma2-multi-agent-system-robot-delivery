@@ -99,7 +99,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
 
     @Override
     public String toString() {
-        return  "\nRobot " + this.id + " parcels: " + this.currentParcels.size() + ", intention: " + this.intention +
+        return  "\nRobot " + this.id + " at " + this.getPosition().get() + " parcels: " + this.currentParcels.size() + ", intention: " + this.intention +
                 ", isCharging: " + this.isCharging + ", isAtPizzeria: " + this.isAtPizzeria + ", goingToCharge: " +
                 this.goingToCharge + ", goingToPizzeria: " + this.goingToPizzeria + ". Waiting for ants: desire: " +
                 this.waitingForDesireAnts + ", exploration: " + this.waitingForExplorationAnts + ", intention: " +
@@ -240,6 +240,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
         }
 
         System.out.println(this);
+        System.out.println("time = " + time);
 
         if (this.getRemainingBatteryCapacityPercentage() == 0.0 && !this.isCharging) {
             this.rechargeBatteryIfRescued(time);
@@ -775,6 +776,8 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
             if (this.existsConnectionForNextMove(nextPosition)) {
                 // Perform the actual move
                 MoveProgress progress = this.roadModel.moveTo(this, nextPosition, time);
+                this.intendedArrivalTime -= progress.time().getValue();
+                System.out.println("progress = " + progress);
 
                 this.isOnNode = this.getPosition().get().equals(nextPosition);
                 if (this.isOnNode) {
