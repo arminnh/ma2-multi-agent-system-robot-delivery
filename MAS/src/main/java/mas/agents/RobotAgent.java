@@ -100,7 +100,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
 
     @Override
     public String toString() {
-        return  "\nRobot " + this.id + " at " + this.getPosition().get() + " parcels: " + this.currentParcels.size() + ", intention: " + this.intention +
+        return  "\nRobot " + this.id + " parcels: " + this.currentParcels.size() + ", intention: " + this.intention +
                 ", isCharging: " + this.isCharging + ", isAtPizzeria: " + this.isAtPizzeria + ", goingToCharge: " +
                 this.goingToCharge + ", goingToPizzeria: " + this.goingToPizzeria + ". Waiting for ants: desire: " +
                 this.waitingForDesireAnts + ", exploration: " + this.waitingForExplorationAnts + ", intention: " +
@@ -241,7 +241,6 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
         }
 
         System.out.println(this);
-        System.out.println("time = " + time);
 
         if (this.getRemainingBatteryCapacityPercentage() == 0.0 && !this.isCharging) {
             this.rechargeBatteryIfRescued(time);
@@ -377,13 +376,6 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
             return;
         }
 
-        // Drop all parcels for tasks for which the amount of pizzas is 0
-        for (IntentionData intention : bestAnt.intentions) {
-            if (intention.pizzas == 0) {
-                this.dropParcelForTaskIfCarrying(intention.deliveryTaskID, time);
-            }
-        }
-
         // If exploration ants were sent while an intention was already present, then they were sent to find a better
         // path for the current intention. => See if there is a new better path for the current intention.
         if (this.intention.isPresent()) {
@@ -399,6 +391,14 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
             if (this.goingToPizzeria) {
                 this.setIntentionForAnt(bestAnt);
             } else {
+                // If no intention, then robot was looking for first path towards new parcels or the parcels already carried.
+                // Drop all carried parcels for tasks for which the amount of pizzas is 0
+                for (IntentionData intention : bestAnt.intentions) {
+                    if (intention.pizzas == 0) {
+                        this.dropParcelForTaskIfCarrying(intention.deliveryTaskID, time);
+                    }
+                }
+
                 this.sendIntentionAnt(bestAnt);
             }
         }
