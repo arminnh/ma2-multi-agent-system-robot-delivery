@@ -1,18 +1,13 @@
 # Todo's
 
 * Check that bestTime < this.intendedArrivalTime works correctly
-  * Gebeurt enkel als je al een intention hebt, dus na resendExplorationAnts
-  * this.intendedArrivalTime juist wordt gezet en gedecrement bij moves
-  * estimatedTime wel juist word berekend. i.p.v. +1, + verwachte rijtijd afhankelijk van snelheid enzo.
+  * Use a map with high road works probability and check that a new better path is actually chosen when roadworks happen
 
 * Desire ant evaluation logic
-  * Implement good scoring function
-  * Beter kiezen van tasks
-    * Mogelijks beetje randomness toevoegen zodat robots niet dezelfde tasks als best tasks krijgen
-    * Desires in de lijst droppen met een kans
-    * Betere paden maken
-  * Minder sturen, pizzeriaModel.getOldestDeliveryTasks(X)
+  * Improve scoring function and selection function
+  * Reorder chosen desired so that the shortest path is followed from when the robot starts driving again:
+    * From the point the robot starts driving, the shortest path will always be the best one w.r.t. decreasing total waiting time.
 
-* Scenarios
-  * Compatibility met Scenarios zodat ze in experimenten kunnen worden gezet
-  * Experiments opzetten
+* Test with multiple pizzas per task
+
+* Do experiments

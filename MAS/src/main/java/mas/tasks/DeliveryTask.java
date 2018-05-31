@@ -58,17 +58,4 @@ public class DeliveryTask implements RoadUser {
     public long getWaitingTime(long currentTime) {
         return currentTime - startTime;
     }
-
-    /*public Long getScore() {
-        // TODO: implement a good scoring function
-        // TODO: implement a good scoring function
-        // TODO: implement a good scoring function
-        // TODO: implement a good scoring function
-        // TODO: implement a good scoring function
-        // TODO: implement a good scoring function
-        // Suggestions:
-        // - Use waiting time (OK)
-        // - Estimated delivery time
-        return getWaitingTime(clock.getCurrentTime());
-    }*/
 }

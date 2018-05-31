@@ -100,7 +100,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
 
     @Override
     public String toString() {
-        return  "\nRobot " + this.id + " parcels: " + this.currentParcels.size() + ", intention: " + this.intention +
+        return "\nRobot " + this.id + " parcels: " + this.currentParcels.size() + ", intention: " + this.intention +
                 ", isCharging: " + this.isCharging + ", isAtPizzeria: " + this.isAtPizzeria + ", goingToCharge: " +
                 this.goingToCharge + ", goingToPizzeria: " + this.goingToPizzeria + ". Waiting for ants: desire: " +
                 this.waitingForDesireAnts + ", exploration: " + this.waitingForExplorationAnts + ", intention: " +
@@ -989,17 +989,17 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
         System.out.println("remainingCapacity = " + remainingCapacity);
         // Get all tasks with highest score sorted in descending
         HashMap<DesireAnt, Long> currentDesireAnts = this.desireAnts;
-        while(bestTasks.size() < currentDesireAnts.size() && remainingCapacity > 0){
+        while (bestTasks.size() < currentDesireAnts.size() && remainingCapacity > 0) {
             // Choose an ant randomly
             // Each ant has a change p proportional to its score to be chosen
             double p = this.rng.nextDouble();
             Long total_sum = sumAllDesireScores(currentDesireAnts);
             double current_sum = 0.0;
             DesireAnt chosenAnt = null;
-            for(Map.Entry<DesireAnt, Long> entry : currentDesireAnts.entrySet()){
+            for (Map.Entry<DesireAnt, Long> entry : currentDesireAnts.entrySet()) {
                 current_sum += entry.getValue().doubleValue() / total_sum.doubleValue();
                 System.out.println("p val: " + p + " check with: " + current_sum);
-                if(p < current_sum){
+                if (p < current_sum) {
                     chosenAnt = entry.getKey();
                     break;
                 }
@@ -1026,7 +1026,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
         return bestTasks;
     }
 
-    private long sumAllDesireScores(HashMap<DesireAnt, Long> currentDesireAnts){
+    private long sumAllDesireScores(HashMap<DesireAnt, Long> currentDesireAnts) {
         long sum = 0;
         for (Map.Entry<DesireAnt, Long> entry : currentDesireAnts.entrySet()) {
             sum += entry.getValue();

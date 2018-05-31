@@ -13,9 +13,7 @@ import com.github.rinde.rinsim.geom.ListenableGraph;
 import com.github.rinde.rinsim.geom.Point;
 import com.github.rinde.rinsim.pdptw.common.StatsPanel;
 import com.github.rinde.rinsim.ui.View;
-import com.github.rinde.rinsim.ui.renderers.CommRenderer;
-import com.github.rinde.rinsim.ui.renderers.GraphRoadModelRenderer;
-import com.github.rinde.rinsim.ui.renderers.RoadUserRenderer;
+import com.github.rinde.rinsim.ui.renderers.*;
 import mas.agents.Battery;
 import mas.agents.RobotAgent;
 import mas.buildings.ChargingStation;
@@ -139,7 +137,7 @@ public class PizzaDeliverySimulator {
         sim.addTickListener(new TickListener() {
             @Override
             public void tick(@NotNull TimeLapse time) {
-                if (rng.nextDouble() < SimulatorSettings.PROB_NEW_PARCEL) {
+                if (rng.nextDouble() < SimulatorSettings.PROB_NEW_DELIVERY_TASK) {
                     pizzeriaModel.createNewDeliveryTask(rng, SimulatorSettings.PIZZA_AMOUNT_MEAN, SimulatorSettings.PIZZA_AMOUNT_STD, time.getStartTime());
                 }
             }
