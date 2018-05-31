@@ -6,7 +6,7 @@ public class SimulatorSettings {
     public static final int WINDOW_WIDTH = 1200;
     public static final int WINDOW_HEIGHT = 800;
 
-    public static final int CITY_SIZE = 10;
+    public static final int CITY_SIZE = 6;
     public static final int NUM_ROBOTS = 10;
     public static final int ROBOT_CAPACITY = 5;
     public static final double BATTERY_CAPACITY = 2*CITY_SIZE*CITY_SIZE;
@@ -15,7 +15,7 @@ public class SimulatorSettings {
     public static final int CHARGING_STATION_CAPACITY = 3;
 
     public static final double PROB_NEW_PARCEL = .05;
-    public static final double PROB_NEW_ROAD_WORKS = 0.04;
+    public static final double PROB_NEW_ROAD_WORKS = 0.0;
     public static final long TIME_ROAD_WORKS = 15000;
     public static final double PIZZA_AMOUNT_STD = 0.75;
     public static final double PIZZA_AMOUNT_MEAN = 4;

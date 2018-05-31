@@ -119,7 +119,7 @@ public class ResourceAgent implements CommUser, TickListener {
                 neighbors.add((ResourceAgent) m.getSender());
 
             } else if (m.getContents().getClass() == DesireAnt.class) {
-                this.handleDesireAnt(m);
+                this.handleDesireAnt(m, timeLapse);
 
             } else if (m.getContents().getClass() == ExplorationAnt.class) {
                 this.handleExplorationAnt(m);
@@ -147,7 +147,7 @@ public class ResourceAgent implements CommUser, TickListener {
         this.chargingStationReservations.removeIf(r -> r.evaporationTimestamp < timeLapse.getStartTime());
     }
 
-    private void handleDesireAnt(Message m) {
+    private void handleDesireAnt(Message m, TimeLapse time) {
         DesireAnt ant = (DesireAnt) m.getContents();
         System.out.println("Desire ant at " + this.position + ": " + ant);
 
@@ -164,7 +164,8 @@ public class ResourceAgent implements CommUser, TickListener {
                 if (task != null) {
                     pizzas = this.getPizzasLeftForDeliveryTask(task.id);
                     if (pizzas > 0) {
-                        score = task.getScore();
+                        score = task.getWaitingTime(time.getStartTime());
+                        //score = task.getScore();
                     }
                 }
 

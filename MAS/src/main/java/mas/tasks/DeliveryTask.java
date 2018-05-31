@@ -16,15 +16,13 @@ public class DeliveryTask implements RoadUser {
     public final int id;
     private int pizzasRequested;
     private int pizzasDelivered;
-    private Clock clock;
 
-    public DeliveryTask(Point position, int pizzasRequested, long time, Clock clock) {
+    public DeliveryTask(Point position, int pizzasRequested, long time) {
         this.position = position;
         this.pizzasRequested = pizzasRequested;
         this.pizzasDelivered = 0;
         this.startTime = time;
         this.id = this.getNextID();
-        this.clock = clock;
     }
 
     private int getNextID() {
@@ -65,7 +63,7 @@ public class DeliveryTask implements RoadUser {
         return currentTime - startTime;
     }
 
-    public Long getScore() {
+    /*public Long getScore() {
         // TODO: implement a good scoring function
         // TODO: implement a good scoring function
         // TODO: implement a good scoring function
@@ -76,5 +74,5 @@ public class DeliveryTask implements RoadUser {
         // - Use waiting time (OK)
         // - Estimated delivery time
         return getWaitingTime(clock.getCurrentTime());
-    }
+    }*/
 }
