@@ -120,16 +120,18 @@ public class ExperimentTest {
                 .addModel(DefaultPDPModel.builder())
                 .addModel(CommModel.builder())
                 .addModel(PizzeriaModel.builder())
-                .addModel(StatsTracker.builder())
                 .build();
 
         List<Scenario> scenarios = new ArrayList<>();
         int numberOfDesiredScenarios = 1;
 
+        int scenarioID = 1;
         RandomGenerator rng = new MersenneTwister(123L);
-
         for (int i = 0; i < numberOfDesiredScenarios; i++) {
-            scenarios.add(generator.generate(rng, "?"));
+            scenarios.add(generator.generate(
+                    new MersenneTwister(rng.nextLong()),
+                    "Scenario " + Integer.toString(scenarioID++)
+            ));
         }
 
         final Optional<ExperimentResults> results;
@@ -146,55 +148,49 @@ public class ExperimentTest {
                         // Use the 'defaultHandler()' instead.
                         .addEventHandler(AddDepotEvent.class, AddPizzeriaAndChargingStationAndResourceAgentsEventHandlers.defaultHandler(staticGraph, pizzeriaPosition, chargingStationPosition, chargingStationCapacity))
 
-                        .addEventHandler(AddParcelEvent.class, AddDeliveryTaskEventHandlers.defaultHandler(availablePos, pizzaAmountMean, pizzaAmountStd))
-                        // There is no default handle for vehicle events, here a non functioning
-                        // handler is added, it can be changed to add a custom vehicle to the
-                        // simulator.
+                        .addEventHandler(AddParcelEvent.class, AddDeliveryTaskEventHandlers.defaultHandler(pizzaAmountMean, pizzaAmountStd))
+                        // There is no default handle for vehicle events, here a non functioning handler is added,
+                        // it can be changed to add a custom vehicle to the simulator.
                         .addEventHandler(AddVehicleEvent.class, AddRobotAgentEventHandlers.defaultHandler(dynamicGraph, pizzeriaPosition, chargingStationPosition, batteryCapacity, alternativePathsToExplore))
                         .addEventHandler(TimeOutEvent.class, TimeOutEvent.ignoreHandler())
-                        // Note: if you multi-agent system requires the aid of a model (e.g.
-                        // CommModel) it can be added directly in the configuration. Models that
-                        // are only used for the solution side should not be added in the
-                        // scenario as they are not part of the problem.
+                        // Note: if youe multi-agent system requires the aid of a model (e.g. CommModel) it can be added
+                        // directly in the configuration. Models that are only used for the solution side should not
+                        // be added in the scenario as they are not part of the problem.
                         .addModel(StatsTracker.builder())
                         .build()
                 )
 
-                // Adds the newly constructed scenario to the experiment. Every
-                // configuration will be run on every scenario.
+                // Adds the newly constructed scenario to the experiment.
+                // Every configuration will be run on every scenario.
                 .addScenarios(scenarios)
-                // The number of repetitions for each simulation. Each repetition will
-                // have a unique random seed that is given to the simulator.
+
+                // The number of repetitions for each simulation.
+                // Each repetition will have a unique random seed that is given to the simulator.
                 .repeat(5)
 
-                // The master random seed from which all random seeds for the
-                // simulations will be drawn.
-                .withRandomSeed(0)
+                // The master random seed from which all random seeds for the simulations will be drawn.
+                .withRandomSeed(1234567890)
 
-                // The number of threads the experiment will use, this allows to run
-                // several simulations in parallel. Note that when the GUI is used the
-                // number of threads must be set to 1.
+                // The number of threads the experiment will use, this allows to run several simulations in parallel.
+                // Note that when the GUI is used the number of threads must be set to 1.
                 .withThreads(1)
 
-                // We add a post processor to the experiment. A post processor can read
-                // the state of the simulator after it has finished. It can be used to
-                // gather simulation results. The objects created by the post processor
-                // end up in the ExperimentResults object that is returned by the
-                // perform(..) method of Experiment.
-                //.usePostProcessor(new ExamplePostProcessor())
+                // We add a post processor to the experiment. A post processor can read the state of the simulator
+                // after it has finished. It can be used to gather simulation results. The objects created by the
+                // post processor end up in the ExperimentResults object that is returned by the perform(..) method
+                // TODO
+                // TODO
+                // of Experiment.usePostProcessor(new ExamplePostProcessor())
 
-                // Starts the experiment, but first reads the command-line arguments
-                // that are specified for this application. By supplying the '-h' option
-                // you can see an overview of the supported options.
+                // Starts the experiment, but first reads the command-line arguments that are specified for this
+                // application. By supplying the '-h' option you can see an overview of the supported options.
                 .perform(System.out, arguments);
 
         if (results.isPresent()) {
             for (final Experiment.SimulationResult sr : results.get().getResults()) {
-                // The SimulationResult contains all information about a specific
-                // simulation, the result object is the object created by the post
-                // processor, a String in this case.
-                System.out.println(
-                        sr.getSimArgs().getRandomSeed() + " " + sr.getResultObject());
+                // The SimulationResult contains all information about a specific simulation,
+                // the result object is the object created by the post processor, a String in this case.
+                System.out.println(sr.getSimArgs().getRandomSeed() + " " + sr.getResultObject());
             }
         } else {
             throw new IllegalStateException("Experiment did not complete.");
@@ -228,7 +224,7 @@ public class ExperimentTest {
     }
 
     public static Parcels.ParcelGenerator getParcelGenerator(List<Point> p) {
-        return new DeliveryTaskGenerator(p, tickLength);
+        return new DeliveryTaskGenerator(tickLength, probNewDeliveryTask);
     }
 }
 
