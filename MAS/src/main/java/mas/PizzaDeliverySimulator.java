@@ -30,8 +30,6 @@ import mas.tasks.DeliveryTask;
 import org.apache.commons.math3.random.RandomGenerator;
 import org.jetbrains.annotations.NotNull;
 
-import javax.measure.unit.SI;
-
 public class PizzaDeliverySimulator {
 
     private static int robotID = 1;
@@ -93,7 +91,8 @@ public class PizzaDeliverySimulator {
                         //.withSeed(SimulatorSettings.RANDOM_SEED)
                 )
                 .addModel(RoadModelBuilders.dynamicGraph(dynamicGraph)
-                        .withDistanceUnit(SI.METER)
+                        .withDistanceUnit(SimulatorSettings.DISTANCE_UNIT)
+                        .withSpeedUnit(SimulatorSettings.SPEED_UNIT)
                         .withModificationCheck(true)
                 )
                 .addModel(DefaultPDPModel.builder())
@@ -119,7 +118,7 @@ public class PizzaDeliverySimulator {
                     .capacity(SimulatorSettings.ROBOT_CAPACITY)
                     //.startPosition(pizzeria.getPosition())
                     .startPosition(pizzeria.getPosition())
-                    .speed(SimulatorSettings.VEHICLE_SPEED_KMH)
+                    .speed(SimulatorSettings.VEHICLE_SPEED)
                     .build();
 
             Battery battery = new Battery(SimulatorSettings.BATTERY_CAPACITY);
@@ -127,7 +126,7 @@ public class PizzaDeliverySimulator {
             // Robots start at the pizzeria
             sim.register(new RobotAgent(
                     getNextRobotID(), vdto, battery, staticGraph, pizzeria.getPosition(),
-                    SimulatorSettings.ALTERNATIVE_PATHS_TO_EXPLORE, chargingStation.getPosition())
+                    SimulatorSettings.ALTERNATIVE_PATHS_TO_EXPLORE, chargingStation.position)
             );
         }
 

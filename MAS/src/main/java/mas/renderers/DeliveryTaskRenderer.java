@@ -34,7 +34,7 @@ public class DeliveryTaskRenderer extends AbstractCanvasRenderer {
     public void renderDynamic(@NotNull GC gc, @NotNull ViewPort vp, long time) {
         for (DeliveryTask task : this.roadModel.getObjectsOfType(DeliveryTask.class)) {
             final Point p = task.position;
-            final int pizzaAmount = task.getPizzasRequested();
+            final int pizzaAmount = task.getPizzasRemaining();
             final int x = vp.toCoordX(p.x) + X_OFFSET;
             final int y = vp.toCoordY(p.y) + Y_OFFSET;
 

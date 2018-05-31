@@ -14,7 +14,7 @@ public class DeliveryTask implements RoadUser {
     public final long startTime;
     public final Point position;
     public final int id;
-    private int pizzasRequested;
+    public final int pizzasRequested;
     private int pizzasDelivered;
 
     public DeliveryTask(Point position, int pizzasRequested, long time) {
@@ -41,10 +41,6 @@ public class DeliveryTask implements RoadUser {
                 ", requested: " + this.pizzasRequested +
                 ", delivered: " + this.pizzasDelivered +
                 "}";
-    }
-
-    public int getPizzasRequested() {
-        return this.pizzasRequested;
     }
 
     public int getPizzasRemaining() {

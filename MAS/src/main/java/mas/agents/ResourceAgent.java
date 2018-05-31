@@ -290,16 +290,16 @@ public class ResourceAgent implements CommUser, TickListener {
             } else {
                 // We have less reservations than the total capacity of the charging station
                 System.out.println("this.chargingStationReservations.size() = " + this.chargingStationReservations.size());
-                System.out.println("this.chargingStation.get().getCapacity() = " + this.chargingStation.get().getCapacity());
+                System.out.println("this.chargingStation.get().getChargeCapacity() = " + this.chargingStation.get().capacity);
 
-                if (this.chargingStationReservations.size() < this.chargingStation.get().getCapacity()) {
+                if (this.chargingStationReservations.size() < this.chargingStation.get().capacity) {
                     // Confirm the reservation
                     newDeliveriesData.add(intentionData.copy(true));
 
                     // Add new reservation to the list
                     ChargingStationReservation resv = new ChargingStationReservation(ant.robotID, timeLapse.getEndTime() + SimulatorSettings.INTENTION_RESERVATION_LIFETIME);
                     this.chargingStationReservations.add(resv);
-                    System.out.println("Creating Reservation at charging station. " + this.chargingStationReservations.size() + "/ " + this.chargingStation.get().getCapacity() + " resv in total.");
+                    System.out.println("Creating Reservation at charging station. " + this.chargingStationReservations.size() + "/ " + this.chargingStation.get().capacity + " resv in total.");
                 } else {
                     newDeliveriesData.add(intentionData);
                 }
@@ -407,8 +407,10 @@ public class ResourceAgent implements CommUser, TickListener {
 
         long estimatedTime = ant.estimatedTime;
         if (!ant.isReturning) {
-            estimatedTime++;
-            // TODO: calculate new estimated time based on this_location -> next_location
+            // Want time in ms, have distance in m, speed in m/s (see SimulatorSettings)
+            // We know that distance between two nodes is always 2m
+            // So estimatedTime between two nodes in milliseconds = (distance / speed) * 1000
+            estimatedTime += (SimulatorSettings.NODE_DISTANCE / SimulatorSettings.VEHICLE_SPEED) * 1000;
         }
 
         int nextPositionIndex = ant.pathIndex + 1;
@@ -420,9 +422,8 @@ public class ResourceAgent implements CommUser, TickListener {
                 if (neighbor.hasRoadWorks()) {
                     estimatedTime += SimulatorSettings.TIME_ROAD_WORKS;
                 }
-                ant = ant.copy(estimatedTime, nextPositionIndex);
                 sentOutAnt = true;
-                this.commDevice.send(ant, neighbor);
+                this.commDevice.send(ant.copy(estimatedTime, nextPositionIndex), neighbor);
             }
         }
 
