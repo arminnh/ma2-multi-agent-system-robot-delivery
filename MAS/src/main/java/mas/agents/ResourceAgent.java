@@ -410,7 +410,7 @@ public class ResourceAgent implements CommUser, TickListener {
             // Want time in ms, have distance in m, speed in m/s (see SimulatorSettings)
             // We know that distance between two nodes is always 2m
             // So estimatedTime between two nodes in milliseconds = (distance / speed) * 1000
-            estimatedTime += (SimulatorSettings.NODE_DISTANCE / SimulatorSettings.VEHICLE_SPEED) * 1000;
+            estimatedTime += (SimulatorSettings.NODE_DISTANCE / SimulatorSettings.ROBOT_SPEED) * 1000;
         }
 
         int nextPositionIndex = ant.pathIndex + 1;

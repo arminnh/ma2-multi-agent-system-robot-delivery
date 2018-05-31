@@ -49,7 +49,7 @@ public class PizzaDeliverySimulator {
                 .withAutoPlay()
                 .withSpeedUp(SimulatorSettings.SIM_SPEEDUP)
                 .with(GraphRoadModelRenderer.builder()
-                        .withMargin(SimulatorSettings.VEHICLE_LENGTH)
+                        .withMargin(SimulatorSettings.ROBOT_LENGTH)
                 )
                 .with(RoadUserRenderer.builder()
                         .withImageAssociation(RobotAgent.class, "/robot.png")
@@ -77,8 +77,8 @@ public class PizzaDeliverySimulator {
 
         // Create the graphs for the virtual environment. Need to create them twice in order to keep a static one
         // on the vehicles. It was impossible to create a graph snapshot in the vehicles.
-        ListenableGraph<LengthData> staticGraph = CityGraphCreator.createGraph(SimulatorSettings.CITY_SIZE, SimulatorSettings.VEHICLE_LENGTH);
-        ListenableGraph<LengthData> dynamicGraph = CityGraphCreator.createGraph(SimulatorSettings.CITY_SIZE, SimulatorSettings.VEHICLE_LENGTH);
+        ListenableGraph<LengthData> staticGraph = CityGraphCreator.createGraph(SimulatorSettings.CITY_SIZE, SimulatorSettings.ROBOT_LENGTH);
+        ListenableGraph<LengthData> dynamicGraph = CityGraphCreator.createGraph(SimulatorSettings.CITY_SIZE, SimulatorSettings.ROBOT_LENGTH);
 
         // initialize a new Simulator instance
         final Simulator sim = Simulator.builder()
@@ -116,7 +116,7 @@ public class PizzaDeliverySimulator {
                     .capacity(SimulatorSettings.ROBOT_CAPACITY)
                     //.startPosition(pizzeria.getPosition())
                     .startPosition(pizzeria.getPosition())
-                    .speed(SimulatorSettings.VEHICLE_SPEED)
+                    .speed(SimulatorSettings.ROBOT_SPEED)
                     .build();
 
             Battery battery = new Battery(SimulatorSettings.BATTERY_CAPACITY);

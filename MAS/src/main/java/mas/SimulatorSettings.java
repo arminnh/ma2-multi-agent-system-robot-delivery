@@ -8,7 +8,7 @@ import javax.measure.unit.Unit;
 
 public class SimulatorSettings {
     // SIMULATOR
-    // Tick length = 1s, do not change this, probabilities for new parcel and new road works are done per tick.
+    // Tick length = 1s, do not change this, probabilities for new task and new road works are done per tick.
     public static final long TICK_LENGTH = 1000L;
     public static final int SIM_SPEEDUP = 10;
     public static final int WINDOW_WIDTH = 1200;
@@ -17,9 +17,9 @@ public class SimulatorSettings {
     // CITY AND ROBOTS
     public static final int CITY_SIZE = 10;
     public static final int NUM_ROBOTS = 4;
-    public static final int VEHICLE_LENGTH = 1;
-    public static final int NODE_DISTANCE = 2 * VEHICLE_LENGTH;
-    public static final double VEHICLE_SPEED = 1;
+    public static final int ROBOT_LENGTH = 1;
+    public static final int NODE_DISTANCE = 2 * ROBOT_LENGTH;
+    public static final double ROBOT_SPEED = 1;
     public static final Unit<Length> DISTANCE_UNIT = SI.METER;
     public static final Unit<Velocity> SPEED_UNIT = SI.METRES_PER_SECOND;
     public static final int ROBOT_CAPACITY = 5;
@@ -39,7 +39,7 @@ public class SimulatorSettings {
     // as a punishment for draining the battery.
     public static final long BATTERY_RESCUE_DELAY = (long) (5 * (BATTERY_CAPACITY / BATTERY_CHARGE_CAPACITY) * TICK_LENGTH);
     // Lifetime of a reservation. Make it long enough so that the robot can make one revolution around the city block
-    public static final long INTENTION_RESERVATION_LIFETIME = (long) (4 * CITY_SIZE * NODE_DISTANCE / VEHICLE_SPEED) * 1000;
+    public static final long INTENTION_RESERVATION_LIFETIME = (long) (4 * CITY_SIZE * NODE_DISTANCE / ROBOT_SPEED) * 1000;
     // Time to refresh intentions
     public static final long REFRESH_INTENTIONS = (long) (0.5 * INTENTION_RESERVATION_LIFETIME);
     // Time to refresh explorations

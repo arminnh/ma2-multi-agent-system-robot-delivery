@@ -2,6 +2,7 @@ package mas.experiments;
 
 import com.github.rinde.rinsim.core.model.comm.CommModel;
 import com.github.rinde.rinsim.core.model.pdp.DefaultPDPModel;
+import com.github.rinde.rinsim.core.model.rand.RandomModel;
 import com.github.rinde.rinsim.core.model.road.RoadModelBuilders;
 import com.github.rinde.rinsim.core.model.time.TimeModel;
 import com.github.rinde.rinsim.experiment.Experiment;
@@ -10,39 +11,66 @@ import com.github.rinde.rinsim.experiment.MASConfiguration;
 import com.github.rinde.rinsim.geom.LengthData;
 import com.github.rinde.rinsim.geom.ListenableGraph;
 import com.github.rinde.rinsim.geom.Point;
-import com.github.rinde.rinsim.pdptw.common.*;
+import com.github.rinde.rinsim.pdptw.common.AddDepotEvent;
+import com.github.rinde.rinsim.pdptw.common.AddParcelEvent;
+import com.github.rinde.rinsim.pdptw.common.AddVehicleEvent;
+import com.github.rinde.rinsim.pdptw.common.StatsStopConditions;
 import com.github.rinde.rinsim.scenario.Scenario;
 import com.github.rinde.rinsim.scenario.TimeOutEvent;
-import com.github.rinde.rinsim.scenario.generator.*;
+import com.github.rinde.rinsim.scenario.generator.Depots;
+import com.github.rinde.rinsim.scenario.generator.Parcels;
+import com.github.rinde.rinsim.scenario.generator.ScenarioGenerator;
+import com.github.rinde.rinsim.scenario.generator.Vehicles;
 import com.github.rinde.rinsim.util.StochasticSuppliers;
 import com.google.common.base.Optional;
 import mas.SimulatorSettings;
-import mas.experiments.events.AddDeliveryTaskEvent;
-import mas.experiments.events.AddPizzeriaEvent;
 import mas.graphs.CityGraphCreator;
-import mas.experiments.handlers.RobotVehicleHandler;
 import mas.models.PizzeriaModel;
 import mas.statistics.StatsTracker;
 import org.apache.commons.math3.random.MersenneTwister;
 import org.apache.commons.math3.random.RandomGenerator;
 
-import javax.measure.unit.SI;
+import javax.measure.quantity.Length;
+import javax.measure.quantity.Velocity;
+import javax.measure.unit.Unit;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class ExperimentTest {
-    private static final double VEHICLE_SPEED = 1;
-    private static final Point PIZZERIA_LOC = new Point(4, 2);
-    private static final Point CHARGING_STATION_LOC = new Point(2, 2);
-    private static final int CHARGING_STATION_CAP = 3;
     // TODO: CHANGE THESE VALUES
-    private static final ListenableGraph<LengthData> STATIC_GRAPH = CityGraphCreator.createGraph(SimulatorSettings.CITY_SIZE, SimulatorSettings.VEHICLE_LENGTH);
-    private static final ListenableGraph<LengthData> dynamicGraph = CityGraphCreator.createGraph(SimulatorSettings.CITY_SIZE, SimulatorSettings.VEHICLE_LENGTH);
-    private static final double BATTERY_SIZE = SimulatorSettings.BATTERY_CAPACITY;
 
-    public static final double PIZZA_AMOUNT_STD = 0.75;
-    public static final double PIZZA_AMOUNT_MEAN = 4;
+    private static long tickLength = SimulatorSettings.TICK_LENGTH;
+
+    private static int citySize = SimulatorSettings.CITY_SIZE;
+    private static int numRobots = SimulatorSettings.NUM_ROBOTS;
+    private static int robotLength = SimulatorSettings.ROBOT_LENGTH;
+    private static final double robotSpeed = SimulatorSettings.ROBOT_SPEED;
+    private static Unit<Length> distanceUnit = SimulatorSettings.DISTANCE_UNIT;
+    private static Unit<Velocity> speedUnit = SimulatorSettings.SPEED_UNIT;
+    private static final int robotCapacity = SimulatorSettings.ROBOT_CAPACITY;
+    private static final int chargingStationCapacity = SimulatorSettings.CHARGING_STATION_CAPACITY;
+    private static final double batteryCapacity = SimulatorSettings.BATTERY_CAPACITY;
+    private static final double batteryChargeCapacity = SimulatorSettings.BATTERY_CHARGE_CAPACITY;
+    private static final int alternativePathsToExplore = SimulatorSettings.ALTERNATIVE_PATHS_TO_EXPLORE;
+
+    private static final double timeRoadWorks = SimulatorSettings.TIME_ROAD_WORKS;
+    private static final double batteryRescueDelay = SimulatorSettings.BATTERY_RESCUE_DELAY;
+    private static final double intentionReservationLifetime = SimulatorSettings.INTENTION_RESERVATION_LIFETIME;
+    private static final double refreshIntentions = SimulatorSettings.REFRESH_INTENTIONS;
+    private static final double refreshExplorations = SimulatorSettings.REFRESH_EXPLORATIONS;
+
+    private static final double probNewDeliveryTask = SimulatorSettings.PROB_NEW_DELIVERY_TASK;
+    private static final double probNewRoadWorks = SimulatorSettings.PROB_NEW_ROAD_WORKS;
+    private static final double pizzaAmountStd = SimulatorSettings.PIZZA_AMOUNT_STD;
+    private static final double pizzaAmountMean = SimulatorSettings.PIZZA_AMOUNT_MEAN;
+
+    private static final Point pizzeriaPosition = new Point(4, 2);
+    private static final Point chargingStationPosition = new Point(2, 2);
+    private static final ListenableGraph<LengthData> staticGraph = CityGraphCreator.createGraph(citySize, robotLength);
+    private static final ListenableGraph<LengthData> dynamicGraph = CityGraphCreator.createGraph(citySize, robotLength);
 
     private static final Point P1_PICKUP = new Point(1, 2);
     private static final Point P1_DELIVERY = new Point(4, 2);
@@ -69,37 +97,30 @@ public class ExperimentTest {
         int uiSpeedUp = 1;
         String[] arguments = args;
 
-        Vehicles.VehicleGenerator vehicleGenerator = getVehicleGenerator(1,
-                SimulatorSettings.ROBOT_CAPACITY, SimulatorSettings.VEHICLE_SPEED, PIZZERIA_LOC);
+        LinkedList<Point> positions = new LinkedList<>(Arrays.asList(pizzeriaPosition, chargingStationPosition));
 
-        LinkedList<Point> positions = new LinkedList<>();
-        positions.add(PIZZERIA_LOC);
-        positions.add(CHARGING_STATION_LOC);
-        Depots.DepotGenerator depotGenerator = getDepotGenerator(positions);
-
-        List<Point> availablePos = new LinkedList<>();
-        for(Point node: STATIC_GRAPH.getNodes()){
-            if(node.equals(PIZZERIA_LOC) || node.equals(CHARGING_STATION_LOC)){
-                continue;
-            }
-            availablePos.add(node);
-        }
-
-        Parcels.ParcelGenerator parcelGenerator = getParcelGenerator(availablePos);
+        List<Point> availablePos = staticGraph.getNodes().stream()
+                .filter(n -> !n.equals(pizzeriaPosition) && !n.equals(chargingStationPosition))
+                .collect(Collectors.toList());
 
         ScenarioGenerator generator = ScenarioGenerator.builder()
-                .scenarioLength(1000)
+                .scenarioLength(100 * 1000)
                 .setStopCondition(StatsStopConditions.timeOutEvent())
-                .vehicles(vehicleGenerator)
-                .parcels(parcelGenerator)
-                .depots(depotGenerator)
-                .addModel(TimeModel.builder().withTickLength(SimulatorSettings.TICK_LENGTH))
-                .addModel(PizzeriaModel.builder())
+                .vehicles(getVehicleGenerator(
+                        1, robotCapacity, robotSpeed, pizzeriaPosition
+                ))
+                .parcels(getParcelGenerator(availablePos))
+                .depots(getDepotGenerator(positions))
+                .addModel(TimeModel.builder().withTickLength(tickLength))
+                .addModel(RandomModel.builder())
                 .addModel(RoadModelBuilders.dynamicGraph(dynamicGraph)
-                        .withDistanceUnit(SI.METER)
+                        .withDistanceUnit(distanceUnit)
+                        .withSpeedUnit(speedUnit)
                         .withModificationCheck(true))
                 .addModel(DefaultPDPModel.builder())
                 .addModel(CommModel.builder())
+                .addModel(PizzeriaModel.builder())
+                .addModel(StatsTracker.builder())
                 .build();
 
         List<Scenario> scenarios = new ArrayList<>();
@@ -107,39 +128,37 @@ public class ExperimentTest {
 
         RandomGenerator rng = new MersenneTwister(123L);
 
-        for(int i = 0; i < numberOfDesiredScenarios; i++){
+        for (int i = 0; i < numberOfDesiredScenarios; i++) {
             scenarios.add(generator.generate(rng, "?"));
         }
 
         final Optional<ExperimentResults> results;
+
         // Starts the experiment builder.
         results = Experiment.builder()
-                // Adds a configuration to the experiment. A configuration configures an
-                // algorithm that is supposed to handle or 'solve' a problem specified by
-                // a scenario. A configuration can handle a scenario if it contains an
-                // event handler for all events that occur in the scenario. The scenario
-                // in this example contains four different events and registers an event
-                // handler for each of them.
+                // Adds a configuration to the experiment. A configuration configures an algorithm that is supposed to
+                // handle or 'solve' a problem specified by a scenario. A configuration can handle a scenario if it
+                // contains an event handler for all events that occur in the scenario. The scenario in this example
+                // contains four different events and registers an event handler for each of them.
                 .addConfiguration(MASConfiguration.builder()
-                        // NOTE: this example uses 'namedHandler's for Depots and Parcels, while
-                        // very useful for debugging these should not be used in production as
-                        // these are not thread safe. Use the 'defaultHandler()' instead.
-                        .addEventHandler(AddDepotEvent.class, AddPizzeriaEvent.defaultHandler(CHARGING_STATION_CAP, STATIC_GRAPH, PIZZERIA_LOC, CHARGING_STATION_LOC))
+                        // NOTE: this example uses 'namedHandler's for Depots and Parcels, while very useful for
+                        // debugging these should not be used in production as these are not thread safe.
+                        // Use the 'defaultHandler()' instead.
+                        .addEventHandler(AddDepotEvent.class, AddPizzeriaAndChargingStationAndResourceAgentsEventHandlers.defaultHandler(staticGraph, pizzeriaPosition, chargingStationPosition, chargingStationCapacity))
 
-                        .addEventHandler(AddParcelEvent.class, AddDeliveryTaskEvent.defaultHandler(STATIC_GRAPH, PIZZERIA_LOC, CHARGING_STATION_LOC))
+                        .addEventHandler(AddParcelEvent.class, AddDeliveryTaskEventHandlers.defaultHandler(availablePos, pizzaAmountMean, pizzaAmountStd))
                         // There is no default handle for vehicle events, here a non functioning
                         // handler is added, it can be changed to add a custom vehicle to the
                         // simulator.
-                        .addEventHandler(AddVehicleEvent.class,
-                                RobotVehicleHandler.defaultHandler(PIZZERIA_LOC, CHARGING_STATION_LOC, STATIC_GRAPH, BATTERY_SIZE)
-                        )
+                        .addEventHandler(AddVehicleEvent.class, AddRobotAgentEventHandlers.defaultHandler(dynamicGraph, pizzeriaPosition, chargingStationPosition, batteryCapacity, alternativePathsToExplore))
                         .addEventHandler(TimeOutEvent.class, TimeOutEvent.ignoreHandler())
                         // Note: if you multi-agent system requires the aid of a model (e.g.
                         // CommModel) it can be added directly in the configuration. Models that
                         // are only used for the solution side should not be added in the
                         // scenario as they are not part of the problem.
                         .addModel(StatsTracker.builder())
-                        .build())
+                        .build()
+                )
 
                 // Adds the newly constructed scenario to the experiment. Every
                 // configuration will be run on every scenario.
@@ -187,17 +206,17 @@ public class ExperimentTest {
      * Note that a scenario is supposed to only contain problem specific
      * information it should (generally) not make any assumptions about the
      * algorithm(s) that are used to solve the problem.
+     *
      * @return A newly constructed scenario.
      */
-    public static Vehicles.VehicleGenerator getVehicleGenerator(Integer vehiclesAm,
-                                                                Integer vehicleCap,
-                                                                Double vehicleSpeed,
-                                                                Point pizzeriaPos) {
+    public static Vehicles.VehicleGenerator getVehicleGenerator(int vehiclesAm, int vehicleCap,
+                                                                double vehicleSpeed, Point pizzeriaPos) {
         return Vehicles.builder()
                 .numberOfVehicles(StochasticSuppliers.constant(vehiclesAm))
                 .capacities(StochasticSuppliers.constant(vehicleCap))
                 .speeds(StochasticSuppliers.constant(vehicleSpeed))
-                .startPositions(StochasticSuppliers.constant(pizzeriaPos)).build();
+                .startPositions(StochasticSuppliers.constant(pizzeriaPos))
+                .build();
     }
 
     public static Depots.DepotGenerator getDepotGenerator(LinkedList<Point> points) {
@@ -209,12 +228,7 @@ public class ExperimentTest {
     }
 
     public static Parcels.ParcelGenerator getParcelGenerator(List<Point> p) {
-        return new TestParcels(p);
-
-        /*return Parcels.builder()
-               .locations(new PizzaLocations(p))
-               .neededCapacities(StochasticSuppliers.normal().mean(PIZZA_AMOUNT_MEAN).std(PIZZA_AMOUNT_STD).buildInteger())
-               .build();*/
+        return new DeliveryTaskGenerator(p, tickLength);
     }
 }
 
