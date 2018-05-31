@@ -1,11 +1,13 @@
 package mas.experiments;
 
 import com.github.rinde.rinsim.core.model.pdp.Parcel;
+import com.github.rinde.rinsim.core.model.pdp.ParcelDTO;
 import com.github.rinde.rinsim.geom.Point;
 import com.github.rinde.rinsim.pdptw.common.AddParcelEvent;
 import com.github.rinde.rinsim.scenario.generator.Parcels;
 import com.github.rinde.rinsim.scenario.generator.ScenarioGenerator;
 import com.github.rinde.rinsim.scenario.generator.TimeSeries;
+import com.github.rinde.rinsim.util.TimeWindow;
 import com.google.common.collect.ImmutableList;
 import com.google.common.math.DoubleMath;
 import org.jetbrains.annotations.NotNull;
@@ -36,20 +38,21 @@ public class DeliveryTaskGenerator implements Parcels.ParcelGenerator {
         List<Double> eventTimes = announceTimeGenerator.generate(seed);
 
         for (Double time : eventTimes) {
-            if (time >= endTime) {
-                System.out.println("time after endTime = " + time);
+            long ttime = DoubleMath.roundToLong(time, RoundingMode.FLOOR);
+
+            if (ttime >= endTime) {
                 break;
             }
 
-            Parcel.Builder parcelBuilder = Parcel
+            ParcelDTO parcelBuilder = Parcel
                     // Just put some random positions. Not that important as they will be chosen randomly in handler.
                     .builder(new Point(4, 2), new Point(0, 0))
-                    .orderAnnounceTime(DoubleMath.roundToLong(time, RoundingMode.FLOOR))
-                    .pickupDuration(0)
-                    .deliveryDuration(0)
-                    .neededCapacity(1);
+                    .orderAnnounceTime(ttime)
+                    .pickupTimeWindow(TimeWindow.create(ttime, 2*ttime))
+                    .neededCapacity(1)
+                    .buildDTO();
 
-            eventList.add(AddParcelEvent.create(parcelBuilder.buildDTO()));
+            eventList.add(AddParcelEvent.create(parcelBuilder));
         }
 
         return eventList.build();

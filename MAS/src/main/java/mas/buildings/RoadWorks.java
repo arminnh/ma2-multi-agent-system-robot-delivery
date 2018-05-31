@@ -24,6 +24,14 @@ public class RoadWorks implements RoadUser, TickListener, PizzeriaUser {
     }
 
     @Override
+    public String toString() {
+        return "RoadWorks{id: " + this.id +
+                ", position: " + this.position +
+                ", endTimestamp: " + this.endTimestamp +
+                "}";
+    }
+
+    @Override
     public void initRoadUser(@NotNull RoadModel model) {
         this.roadModel = model;
 

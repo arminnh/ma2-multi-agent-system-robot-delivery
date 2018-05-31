@@ -240,7 +240,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
             return;
         }
 
-        System.out.println(this);
+        // System.out.println(this);
 
         if (this.getRemainingBatteryCapacityPercentage() == 0.0 && !this.isCharging) {
             this.rechargeBatteryIfRescued(time);
@@ -537,7 +537,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
      * Makes the robot move and then optionally deliver a package or to a charging station or pizzeria.
      */
     private void doAction(@NotNull TimeLapse time) {
-        System.out.println("RobotAgent.doAction, position = " + getPosition().get() + ", this.intention.get() = " + this.intention.get());
+        //System.out.println("RobotAgent.doAction, position = " + getPosition().get() + ", this.intention.get() = " + this.intention.get());
 
         // If an intention is present, make the robot follow it.
         this.move(time);
@@ -794,7 +794,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
                 // Perform the actual move
                 MoveProgress progress = this.roadModel.moveTo(this, nextPosition, time);
                 this.intendedArrivalTime -= progress.time().getValue();
-                System.out.println("progress = " + progress);
+                //System.out.println("progress = " + progress);
 
                 this.isOnNode = this.getPosition().get().equals(nextPosition);
                 if (this.isOnNode) {
