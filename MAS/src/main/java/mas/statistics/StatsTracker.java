@@ -89,7 +89,7 @@ public final class StatsTracker extends AbstractModelVoid implements StatsProvid
         }
 
         int movedVehicles = tl.distanceMap.size();
-        double avgPizzasPerRobot = (double) tl.pizzas / (tl.totalVehicles - tl.vehiclesIdle);
+        double avgPizzasPerRobot = (double) tl.pizzas / tl.totalVehicles;
 
         long tasksWaitingTime = this.pizzeriaModel.getDeliveryTasks().stream()
                 .mapToLong(t -> t.getWaitingTime(clock.getCurrentTime()))
@@ -119,7 +119,6 @@ public final class StatsTracker extends AbstractModelVoid implements StatsProvid
                 roadModel.getSpeedUnit(),
                 tasksWaitingTime,
                 tl.totalTaskWaitingTime,
-                tl.vehiclesIdle,
                 tl.tasks,
                 tl.totalTasks,
                 tl.totalTasksFinished,

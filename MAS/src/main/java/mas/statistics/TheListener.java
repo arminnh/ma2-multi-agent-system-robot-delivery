@@ -18,7 +18,6 @@ import com.github.rinde.rinsim.pdptw.common.StatsProvider;
 import com.github.rinde.rinsim.scenario.ScenarioController;
 import com.github.rinde.rinsim.scenario.ScenarioController.ScenarioEvent;
 import com.github.rinde.rinsim.scenario.TimeOutEvent;
-import com.google.common.base.Optional;
 import mas.agents.RobotAgent;
 import mas.models.PizzeriaEvent;
 import mas.models.PizzeriaEventType;
@@ -51,7 +50,6 @@ public class TheListener implements Listener {
     public long totalPizzaTravelTime;
     // vehicles
     public int totalVehicles;
-    public int vehiclesIdle;
     public int vehiclesCharging;
     public int totalPickups; // same as acceptedParcels
     public int totalDeliveries;
@@ -89,7 +87,6 @@ public class TheListener implements Listener {
         totalPizzaTravelTime = 0L;
 
         totalVehicles = 0;
-        vehiclesIdle = 0;
         vehiclesCharging = 0;
         totalDistance = 0;
         totalTravelTime = 0L;
@@ -126,13 +123,13 @@ public class TheListener implements Listener {
 
         } else if (e.getEventType() == GenericRoadModel.RoadEventType.MOVE) {
             final MoveEvent me = (MoveEvent) e;
-            MovingRoadUser mru = (MovingRoadUser) me.roadUser;
+            RobotAgent robot = (RobotAgent) me.roadUser;
 
             double moveDistance = me.pathProgress.distance().getValue();
-            if (!distanceMap.containsKey(mru)) {
-                distanceMap.put(mru, moveDistance);
+            if (!distanceMap.containsKey(robot)) {
+                distanceMap.put(robot, moveDistance);
             } else {
-                distanceMap.put(mru, distanceMap.get(mru) + moveDistance);
+                distanceMap.put(robot, distanceMap.get(robot) + moveDistance);
             }
 
             totalDistance += moveDistance;
@@ -160,6 +157,8 @@ public class TheListener implements Listener {
                 lastArrivalTimeAtDepot.remove(me.roadUser);
             }
 
+            totalIdleTime += robot.getAndResetIdleTime();
+
         } else if (e.getEventType() == PDPModelEventType.START_PICKUP) {
             final PDPModelEvent pme = (PDPModelEvent) e;
             final Parcel p = pme.parcel;
@@ -179,10 +178,6 @@ public class TheListener implements Listener {
             assert r != null;
 
             totalPickups++;
-            if (r.timestampIdle.isPresent()) {
-                totalIdleTime += pme.time - r.timestampIdle.get();
-                r.timestampIdle = Optional.absent();
-            }
 
         } else if (e.getEventType() == PDPModelEventType.START_DELIVERY) {
             final PDPModelEvent pme = (PDPModelEvent) e;

@@ -10,7 +10,6 @@ public class StatisticsDTO extends com.github.rinde.rinsim.pdptw.common.Statisti
     public final int droppedParcels;
     public final long tasksWaitingTime;
     public final long totalTasksWaitingTime;
-    public final int vehiclesIdle;
     public final long totalIdleTime;
     public final long totalChargingTime;
     public final int tasks;
@@ -49,7 +48,6 @@ public class StatisticsDTO extends com.github.rinde.rinsim.pdptw.common.Statisti
             Unit<Velocity> speedUnit,
             long tasksWaitingTime,
             long totalTasksWaitingTime,
-            int vehiclesIdle,
             int tasks,
             int totalTasks,
             int totalTasksFinished,
@@ -82,7 +80,6 @@ public class StatisticsDTO extends com.github.rinde.rinsim.pdptw.common.Statisti
         this.droppedParcels = droppedParcels;
         this.tasksWaitingTime = tasksWaitingTime;
         this.totalTasksWaitingTime = totalTasksWaitingTime;
-        this.vehiclesIdle = vehiclesIdle;
         this.totalIdleTime = totalIdleTime;
         this.totalChargingTime = totalChargingTime;
         this.tasks = tasks;

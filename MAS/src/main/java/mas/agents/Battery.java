@@ -9,10 +9,6 @@ public class Battery {
         capacity = maxCapacity;
     }
 
-    public double getRemainingCapacity() {
-        return capacity;
-    }
-
     public double getRemainingCapacityPercentage() {
         return Math.round(100.0 * this.capacity / this.maxCapacity) / 100.0;
     }
@@ -28,8 +24,8 @@ public class Battery {
         }
     }
 
-    public void incrementCapacityWith(int amCap){
-        capacity += amCap;
+    public void incrementCapacityWith(double amount) {
+        capacity += amount;
         if (capacity > maxCapacity) {
             capacity = maxCapacity;
         }

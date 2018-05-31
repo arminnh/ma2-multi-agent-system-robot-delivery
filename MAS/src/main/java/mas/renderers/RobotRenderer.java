@@ -42,9 +42,28 @@ public class RobotRenderer extends AbstractCanvasRenderer {
 
             if(robot.waitingForAnts()){
                 drawWaitingForAnts(gc, vp, p);
-
             }
 
+            final int x = vp.toCoordX(p.x);
+            final int y = vp.toCoordY(p.y);
+
+            // Draw robot's estimated time of arrival
+            gc.setForeground(gc.getDevice().getSystemColor(SWT.COLOR_GREEN));
+            gc.drawText(
+                    Long.toString(robot.getIntendedArrivalTime()),
+                    x-40,
+                    y-12,
+                    true
+            );
+
+            // Draw robot's idle time
+            gc.setForeground(gc.getDevice().getSystemColor(SWT.COLOR_DARK_BLUE));
+            gc.drawText(
+                    Long.toString(robot.getIdleTime()),
+                    x-40,
+                    y+12,
+                    true
+            );
         }
 
     }
