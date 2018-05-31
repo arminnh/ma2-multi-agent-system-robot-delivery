@@ -318,7 +318,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
 
         // If waiting for ExplorationAnts, and they all have returned, process the different paths.
         if (!this.explorationAnts.isEmpty() && this.waitingForExplorationAnts == 0) {
-            this.processExploredPathsAndReviseIntentions();
+            this.processExploredPathsAndReviseIntentions(time);
         }
 
         // If waiting for IntentionAnts, and they all have returned, process the results.
@@ -355,7 +355,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
      * Finds the best path among the ones that were explored by ExplorationAnts. If the best path is better than the
      * one the robot is currently following, the intention will be updated and new IntentionAnts will be sent.
      */
-    private void processExploredPathsAndReviseIntentions() {
+    private void processExploredPathsAndReviseIntentions(TimeLapse time) {
         System.out.println("RobotAgent.processExploredPathsAndReviseIntentions, this.intention.isPresent(): " + this.intention.isPresent());
         Long bestTime = Long.MAX_VALUE;
         ExplorationAnt bestAnt = null;
@@ -366,7 +366,6 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
                 bestAnt = ant;
             }
             if (ant.path.get(ant.path.size() - 1).equals(this.chargingStationPosition) && this.goingToCharge) {
-                bestTime = ant.estimatedTime;
                 bestAnt = ant;
                 // We break here because charging takes precedence over everything else.
                 break;
@@ -378,10 +377,19 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
             return;
         }
 
+        // Drop all parcels for tasks for which the amount of pizzas is 0
+        for (IntentionData intention : bestAnt.intentions) {
+            if (intention.pizzas == 0) {
+                this.dropParcelForTaskIfCarrying(intention.deliveryTaskID, time);
+            }
+        }
+
         // If exploration ants were sent while an intention was already present, then they were sent to find a better
         // path for the current intention. => See if there is a new better path for the current intention.
         if (this.intention.isPresent()) {
             System.out.println("EXPLORED PATHS WHILE HAVING INTENTION, bestAnt = " + bestAnt);
+
+            // Set the new path if it is better
             if (bestAnt.estimatedTime < this.intendedArrivalTime) {
                 System.out.println("SET INTENTION TO BETTER PATH");
                 this.setIntentionForAnt(bestAnt);
@@ -394,6 +402,13 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
                 this.sendIntentionAnt(bestAnt);
             }
         }
+    }
+
+    private void dropParcelForTaskIfCarrying(int deliveryTaskID, TimeLapse time) {
+        java.util.Optional<PizzaParcel> pizzaParcel = this.currentParcels.stream()
+                .filter(p -> p.deliveryTaskID == deliveryTaskID).findFirst();
+
+        pizzaParcel.ifPresent(pp -> this.dropParcel(pp, time));
     }
 
     /**
