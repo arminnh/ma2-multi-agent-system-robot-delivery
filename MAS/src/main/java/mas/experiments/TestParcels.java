@@ -6,6 +6,7 @@ import com.github.rinde.rinsim.pdptw.common.AddParcelEvent;
 import com.github.rinde.rinsim.scenario.generator.Parcels;
 import com.github.rinde.rinsim.scenario.generator.ScenarioGenerator;
 import com.google.common.collect.ImmutableList;
+import sun.plugin.dom.exception.InvalidStateException;
 
 import java.util.List;
 
@@ -27,7 +28,7 @@ public class TestParcels implements Parcels.ParcelGenerator {
 
         eventList.add(AddParcelEvent.create(parcelBuilder.buildDTO()));
 
-
+        System.out.println("CREATED PARCEL");
         return eventList.build();
     }
 

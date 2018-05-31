@@ -55,6 +55,8 @@ public class PizzeriaModel extends AbstractModel<PizzeriaUser> {
         this.dynamicGraph = this.dynamicGraphRoadModel.getGraph();
 
         this.eventDispatcher = new EventDispatcher(PizzeriaEventType.values());
+
+
     }
 
     public static PizzeriaModelBuilder builder() {
