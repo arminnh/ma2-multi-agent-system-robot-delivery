@@ -45,6 +45,7 @@ public class SimulatorSettings {
     // Time to refresh explorations
     public static final long REFRESH_EXPLORATIONS = (long) (0.4 * INTENTION_RESERVATION_LIFETIME);
 
+
     // PROBABILITIES
     public static final double PROB_NEW_PARCEL = 0.002 * CITY_SIZE;
     public static final double PROB_NEW_ROAD_WORKS = 0.0025 * CITY_SIZE;

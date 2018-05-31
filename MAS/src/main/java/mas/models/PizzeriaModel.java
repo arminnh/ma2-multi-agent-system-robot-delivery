@@ -136,7 +136,7 @@ public class PizzeriaModel extends AbstractModel<PizzeriaUser> {
             }
 
             if (canCreate) {
-                DeliveryTask task = new DeliveryTask(position, pizzaAmount, time, clock);
+                DeliveryTask task = new DeliveryTask(position, pizzaAmount, time);
 
                 this.deliveryTasks.put(task.id, task);
                 // Link the task to the resource agent it was put on.
