@@ -246,7 +246,7 @@ public class PizzeriaModel extends AbstractModel<PizzeriaUser> {
         this.sim.register(agent);
     }
 
-    public void newRoadWorks(long time) {
+    synchronized  public void newRoadWorks(long time) {
         // Road works can only be set on positions where there is no robot, building, or delivery task.
         // Try to create new road works up to 5 times.
         int attempts = 5;

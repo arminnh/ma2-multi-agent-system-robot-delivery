@@ -942,6 +942,29 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
 
         System.out.println("remainingCapacity = " + remainingCapacity);
         // Get all tasks with highest score sorted in descending
+        HashMap<DesireAnt, Long> currentDesireAnts = this.desireAnts;
+        while(bestTasks.size() < currentDesireAnts.size() && remainingCapacity > 0){
+            // Choose an ant randomly
+            // Each ant has a change p proportional to its score to be chosen
+            double p = this.rng.nextDouble();
+            Long total_sum = sumAllDesireScores(currentDesireAnts);
+            double current_sum = 0.0;
+            DesireAnt chosenAnt = null;
+            for(Map.Entry<DesireAnt, Long> entry : currentDesireAnts.entrySet()){
+                current_sum += entry.getValue().doubleValue() / total_sum.doubleValue();
+                System.out.println("p val: " + p + " check with: " + current_sum);
+                if(p < current_sum){
+                    chosenAnt = entry.getKey();
+                    break;
+                }
+            }
+            int capacity = Math.min(remainingCapacity, chosenAnt.pizzas);
+            remainingCapacity -= capacity;
+            bestTasks.add(chosenAnt);
+            currentDesireAnts.remove(chosenAnt);
+        }
+
+        /*
         for (Map.Entry<DesireAnt, Long> entry : sortMapDescending(this.desireAnts)) {
             System.out.println("entry.getKey().pizzas = " + entry.getKey().pizzas);
             int capacity = Math.min(remainingCapacity, entry.getKey().pizzas);
@@ -953,8 +976,16 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
             } else {
                 break;
             }
-        }
+        }*/
         return bestTasks;
+    }
+
+    private long sumAllDesireScores(HashMap<DesireAnt, Long> currentDesireAnts){
+        long sum = 0;
+        for (Map.Entry<DesireAnt, Long> entry : currentDesireAnts.entrySet()) {
+            sum += entry.getValue();
+        }
+        return sum;
     }
 
     private List<Map.Entry<DesireAnt, Long>> sortMapDescending(HashMap<DesireAnt, Long> map) {
