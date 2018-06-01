@@ -23,6 +23,11 @@
             <artifactId>slf4j-api</artifactId>
             <version>1.7.5</version>
         </dependency>
+        <dependency>
+            <groupId>com.github.pcj</groupId>
+            <artifactId>google-options</artifactId>
+            <version>1.0.0</version>
+        </dependency>
     </dependencies>
 
     <build>

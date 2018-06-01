@@ -22,7 +22,6 @@
     <orderEntry type="library" name="Maven: commons-io:commons-io:2.5" level="project" />
     <orderEntry type="library" name="Maven: joda-time:joda-time:2.10" level="project" />
     <orderEntry type="library" name="Maven: com.google.code.gson:gson:2.8.0" level="project" />
-    <orderEntry type="library" name="Maven: com.google.code.findbugs:jsr305:3.0.2" level="project" />
     <orderEntry type="library" name="Maven: org.jscience:jscience:4.3.1" level="project" />
     <orderEntry type="library" name="Maven: org.javolution:javolution:5.2.3" level="project" />
     <orderEntry type="library" name="Maven: com.github.rinde:rinsim-event:4.4.5" level="project" />
@@ -52,5 +51,7 @@
     <orderEntry type="library" name="Maven: com.github.rinde:rinsim-test-util:test-jar:tests:4.4.5" level="project" />
     <orderEntry type="library" name="Maven: org.apache.commons:commons-collections4:4.1" level="project" />
     <orderEntry type="library" name="Maven: org.slf4j:slf4j-api:1.7.5" level="project" />
+    <orderEntry type="library" name="Maven: com.github.pcj:google-options:1.0.0" level="project" />
+    <orderEntry type="library" name="Maven: com.google.code.findbugs:jsr305:3.0.1" level="project" />
   </component>
 </module>

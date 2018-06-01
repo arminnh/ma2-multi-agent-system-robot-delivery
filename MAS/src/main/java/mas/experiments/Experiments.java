@@ -24,6 +24,7 @@ import com.github.rinde.rinsim.ui.renderers.GraphRoadModelRenderer;
 import com.github.rinde.rinsim.ui.renderers.RoadUserRenderer;
 import com.github.rinde.rinsim.util.StochasticSuppliers;
 import com.google.common.base.Optional;
+import com.google.devtools.common.options.Option;
 import mas.SimulatorSettings;
 import mas.agents.RobotAgent;
 import mas.buildings.ChargingStation;
@@ -41,8 +42,9 @@ import org.apache.commons.math3.random.RandomGenerator;
 import javax.measure.quantity.Length;
 import javax.measure.quantity.Velocity;
 import javax.measure.unit.Unit;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+
+import com.google.devtools.common.options.OptionsParser;
 
 public class Experiments {
     private static double robotSpeed = SimulatorSettings.ROBOT_SPEED;
@@ -70,10 +72,43 @@ public class Experiments {
     private static int nodeDistance = SimulatorSettings.NODE_DISTANCE;
     private static Unit<Length> distanceUnit = SimulatorSettings.DISTANCE_UNIT;
     private static Unit<Velocity> speedUnit = SimulatorSettings.SPEED_UNIT;
+    private static int repeat;
+    private static int simSpeedUp;
+    private static boolean showGUI;
+    
+    private static void assignOptions(ExperimentsOptions options){
+        alternativePathsToExplore = options.alternativePaths;
+        chargingStationCapacity = options.chargingStationCapacity;
+        citySize = options.citySize;
+        repeat = options.repeat;
+        numRobots = options.numRobots;
+        probNewDeliveryTask = options.probNewDeliveryTask;
+        probNewRoadWorks = options.probNewRoadWorks;
+        showGUI = options.showGUI;
+        simSpeedUp = options.simSpeedUp;
+    }
 
+    private static void printUsage(OptionsParser parser) {
+        System.out.println("Usage: java -jar experiments.jar OPTIONS");
+        System.out.println(parser.describeOptions(Collections.<String, String>emptyMap(),
+                OptionsParser.HelpVerbosity.LONG));
+    }
     public static void main(String[] args) {
-        int uiSpeedUp = 1;
-        String[] arguments = args;
+
+        OptionsParser parser = OptionsParser.newOptionsParser(ExperimentsOptions.class);
+        parser.parseAndExitUponError(args);
+        ExperimentsOptions options = parser.getOptions(ExperimentsOptions.class);
+        if(options.help){
+            printUsage(parser);
+            return;
+        }
+
+        assignOptions(options);
+        System.out.println("numRobots = " + numRobots);
+
+        //int uiSpeedUp = 1;
+        //String[] arguments = args;
+
 
         // SOME MEMBERS CAN BE SET USING ARGUMENTS
         // numRobots
@@ -92,7 +127,7 @@ public class Experiments {
                 .withAutoPlay()
                 .withSimulatorEndTime(simulationLength)
                 .withAutoClose()
-                .withSpeedUp(SimulatorSettings.SIM_SPEEDUP)
+                .withSpeedUp(simSpeedUp)
                 .with(GraphRoadModelRenderer.builder()
                         .withMargin(robotLength)
                 )
@@ -168,7 +203,7 @@ public class Experiments {
 
                 // The number of repetitions for each simulation.
                 // Each repetition will have a unique random seed that is given to the simulator.
-                .repeat(20)
+                .repeat(repeat)
 
                 // The master random seed from which all random seeds for the simulations will be drawn.
                 .withRandomSeed(randomSeed)
@@ -183,11 +218,11 @@ public class Experiments {
                 .usePostProcessor(new PizzaPostProcessor())
 
                 .showGui(viewBuilder)
-                .showGui(false)
+                .showGui(showGUI)
 
                 // Starts the experiment, but first reads the command-line arguments that are specified for this
                 // application. By supplying the '-h' option you can see an overview of the supported options.
-                .perform(System.out, arguments);
+                .perform(System.out);
 
         if (results.isPresent()) {
             for (final Experiment.SimulationResult sr : results.get().getResults()) {
@@ -200,14 +235,6 @@ public class Experiments {
         }
     }
 
-    /**
-     * Defines a simple scenario with one depot, one vehicle and three parcels.
-     * Note that a scenario is supposed to only contain problem specific
-     * information it should (generally) not make any assumptions about the
-     * algorithm(s) that are used to solve the problem.
-     *
-     * @return A newly constructed scenario.
-     */
     public static Vehicles.VehicleGenerator getVehicleGenerator(int vehiclesAm, int vehicleCap, double vehicleSpeed) {
         return Vehicles.builder()
                 .numberOfVehicles(StochasticSuppliers.constant(vehiclesAm))
