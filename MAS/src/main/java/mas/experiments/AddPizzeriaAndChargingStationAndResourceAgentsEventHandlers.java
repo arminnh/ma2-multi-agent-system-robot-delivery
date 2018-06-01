@@ -37,10 +37,12 @@ public class AddPizzeriaAndChargingStationAndResourceAgentsEventHandlers {
     enum Handler implements TimedEventHandler<AddDepotEvent> {
         INSTANCE {
             public void handleTimedEvent(@NotNull AddDepotEvent event, @NotNull SimulatorAPI sim) {
-                sim.register(new Pizzeria(pizzeriaPosition));
-                sim.register(new ChargingStation(chargingStationPosition, chargingStationCapacity));
+                //sim.register(new Pizzeria(pizzeriaPosition));
+                //sim.register(new ChargingStation(chargingStationPosition, chargingStationCapacity));
 
                 PizzeriaModel pm = ((Simulator) sim).getModelProvider().getModel(PizzeriaModel.class);
+                pm.openPizzeria();
+                pm.openChargingStation();
                 for (Point p : graph.getNodes()) {
                     pm.createResourceAgent(p, intentionReservationLifetime, nodeDistance, robotSpeed);
                 }
