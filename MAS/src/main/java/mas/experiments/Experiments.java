@@ -123,7 +123,6 @@ public class Experiments {
                 .addModel(DefaultPDPModel.builder())
                 .addModel(CommModel.builder())
                 .addModel(PizzeriaModel.builder())
-                .addModel(viewBuilder)
                 .build();
 
         List<Scenario> scenarios = new ArrayList<>();
@@ -183,6 +182,9 @@ public class Experiments {
                 // after it has finished. It can be used to gather simulation results. The objects created by the
                 // post processor end up in the ExperimentResults object that is returned by the perform(..) method
                 .usePostProcessor(new PizzaPostProcessor())
+
+                .showGui(viewBuilder)
+                .showGui(false)
 
                 // Starts the experiment, but first reads the command-line arguments that are specified for this
                 // application. By supplying the '-h' option you can see an overview of the supported options.
