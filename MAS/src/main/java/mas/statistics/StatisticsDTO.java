@@ -112,6 +112,7 @@ public class StatisticsDTO extends com.github.rinde.rinsim.pdptw.common.Statisti
                 ", timeUnit: " + this.timeUnit +
                 ", distanceUnit: " + this.distanceUnit +
                 ", speedUnit: " + this.speedUnit +
+                ", simulationTime in min: " + this.simulationTime / 1000.0 / 60.0 +
                 "}";
 
 

@@ -47,30 +47,29 @@ import java.util.*;
 import com.google.devtools.common.options.OptionsParser;
 
 public class Experiments {
-    private static final double robotSpeed = SimulatorSettings.ROBOT_SPEED;
-    private static final int robotCapacity = SimulatorSettings.ROBOT_CAPACITY;
-
+    private static double robotSpeed = SimulatorSettings.ROBOT_SPEED;
+    private static int robotCapacity = SimulatorSettings.ROBOT_CAPACITY;
     private static int chargingStationCapacity = SimulatorSettings.CHARGING_STATION_ROBOT_CAPACITY;
-    private static final double batteryCapacity = SimulatorSettings.BATTERY_CAPACITY;
-    private static final double batteryRechargeCapacity = SimulatorSettings.BATTERY_RECHARGE_CAPACITY;
+    private static double batteryCapacity = SimulatorSettings.BATTERY_CAPACITY;
+    private static double batteryRechargeCapacity = SimulatorSettings.BATTERY_RECHARGE_CAPACITY;
     private static int alternativePathsToExplore = SimulatorSettings.ALTERNATIVE_PATHS_TO_EXPLORE;
-    private static final long timeRoadWorks = SimulatorSettings.TIME_ROAD_WORKS;
-    private static final long batteryRescueDelay = SimulatorSettings.BATTERY_RESCUE_DELAY;
-    private static final long intentionReservationLifetime = SimulatorSettings.INTENTION_RESERVATION_LIFETIME;
-    private static final long explorationRefreshTime = SimulatorSettings.EXPLORATION_REFRESH_TIME;
-    private static final long intentionRefreshTime = SimulatorSettings.INTENTION_REFRESH_TIME;
+    private static long timeRoadWorks = SimulatorSettings.TIME_ROAD_WORKS;
+    private static long batteryRescueDelay = SimulatorSettings.BATTERY_RESCUE_DELAY;
+    private static long intentionReservationLifetime = SimulatorSettings.INTENTION_RESERVATION_LIFETIME;
+    private static long explorationRefreshTime = SimulatorSettings.EXPLORATION_REFRESH_TIME;
+    private static long intentionRefreshTime = SimulatorSettings.INTENTION_REFRESH_TIME;
     private static double probNewDeliveryTask = SimulatorSettings.PROB_NEW_DELIVERY_TASK;
     private static double probNewRoadWorks = SimulatorSettings.PROB_NEW_ROAD_WORKS;
-    private static final double pizzaAmountStd = SimulatorSettings.PIZZA_AMOUNT_STD;
-    private static final double pizzaAmountMean = SimulatorSettings.PIZZA_AMOUNT_MEAN;
+    private static double pizzaAmountStd = SimulatorSettings.PIZZA_AMOUNT_STD;
+    private static double pizzaAmountMean = SimulatorSettings.PIZZA_AMOUNT_MEAN;
 
     private static long tickLength = SimulatorSettings.TICK_LENGTH;
     private static int citySize = SimulatorSettings.CITY_SIZE;
     private static int numRobots = SimulatorSettings.NUM_ROBOTS;
     private static int robotLength = SimulatorSettings.ROBOT_LENGTH;
-    private static int nodeDistance = SimulatorSettings.NODE_DISTANCE;
     private static final ListenableGraph<LengthData> staticGraph = CityGraphCreator.createGraph(citySize, robotLength);
     private static final ListenableGraph<LengthData> dynamicGraph = CityGraphCreator.createGraph(citySize, robotLength);
+    private static int nodeDistance = SimulatorSettings.NODE_DISTANCE;
     private static Unit<Length> distanceUnit = SimulatorSettings.DISTANCE_UNIT;
     private static Unit<Velocity> speedUnit = SimulatorSettings.SPEED_UNIT;
     private static int repeat;
@@ -103,8 +102,6 @@ public class Experiments {
         assignOptions(options);
         System.out.println("numRobots = " + numRobots);
 
-
-
         int uiSpeedUp = 1;
         String[] arguments = args;
 
@@ -116,9 +113,9 @@ public class Experiments {
         // probNewDeliveryTask
         // probNewRoadWorks
         // alternativePathsToExplore
+//        probNewRoadWorks = 0;
 
-
-        long simulationLength = 60 * 60 * 1000;
+        long simulationLength = 30 * 60 * 1000;
 
         View.Builder viewBuilder = View.builder()
                 .withTitleAppendix("Pizza delivery multi agent system simulator")
@@ -149,7 +146,6 @@ public class Experiments {
                 .parcels(getDeliveryTaskAndRoadWorksGenerator())
                 .depots(getDepotGenerator())
                 .addModel(TimeModel.builder().withTickLength(tickLength))
-                .addModel(RandomModel.builder())
                 .addModel(RoadModelBuilders.dynamicGraph(dynamicGraph)
                         .withDistanceUnit(distanceUnit)
                         .withSpeedUnit(speedUnit)
@@ -160,15 +156,14 @@ public class Experiments {
                 .addModel(PizzeriaModel.builder())
                 .build();
 
+        // The seed is strong
+        long randomSeed = System.currentTimeMillis();
         List<Scenario> scenarios = new ArrayList<>();
         int numberOfDesiredScenarios = 1;
-
-        int scenarioID = 1;
-        RandomGenerator rng = new MersenneTwister(123L);
         for (int i = 0; i < numberOfDesiredScenarios; i++) {
             scenarios.add(generator.generate(
-                    new MersenneTwister(rng.nextLong()),
-                    "Scenario " + Integer.toString(scenarioID++)
+                    new MersenneTwister(randomSeed),
+                    "Scenario " + Integer.toString(i + 1)
             ));
         }
 
@@ -204,10 +199,10 @@ public class Experiments {
 
                 // The number of repetitions for each simulation.
                 // Each repetition will have a unique random seed that is given to the simulator.
-                .repeat(1)
+                .repeat(2)
 
                 // The master random seed from which all random seeds for the simulations will be drawn.
-                .withRandomSeed(1234567890)
+                .withRandomSeed(randomSeed)
 
                 // The number of threads the experiment will use, this allows to run several simulations in parallel.
                 // Note that when the GUI is used the number of threads must be set to 1.
@@ -241,6 +236,7 @@ public class Experiments {
                 .numberOfVehicles(StochasticSuppliers.constant(vehiclesAm))
                 .capacities(StochasticSuppliers.constant(vehicleCap))
                 .speeds(StochasticSuppliers.constant(vehicleSpeed))
+                .startPositions(StochasticSuppliers.constant(new Point(2, 2)))
                 .build();
     }
 
