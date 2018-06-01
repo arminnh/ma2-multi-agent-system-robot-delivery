@@ -24,6 +24,7 @@ import com.github.rinde.rinsim.ui.renderers.GraphRoadModelRenderer;
 import com.github.rinde.rinsim.ui.renderers.RoadUserRenderer;
 import com.github.rinde.rinsim.util.StochasticSuppliers;
 import com.google.common.base.Optional;
+import com.google.devtools.common.options.Option;
 import mas.SimulatorSettings;
 import mas.agents.RobotAgent;
 import mas.buildings.ChargingStation;
@@ -41,25 +42,25 @@ import org.apache.commons.math3.random.RandomGenerator;
 import javax.measure.quantity.Length;
 import javax.measure.quantity.Velocity;
 import javax.measure.unit.Unit;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
+
+import com.google.devtools.common.options.OptionsParser;
 
 public class Experiments {
     private static final double robotSpeed = SimulatorSettings.ROBOT_SPEED;
     private static final int robotCapacity = SimulatorSettings.ROBOT_CAPACITY;
-    private static final int chargingStationCapacity = SimulatorSettings.CHARGING_STATION_ROBOT_CAPACITY;
+
+    private static int chargingStationCapacity = SimulatorSettings.CHARGING_STATION_ROBOT_CAPACITY;
     private static final double batteryCapacity = SimulatorSettings.BATTERY_CAPACITY;
     private static final double batteryRechargeCapacity = SimulatorSettings.BATTERY_RECHARGE_CAPACITY;
-    private static final int alternativePathsToExplore = SimulatorSettings.ALTERNATIVE_PATHS_TO_EXPLORE;
+    private static int alternativePathsToExplore = SimulatorSettings.ALTERNATIVE_PATHS_TO_EXPLORE;
     private static final long timeRoadWorks = SimulatorSettings.TIME_ROAD_WORKS;
     private static final long batteryRescueDelay = SimulatorSettings.BATTERY_RESCUE_DELAY;
     private static final long intentionReservationLifetime = SimulatorSettings.INTENTION_RESERVATION_LIFETIME;
     private static final long explorationRefreshTime = SimulatorSettings.EXPLORATION_REFRESH_TIME;
     private static final long intentionRefreshTime = SimulatorSettings.INTENTION_REFRESH_TIME;
-    private static final double probNewDeliveryTask = SimulatorSettings.PROB_NEW_DELIVERY_TASK;
-    private static final double probNewRoadWorks = SimulatorSettings.PROB_NEW_ROAD_WORKS;
+    private static double probNewDeliveryTask = SimulatorSettings.PROB_NEW_DELIVERY_TASK;
+    private static double probNewRoadWorks = SimulatorSettings.PROB_NEW_ROAD_WORKS;
     private static final double pizzaAmountStd = SimulatorSettings.PIZZA_AMOUNT_STD;
     private static final double pizzaAmountMean = SimulatorSettings.PIZZA_AMOUNT_MEAN;
 
@@ -72,10 +73,41 @@ public class Experiments {
     private static final ListenableGraph<LengthData> dynamicGraph = CityGraphCreator.createGraph(citySize, robotLength);
     private static Unit<Length> distanceUnit = SimulatorSettings.DISTANCE_UNIT;
     private static Unit<Velocity> speedUnit = SimulatorSettings.SPEED_UNIT;
+    private static int repeat;
+
+    private static void printUsage(OptionsParser parser) {
+        System.out.println("Usage: java -jar experiments.jar OPTIONS");
+        System.out.println(parser.describeOptions(Collections.<String, String>emptyMap(),
+                OptionsParser.HelpVerbosity.LONG));
+    }
+
+    private static void assignOptions(ExperimentsOptions options){
+        alternativePathsToExplore = options.alternativePaths;
+        chargingStationCapacity = options.chargingStationCapacity;
+        citySize = options.citySize;
+        repeat = options.repeat;
+        numRobots = options.numRobots;
+        probNewDeliveryTask = options.probNewDeliveryTask;
+        probNewRoadWorks = options.probNewRoadWorks;
+    }
 
     public static void main(String[] args) {
+
+        OptionsParser parser = OptionsParser.newOptionsParser(ExperimentsOptions.class);
+        parser.parseAndExitUponError(args);
+        ExperimentsOptions options = parser.getOptions(ExperimentsOptions.class);
+        if(options.help){
+            printUsage(parser);
+        }
+
+        assignOptions(options);
+        System.out.println("numRobots = " + numRobots);
+
+
+
         int uiSpeedUp = 1;
         String[] arguments = args;
+
 
         // SOME MEMBERS CAN BE SET USING ARGUMENTS
         // numRobots
@@ -204,14 +236,6 @@ public class Experiments {
         }
     }
 
-    /**
-     * Defines a simple scenario with one depot, one vehicle and three parcels.
-     * Note that a scenario is supposed to only contain problem specific
-     * information it should (generally) not make any assumptions about the
-     * algorithm(s) that are used to solve the problem.
-     *
-     * @return A newly constructed scenario.
-     */
     public static Vehicles.VehicleGenerator getVehicleGenerator(int vehiclesAm, int vehicleCap, double vehicleSpeed) {
         return Vehicles.builder()
                 .numberOfVehicles(StochasticSuppliers.constant(vehiclesAm))
