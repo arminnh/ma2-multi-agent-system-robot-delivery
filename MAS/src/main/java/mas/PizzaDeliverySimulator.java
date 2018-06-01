@@ -15,10 +15,12 @@ import com.github.rinde.rinsim.ui.View;
 import com.github.rinde.rinsim.ui.renderers.CommRenderer;
 import com.github.rinde.rinsim.ui.renderers.GraphRoadModelRenderer;
 import com.github.rinde.rinsim.ui.renderers.RoadUserRenderer;
+import com.google.devtools.common.options.OptionsParser;
 import mas.agents.RobotAgent;
 import mas.buildings.ChargingStation;
 import mas.buildings.Pizzeria;
 import mas.buildings.RoadWorks;
+import mas.experiments.ExperimentsOptions;
 import mas.graphs.CityGraphCreator;
 import mas.models.PizzeriaModel;
 import mas.renderers.DeliveryTaskRenderer;
@@ -28,12 +30,53 @@ import mas.tasks.DeliveryTask;
 import org.apache.commons.math3.random.RandomGenerator;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
+
 public class PizzaDeliverySimulator {
+
+
+    private static int alternativePathsToExplore;
+    private static int citySize;
+    private static int chargingStationCapacity;
+    private static int repeat;
+    private static int numRobots;
+    private static double probNewDeliveryTask;
+    private static double probNewRoadWorks;
+    private static boolean showGUI;
+    private static int simSpeedUp;
+
+    private static void printUsage(OptionsParser parser) {
+        System.out.println("Usage: java -jar MAR.jar OPTIONS");
+        System.out.println(parser.describeOptions(Collections.<String, String>emptyMap(),
+                OptionsParser.HelpVerbosity.LONG));
+    }
+
+    private static void assignOptions(ExperimentsOptions options){
+        alternativePathsToExplore = options.alternativePaths;
+        chargingStationCapacity = options.chargingStationCapacity;
+        citySize = options.citySize;
+        repeat = options.repeat;
+        numRobots = options.numRobots;
+        probNewDeliveryTask = options.probNewDeliveryTask;
+        probNewRoadWorks = options.probNewRoadWorks;
+        showGUI = options.showGUI;
+        simSpeedUp = options.simSpeedUp;
+    }
 
     /**
      * @param args - No args.
      */
     public static void main(String[] args) {
+
+        OptionsParser parser = OptionsParser.newOptionsParser(ExperimentsOptions.class);
+        parser.parseAndExitUponError(args);
+        ExperimentsOptions options = parser.getOptions(ExperimentsOptions.class);
+        if(options.help){
+            printUsage(parser);
+            return;
+        }
+        assignOptions(options);
+
         run();
     }
 
@@ -45,7 +88,7 @@ public class PizzaDeliverySimulator {
         View.Builder viewBuilder = View.builder()
                 .withTitleAppendix("Pizza delivery multi agent system simulator")
                 .withAutoPlay()
-                .withSpeedUp(SimulatorSettings.SIM_SPEEDUP)
+                .withSpeedUp(simSpeedUp)
                 .with(GraphRoadModelRenderer.builder()
                         .withMargin(SimulatorSettings.ROBOT_LENGTH)
                 )
@@ -75,29 +118,50 @@ public class PizzaDeliverySimulator {
 
         // Create the graphs for the virtual environment. Need to create them twice in order to keep a static one
         // on the vehicles. It was impossible to create a graph snapshot in the vehicles.
-        ListenableGraph<LengthData> staticGraph = CityGraphCreator.createGraph(SimulatorSettings.CITY_SIZE, SimulatorSettings.ROBOT_LENGTH);
-        ListenableGraph<LengthData> dynamicGraph = CityGraphCreator.createGraph(SimulatorSettings.CITY_SIZE, SimulatorSettings.ROBOT_LENGTH);
-
+        ListenableGraph<LengthData> staticGraph = CityGraphCreator.createGraph(citySize, SimulatorSettings.ROBOT_LENGTH);
+        ListenableGraph<LengthData> dynamicGraph = CityGraphCreator.createGraph(citySize, SimulatorSettings.ROBOT_LENGTH);
+        Simulator sim = null;
         // initialize a new Simulator instance
-        final Simulator sim = Simulator.builder()
-                // set the length of a simulation 'tick'
-                .setTickLength(SimulatorSettings.TICK_LENGTH)
-                .addModel(RandomModel.builder()
-                        // set the random seed we use in this 'experiment'
-                        .withSeed(System.currentTimeMillis())
-                )
-                .addModel(RoadModelBuilders.dynamicGraph(dynamicGraph)
-                        .withDistanceUnit(SimulatorSettings.DISTANCE_UNIT)
-                        .withSpeedUnit(SimulatorSettings.SPEED_UNIT)
-                        .withModificationCheck(true)
-                )
-                .addModel(DefaultPDPModel.builder())
-                .addModel(CommModel.builder())
-                .addModel(PizzeriaModel.builder())
-                .addModel(StatsTracker.builder())
-                // in case a GUI is not desired simply don't add it.
-                .addModel(viewBuilder)
-                .build();
+        if(showGUI){
+            sim = Simulator.builder()
+                    // set the length of a simulation 'tick'
+                    .setTickLength(SimulatorSettings.TICK_LENGTH)
+                    .addModel(RandomModel.builder()
+                            // set the random seed we use in this 'experiment'
+                            .withSeed(System.currentTimeMillis())
+                    )
+                    .addModel(RoadModelBuilders.dynamicGraph(dynamicGraph)
+                            .withDistanceUnit(SimulatorSettings.DISTANCE_UNIT)
+                            .withSpeedUnit(SimulatorSettings.SPEED_UNIT)
+                            .withModificationCheck(true)
+                    )
+                    .addModel(DefaultPDPModel.builder())
+                    .addModel(CommModel.builder())
+                    .addModel(PizzeriaModel.builder())
+                    .addModel(StatsTracker.builder())
+                    // in case a GUI is not desired simply don't add it.
+                    .addModel(viewBuilder)
+                    .build();
+        }else{
+            Simulator.builder()
+                    // set the length of a simulation 'tick'
+                    .setTickLength(SimulatorSettings.TICK_LENGTH)
+                    .addModel(RandomModel.builder()
+                            // set the random seed we use in this 'experiment'
+                            .withSeed(System.currentTimeMillis())
+                    )
+                    .addModel(RoadModelBuilders.dynamicGraph(dynamicGraph)
+                            .withDistanceUnit(SimulatorSettings.DISTANCE_UNIT)
+                            .withSpeedUnit(SimulatorSettings.SPEED_UNIT)
+                            .withModificationCheck(true)
+                    )
+                    .addModel(DefaultPDPModel.builder())
+                    .addModel(CommModel.builder())
+                    .addModel(PizzeriaModel.builder())
+                    .addModel(StatsTracker.builder())
+                    // in case a GUI is not desired simply don't add it.
+                    .build();
+        }
 
         final RandomGenerator rng = sim.getRandomGenerator();
         final PizzeriaModel pizzeriaModel = sim.getModelProvider().getModel(PizzeriaModel.class);
@@ -106,7 +170,7 @@ public class PizzaDeliverySimulator {
         pizzeriaModel.createPizzeria(rng);
         pizzeriaModel.createChargingStation(
                 rng,
-                SimulatorSettings.ROBOT_CAPACITY,
+                chargingStationCapacity,
                 SimulatorSettings.BATTERY_RECHARGE_CAPACITY
         );
 
@@ -121,7 +185,7 @@ public class PizzaDeliverySimulator {
         }
 
         // Create robots
-        for (int i = 0; i < SimulatorSettings.NUM_ROBOTS; i++) {
+        for (int i = 0; i < numRobots; i++) {
             // Robots start at the pizzeria
             pizzeriaModel.createRobot(
                     SimulatorSettings.ROBOT_CAPACITY,
@@ -129,7 +193,7 @@ public class PizzaDeliverySimulator {
                     SimulatorSettings.BATTERY_CAPACITY,
                     SimulatorSettings.BATTERY_RESCUE_DELAY,
                     staticGraph,
-                    SimulatorSettings.ALTERNATIVE_PATHS_TO_EXPLORE,
+                    alternativePathsToExplore,
                     SimulatorSettings.EXPLORATION_REFRESH_TIME,
                     SimulatorSettings.INTENTION_REFRESH_TIME
             );
@@ -139,7 +203,7 @@ public class PizzaDeliverySimulator {
         sim.addTickListener(new TickListener() {
             @Override
             public void tick(@NotNull TimeLapse time) {
-                if (rng.nextDouble() < SimulatorSettings.PROB_NEW_DELIVERY_TASK) {
+                if (rng.nextDouble() < probNewDeliveryTask) {
                     pizzeriaModel.createDeliveryTask(
                             rng,
                             SimulatorSettings.PIZZA_AMOUNT_MEAN,
@@ -157,7 +221,7 @@ public class PizzaDeliverySimulator {
         sim.addTickListener(new TickListener() {
             @Override
             public void tick(@NotNull TimeLapse timeLapse) {
-                if (rng.nextDouble() < SimulatorSettings.PROB_NEW_ROAD_WORKS) {
+                if (rng.nextDouble() < probNewRoadWorks) {
                     pizzeriaModel.createRoadWorks(
                             rng,
                             timeLapse.getEndTime() + SimulatorSettings.TIME_ROAD_WORKS

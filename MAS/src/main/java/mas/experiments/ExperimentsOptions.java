@@ -16,7 +16,6 @@ public class ExperimentsOptions  extends OptionsBase {
             abbrev = 'n',
             help = "The amount of robots used",
             category="Startup",
-
             defaultValue = "3"
     )
     public int numRobots;
@@ -26,7 +25,6 @@ public class ExperimentsOptions  extends OptionsBase {
             abbrev = 's',
             help = "The size of the city",
             category="Startup",
-
             defaultValue = "12"
     )
     public int citySize;
@@ -36,7 +34,6 @@ public class ExperimentsOptions  extends OptionsBase {
             abbrev = 'c',
             help = "The capacity of the charging station. (How many robots can be there at one given point in time)",
             category="Startup",
-
             defaultValue = "3"
     )
     public int chargingStationCapacity;
@@ -74,7 +71,7 @@ public class ExperimentsOptions  extends OptionsBase {
     @Option(
             name = "repeat",
             abbrev = 'r',
-            help = "How many times to repeat the experiment.",
+            help = "How many times to repeat the experiment. Only for experiments.",
             category="Startup",
 
             defaultValue = "1"
@@ -89,4 +86,23 @@ public class ExperimentsOptions  extends OptionsBase {
             category="Startup"
     )
     public boolean help;
+
+    @Option(
+            name = "simSpeedUp",
+            abbrev = 'u',
+            help = "Speeds up the simulation time between two GUI draw operations",
+            defaultValue = "1",
+            category = "Startup"
+    )
+    public int simSpeedUp;
+
+    @Option(
+            name = "showGUI",
+            abbrev = 'g',
+            help = "Show the gui",
+            defaultValue = "false",
+            category = "Startup"
+    )
+    public boolean showGUI;
+
 }

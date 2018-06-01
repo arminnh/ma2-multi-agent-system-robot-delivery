@@ -73,13 +73,9 @@ public class Experiments {
     private static Unit<Length> distanceUnit = SimulatorSettings.DISTANCE_UNIT;
     private static Unit<Velocity> speedUnit = SimulatorSettings.SPEED_UNIT;
     private static int repeat;
-
-    private static void printUsage(OptionsParser parser) {
-        System.out.println("Usage: java -jar experiments.jar OPTIONS");
-        System.out.println(parser.describeOptions(Collections.<String, String>emptyMap(),
-                OptionsParser.HelpVerbosity.LONG));
-    }
-
+    private static int simSpeedUp;
+    private static boolean showGUI;
+    
     private static void assignOptions(ExperimentsOptions options){
         alternativePathsToExplore = options.alternativePaths;
         chargingStationCapacity = options.chargingStationCapacity;
@@ -88,8 +84,15 @@ public class Experiments {
         numRobots = options.numRobots;
         probNewDeliveryTask = options.probNewDeliveryTask;
         probNewRoadWorks = options.probNewRoadWorks;
+        showGUI = options.showGUI;
+        simSpeedUp = options.simSpeedUp;
     }
 
+    private static void printUsage(OptionsParser parser) {
+        System.out.println("Usage: java -jar experiments.jar OPTIONS");
+        System.out.println(parser.describeOptions(Collections.<String, String>emptyMap(),
+                OptionsParser.HelpVerbosity.LONG));
+    }
     public static void main(String[] args) {
 
         OptionsParser parser = OptionsParser.newOptionsParser(ExperimentsOptions.class);
@@ -97,13 +100,14 @@ public class Experiments {
         ExperimentsOptions options = parser.getOptions(ExperimentsOptions.class);
         if(options.help){
             printUsage(parser);
+            return;
         }
 
         assignOptions(options);
         System.out.println("numRobots = " + numRobots);
 
-        int uiSpeedUp = 1;
-        String[] arguments = args;
+        //int uiSpeedUp = 1;
+        //String[] arguments = args;
 
 
         // SOME MEMBERS CAN BE SET USING ARGUMENTS
@@ -122,7 +126,7 @@ public class Experiments {
                 .withAutoPlay()
                 .withSimulatorEndTime(simulationLength)
                 .withAutoClose()
-                .withSpeedUp(SimulatorSettings.SIM_SPEEDUP)
+                .withSpeedUp(simSpeedUp)
                 .with(GraphRoadModelRenderer.builder()
                         .withMargin(robotLength)
                 )
@@ -199,7 +203,7 @@ public class Experiments {
 
                 // The number of repetitions for each simulation.
                 // Each repetition will have a unique random seed that is given to the simulator.
-                .repeat(2)
+                .repeat(repeat)
 
                 // The master random seed from which all random seeds for the simulations will be drawn.
                 .withRandomSeed(randomSeed)
@@ -214,11 +218,11 @@ public class Experiments {
                 .usePostProcessor(new PizzaPostProcessor())
 
                 .showGui(viewBuilder)
-                .showGui(true)
+                .showGui(showGUI)
 
                 // Starts the experiment, but first reads the command-line arguments that are specified for this
                 // application. By supplying the '-h' option you can see an overview of the supported options.
-                .perform(System.out, arguments);
+                .perform(System.out);
 
         if (results.isPresent()) {
             for (final Experiment.SimulationResult sr : results.get().getResults()) {
