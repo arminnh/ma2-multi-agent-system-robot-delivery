@@ -9,7 +9,6 @@ import com.github.rinde.rinsim.core.model.time.TimeLapse;
 import com.github.rinde.rinsim.geom.Point;
 import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
-import mas.SimulatorSettings;
 import mas.buildings.ChargingStation;
 import mas.buildings.RoadWorks;
 import mas.messages.*;
@@ -38,9 +37,15 @@ public class ResourceAgent implements CommUser, TickListener {
 
     private HashMap<Integer, List<DeliveryTaskReservation>> deliveryReservations = new HashMap<>();
     private List<ChargingStationReservation> chargingStationReservations = new LinkedList<>();
+    private long intentionReservationLifetime;
+    private long robotTimePerHop;
 
-    public ResourceAgent(Point position) {
+    public ResourceAgent(Point position, long intentionReservationLifetime, int nodeDistance, double robotSpeed) {
         this.position = position;
+        this.intentionReservationLifetime = intentionReservationLifetime;
+
+        // distance in m, speed in m/s, travel time between two nodes = (distance / speed)
+        this.robotTimePerHop = (long) (nodeDistance / robotSpeed);
     }
 
     @Override
@@ -64,10 +69,6 @@ public class ResourceAgent implements CommUser, TickListener {
 
     public void setRoadWorks(RoadWorks roadWorks) {
         this.roadWorks = Optional.of(roadWorks);
-    }
-
-    public boolean hasRoadWorks() {
-        return this.roadWorks.isPresent();
     }
 
     public void removeRoadWorks() {
@@ -126,7 +127,7 @@ public class ResourceAgent implements CommUser, TickListener {
                 this.handleDesireAnt(m, timeLapse);
 
             } else if (m.getContents().getClass() == ExplorationAnt.class) {
-                this.handleExplorationAnt(m);
+                this.handleExplorationAnt(m, timeLapse);
 
             } else if (m.getContents().getClass() == IntentionAnt.class) {
                 this.handleIntentionAnt(m, timeLapse);
@@ -174,16 +175,16 @@ public class ResourceAgent implements CommUser, TickListener {
                     }
                 }
 
-                DesireAnt newAnt = ant.copy(Lists.reverse(ant.path),true, score, pizzas, 0);
+                DesireAnt newAnt = ant.copy(Lists.reverse(ant.path), true, score, pizzas, 0);
 
-                this.sendAntToNextHop(newAnt);
+                this.sendAntToNextHop(newAnt, time);
             }
         } else {
-            this.sendAntToNextHop(ant);
+            this.sendAntToNextHop(ant, time);
         }
     }
 
-    private void handleExplorationAnt(Message m) {
+    private void handleExplorationAnt(Message m, TimeLapse time) {
         ExplorationAnt ant = (ExplorationAnt) m.getContents();
         System.out.println("Exploration ant at " + this.position + ": " + ant);
 
@@ -198,18 +199,18 @@ public class ResourceAgent implements CommUser, TickListener {
                 List<IntentionData> newDeliveriesData = this.updateExplorationAntIntentionData(ant);
 
                 if (ant.hasReachedFinalDestination()) {
-                    this.sendAntToNextHop(ant.copy(Lists.reverse(ant.path), true, newDeliveriesData, 0));
+                    this.sendAntToNextHop(ant.copy(Lists.reverse(ant.path), true, newDeliveriesData, 0), time);
                 } else {
-                    this.sendAntToNextHop(ant.copy(ant.path, false, newDeliveriesData, ant.pathIndex));
+                    this.sendAntToNextHop(ant.copy(ant.path, false, newDeliveriesData, ant.pathIndex), time);
                 }
             }
 
         } else {
-            this.sendAntToNextHop(ant);
+            this.sendAntToNextHop(ant, time);
         }
     }
 
-    private void handleIntentionAnt(Message m, TimeLapse timeLapse) {
+    private void handleIntentionAnt(Message m, TimeLapse time) {
         IntentionAnt ant = (IntentionAnt) m.getContents();
         System.out.println("Intention ant at " + this.position + ": " + ant);
 
@@ -218,17 +219,17 @@ public class ResourceAgent implements CommUser, TickListener {
                 this.commDevice.send(ant.copy(Lists.reverse(ant.path), true, ant.intentions, 0), ant.robot);
             } else {
                 if (ant.toChargingStation) {
-                    this.handleIntentionAntForChargingStation(timeLapse, ant);
+                    this.handleIntentionAntForChargingStation(ant, time);
                 } else {
-                    this.handleIntentionAntForDeliveryTask(timeLapse, ant);
+                    this.handleIntentionAntForDeliveryTask(ant, time);
                 }
             }
         } else {
-            this.sendAntToNextHop(ant);
+            this.sendAntToNextHop(ant, time);
         }
     }
 
-    private void handleIntentionAntForDeliveryTask(TimeLapse timeLapse, IntentionAnt ant) {
+    private void handleIntentionAntForDeliveryTask(IntentionAnt ant, TimeLapse time) {
         System.out.println("ResourceAgent.handleIntentionAntForDeliveryTask");
         // Get data of all DeliveryTasks on this position
         List<IntentionData> newDeliveriesData = new LinkedList<>();
@@ -240,7 +241,7 @@ public class ResourceAgent implements CommUser, TickListener {
                 System.out.println("task = " + task);
                 // Check if a reservation can be updated or can be made (= if the task has pizzas to be delivered)
                 if (task != null) {
-                    boolean updated = this.updateDeliveryReservation(task, intentionData, timeLapse);
+                    boolean updated = this.updateDeliveryReservation(task, intentionData, time);
 
                     if (updated) {
                         // The reservation has been updated, set 'confirmed' to true in the delivery data.
@@ -251,7 +252,7 @@ public class ResourceAgent implements CommUser, TickListener {
                         if (this.getPizzasLeftForDeliveryTask(task.id) > 0
                                 && intentionData.pizzas <= this.getPizzasLeftForDeliveryTask(task.id)) {
 
-                            createReservation(timeLapse, intentionData, task);
+                            createReservation(time, intentionData, task);
 
                             // A reservation has been created, set 'confirmed' to true in the delivery data.
                             newDeliveriesData.add(intentionData.copy(true));
@@ -274,12 +275,11 @@ public class ResourceAgent implements CommUser, TickListener {
 
         // Send the ants
         if (ant.hasReachedFinalDestination()) {
-            this.sendAntToNextHop(ant.copy(Lists.reverse(ant.path), true, newDeliveriesData, 0));
+            this.sendAntToNextHop(ant.copy(Lists.reverse(ant.path), true, newDeliveriesData, 0), time);
         } else {
-            this.sendAntToNextHop(ant.copy(ant.path, false, newDeliveriesData, ant.pathIndex));
+            this.sendAntToNextHop(ant.copy(ant.path, false, newDeliveriesData, ant.pathIndex), time);
         }
     }
-
 
     private boolean canRobotChargeAtTime(TimeLapse currentTime, long travelTime){
         int usedSlots = 0;
@@ -295,7 +295,7 @@ public class ResourceAgent implements CommUser, TickListener {
         return usedSlots < maxCap;
     }
 
-    private void handleIntentionAntForChargingStation(TimeLapse timeLapse, IntentionAnt ant) {
+    private void handleIntentionAntForChargingStation(IntentionAnt ant, TimeLapse time) {
         if (this.chargingStation.isPresent()) {
             List<IntentionData> newDeliveriesData = new LinkedList<>();
             if (ant.intentions.size() > 1) {
@@ -304,7 +304,7 @@ public class ResourceAgent implements CommUser, TickListener {
 
             IntentionData intentionData = ant.intentions.get(0);
 
-            boolean update = updateChargingReservation(intentionData, timeLapse);
+            boolean update = updateChargingReservation(intentionData, time);
             if (update) {
                 newDeliveriesData.add(intentionData.copy(true));
             } else {
@@ -312,12 +312,12 @@ public class ResourceAgent implements CommUser, TickListener {
                 System.out.println("this.chargingStationReservations.size() = " + this.chargingStationReservations.size());
                 System.out.println("this.chargingStation.get().getChargeCapacity() = " + this.chargingStation.get().capacity);
 
-                if (canRobotChargeAtTime(timeLapse, ant.estimatedTime)) {
+                if (canRobotChargeAtTime(time, ant.estimatedTime)) {
                     // Confirm the reservation
                     newDeliveriesData.add(intentionData.copy(true));
 
                     // Add new reservation to the list
-                    ChargingStationReservation resv = new ChargingStationReservation(ant.robotID, timeLapse.getEndTime() + SimulatorSettings.INTENTION_RESERVATION_LIFETIME);
+                    ChargingStationReservation resv = new ChargingStationReservation(ant.robotID, time.getEndTime() + this.intentionReservationLifetime);
                     this.chargingStationReservations.add(resv);
                     System.out.println("Creating Reservation at charging station. " + this.chargingStationReservations.size() + "/ " + this.chargingStation.get().capacity + " resv in total.");
                 } else {
@@ -326,7 +326,7 @@ public class ResourceAgent implements CommUser, TickListener {
             }
 
             System.out.println("ResourceAgent.handleIntentionAntForChargingStation: " + this.chargingStation.get());
-            this.sendAntToNextHop(ant.copy(Lists.reverse(ant.path), true, newDeliveriesData, 0));
+            this.sendAntToNextHop(ant.copy(Lists.reverse(ant.path), true, newDeliveriesData, 0), time);
         } else {
             throw new IllegalStateException("Ant arrived at destination with `toChargingStation = true`," +
                     "but there is no charging station at destination");
@@ -365,7 +365,7 @@ public class ResourceAgent implements CommUser, TickListener {
 
     private void createReservation(TimeLapse timeLapse, IntentionData intentionData, DeliveryTask task) {
         // Make the reservation and send the ant back to confirm.
-        long evaporationTimestamp = timeLapse.getEndTime() + SimulatorSettings.INTENTION_RESERVATION_LIFETIME;
+        long evaporationTimestamp = timeLapse.getEndTime() + this.intentionReservationLifetime;
         DeliveryTaskReservation reservation = new DeliveryTaskReservation(intentionData.robotID,
                 task.id, intentionData.pizzas, evaporationTimestamp
         );
@@ -382,7 +382,7 @@ public class ResourceAgent implements CommUser, TickListener {
         for(ChargingStationReservation resv: this.chargingStationReservations){
             if(resv.robotID == robotId){
                 oldResv = resv;
-                Double chargeTime =  TICK_LENGTH * amRechargeNeeded / SimulatorSettings.BATTERY_CHARGE_CAPACITY;
+                Double chargeTime =  TICK_LENGTH * amRechargeNeeded / this.chargingStation.get().rechargeCapacity;
                 newResv = new ChargingStationReservation(robotId, time.getEndTime() + chargeTime.longValue());
             }
         }
@@ -399,7 +399,7 @@ public class ResourceAgent implements CommUser, TickListener {
         if (reservations.size() > 0) {
             // Update the timer.
             DeliveryTaskReservation r = reservations.get(0);
-            DeliveryTaskReservation new_reservation = r.copy(timeLapse.getEndTime() + SimulatorSettings.INTENTION_RESERVATION_LIFETIME);
+            DeliveryTaskReservation new_reservation = r.copy(timeLapse.getEndTime() + this.intentionReservationLifetime);
 
             this.deliveryReservations.get(task.id).remove(r);
             this.deliveryReservations.get(task.id).add(new_reservation);
@@ -417,7 +417,7 @@ public class ResourceAgent implements CommUser, TickListener {
         if (reservations.size() > 0) {
             // Update the timer.
             ChargingStationReservation r = reservations.get(0);
-            ChargingStationReservation new_reservation = r.copy(timeLapse.getEndTime() + SimulatorSettings.INTENTION_RESERVATION_LIFETIME);
+            ChargingStationReservation new_reservation = r.copy(timeLapse.getEndTime() + this.intentionReservationLifetime);
 
             this.chargingStationReservations.remove(r);
             this.chargingStationReservations.add(new_reservation);
@@ -427,7 +427,7 @@ public class ResourceAgent implements CommUser, TickListener {
         return false;
     }
 
-    private void sendAntToNextHop(Ant ant) {
+    private void sendAntToNextHop(Ant ant, TimeLapse time) {
         System.out.println("ResourceAgent.sendAntToNextHop");
 
         if (ant.path.size() == 0) {
@@ -442,10 +442,8 @@ public class ResourceAgent implements CommUser, TickListener {
 
         long estimatedTime = ant.estimatedTime;
         if (!ant.isReturning) {
-            // Want time in ms, have distance in m, speed in m/s (see SimulatorSettings)
-            // We know that distance between two nodes is always 2m
-            // So estimatedTime between two nodes in milliseconds = (distance / speed) * 1000
-            estimatedTime += (SimulatorSettings.NODE_DISTANCE / SimulatorSettings.ROBOT_SPEED) * 1000;
+            // Want time in ms
+            estimatedTime += this.robotTimePerHop * 1000;
         }
 
         int nextPositionIndex = ant.pathIndex + 1;
@@ -454,8 +452,9 @@ public class ResourceAgent implements CommUser, TickListener {
         boolean sentOutAnt = false;
         for (ResourceAgent neighbor : this.neighbors) {
             if (neighbor.getPosition().get().equals(nextPosition)) {
-                if (neighbor.hasRoadWorks()) {
-                    estimatedTime += SimulatorSettings.TIME_ROAD_WORKS;
+                Optional<RoadWorks> roadWorks = neighbor.getRoadWorks();
+                if (roadWorks.isPresent()) {
+                    estimatedTime += roadWorks.get().endTimestamp - time.getStartTime();
                 }
                 sentOutAnt = true;
                 this.commDevice.send(ant.copy(estimatedTime, nextPositionIndex), neighbor);

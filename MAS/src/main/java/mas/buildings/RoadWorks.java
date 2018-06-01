@@ -15,7 +15,6 @@ public class RoadWorks implements RoadUser, TickListener, PizzeriaUser {
     public final int id = nextID();
     public final Point position;
     public final long endTimestamp;
-    private RoadModel roadModel;
     private PizzeriaModel pizzeriaModel;
 
     public RoadWorks(Point position, long endTimestamp) {
@@ -33,9 +32,7 @@ public class RoadWorks implements RoadUser, TickListener, PizzeriaUser {
 
     @Override
     public void initRoadUser(@NotNull RoadModel model) {
-        this.roadModel = model;
-
-        this.roadModel.addObjectAt(this, this.position);
+        model.addObjectAt(this, this.position);
     }
 
     @Override

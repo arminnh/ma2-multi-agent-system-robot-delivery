@@ -22,7 +22,6 @@ import com.google.common.base.Optional;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Table;
-import mas.SimulatorSettings;
 import mas.buildings.ChargingStation;
 import mas.graphs.AStar;
 import mas.messages.*;
@@ -44,6 +43,9 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
 
     public final int id;
     private final int alternativePathsToExplore;
+    private final long batteryRescueDelay;
+    private final long explorationRefreshTime;
+    private final long intentionRefreshTime;
 
     private RandomGenerator rng;
     private RoadModel roadModel;
@@ -81,14 +83,18 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
 
     public RobotAgent(
             int id,
-            VehicleDTO vdto,
-            Battery battery,
+            int capacity,
+            double speed,
             ListenableGraph<LengthData> staticGraph,
+            Battery battery,
+            long batteryRescueDelay,
             Point pizzeriaPosition,
+            Point chargingStationPosition,
             int alternativePathsToExplore,
-            Point chargingStationPosition
+            long explorationRefreshTime,
+            long intentionRefreshTime
     ) {
-        super(vdto);
+        super(VehicleDTO.builder().capacity(capacity).startPosition(pizzeriaPosition).speed(speed).build());
 
         this.id = id;
         this.battery = battery;
@@ -96,6 +102,9 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
         this.pizzeriaPosition = pizzeriaPosition;
         this.chargingStationPosition = chargingStationPosition;
         this.alternativePathsToExplore = alternativePathsToExplore;
+        this.batteryRescueDelay = batteryRescueDelay;
+        this.explorationRefreshTime = explorationRefreshTime;
+        this.intentionRefreshTime = intentionRefreshTime;
     }
 
     @Override
@@ -268,10 +277,10 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
 
     private void rechargeBatteryIfRescued(TimeLapse timeLapse) {
         if (!this.drainedBatteryRescueTime.isPresent()) {
-            this.drainedBatteryRescueTime = Optional.of(timeLapse.getStartTime() + SimulatorSettings.BATTERY_RESCUE_DELAY);
+            this.drainedBatteryRescueTime = Optional.of(timeLapse.getStartTime() + this.batteryRescueDelay);
         } else {
             if (timeLapse.getStartTime() >= this.drainedBatteryRescueTime.get()) {
-                this.battery.increaseCapacity(SimulatorSettings.BATTERY_CAPACITY);
+                this.battery.increaseCapacity(this.battery.maxCapacity);
                 this.drainedBatteryRescueTime = Optional.absent();
             }
         }
@@ -575,7 +584,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
             if (this.waitingForIntentionAnts == 0) {
                 if (!this.nextIntentionAntsUpdate.isPresent()) {
                     this.nextIntentionAntsUpdate =
-                            Optional.of(time.getEndTime() + SimulatorSettings.REFRESH_INTENTIONS);
+                            Optional.of(time.getEndTime() + this.intentionRefreshTime);
 
                 } else if (this.nextIntentionAntsUpdate.get() < time.getEndTime() && !this.goingToPizzeria) {
                     this.nextIntentionAntsUpdate = Optional.absent();
@@ -587,7 +596,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
             if (this.waitingForExplorationAnts == 0) {
                 if (!this.nextExplorationAntsUpdate.isPresent()) {
                     this.nextExplorationAntsUpdate =
-                            Optional.of(time.getStartTime() + SimulatorSettings.REFRESH_EXPLORATIONS);
+                            Optional.of(time.getStartTime() + this.explorationRefreshTime);
 
                 } else if (this.nextExplorationAntsUpdate.get() < time.getEndTime()) {
                     this.nextExplorationAntsUpdate = Optional.absent();
@@ -904,8 +913,8 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
     /**
      * Charges the battery of the robot.
      */
-    public void chargeBattery() {
-        this.battery.increaseCapacity(SimulatorSettings.BATTERY_CHARGE_CAPACITY);
+    public void chargeBattery(double capacity) {
+        this.battery.increaseCapacity(capacity);
 
         if (this.battery.isAtMaxCapacity()) {
             this.isCharging = false;

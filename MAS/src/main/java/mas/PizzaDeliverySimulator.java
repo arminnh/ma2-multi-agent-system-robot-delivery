@@ -3,7 +3,6 @@ package mas;
 import com.github.rinde.rinsim.core.Simulator;
 import com.github.rinde.rinsim.core.model.comm.CommModel;
 import com.github.rinde.rinsim.core.model.pdp.DefaultPDPModel;
-import com.github.rinde.rinsim.core.model.pdp.VehicleDTO;
 import com.github.rinde.rinsim.core.model.rand.RandomModel;
 import com.github.rinde.rinsim.core.model.road.RoadModelBuilders;
 import com.github.rinde.rinsim.core.model.time.TickListener;
@@ -13,8 +12,9 @@ import com.github.rinde.rinsim.geom.ListenableGraph;
 import com.github.rinde.rinsim.geom.Point;
 import com.github.rinde.rinsim.pdptw.common.StatsPanel;
 import com.github.rinde.rinsim.ui.View;
-import com.github.rinde.rinsim.ui.renderers.*;
-import mas.agents.Battery;
+import com.github.rinde.rinsim.ui.renderers.CommRenderer;
+import com.github.rinde.rinsim.ui.renderers.GraphRoadModelRenderer;
+import com.github.rinde.rinsim.ui.renderers.RoadUserRenderer;
 import mas.agents.RobotAgent;
 import mas.buildings.ChargingStation;
 import mas.buildings.Pizzeria;
@@ -104,21 +104,33 @@ public class PizzaDeliverySimulator {
         final RandomGenerator rng = sim.getRandomGenerator();
         final PizzeriaModel pizzeriaModel = sim.getModelProvider().getModel(PizzeriaModel.class);
 
-        // Create pizzeria
-        final Pizzeria pizzeria = pizzeriaModel.openPizzeria();
+        // Create pizzeria and charging station
+        pizzeriaModel.openPizzeria();
+        pizzeriaModel.openChargingStation(SimulatorSettings.ROBOT_CAPACITY, SimulatorSettings.BATTERY_RECHARGE_CAPACITY);
 
-        // Create charging station
-        final ChargingStation chargingStation = pizzeriaModel.openChargingStation();
+        // At every node in the graph, insert a ResourceAgent
+        for (Point node : staticGraph.getNodes()) {
+            pizzeriaModel.createResourceAgent(
+                    node,
+                    SimulatorSettings.INTENTION_RESERVATION_LIFETIME,
+                    SimulatorSettings.NODE_DISTANCE,
+                    SimulatorSettings.ROBOT_SPEED
+            );
+        }
 
         // Create robots
         for (int i = 0; i < SimulatorSettings.NUM_ROBOTS; i++) {
-            pizzeriaModel.newRobot(staticGraph, SimulatorSettings.ROBOT_CAPACITY, SimulatorSettings.ROBOT_SPEED,
-                    SimulatorSettings.BATTERY_CAPACITY, SimulatorSettings.ALTERNATIVE_PATHS_TO_EXPLORE);
-        }
-
-        // At every node, insert a ResourceAgent
-        for (Point node : staticGraph.getNodes()) {
-            pizzeriaModel.createResourceAgent(node);
+            // Robots start at the pizzeria
+            pizzeriaModel.newRobot(
+                    SimulatorSettings.ROBOT_CAPACITY,
+                    SimulatorSettings.ROBOT_SPEED,
+                    SimulatorSettings.BATTERY_CAPACITY,
+                    SimulatorSettings.BATTERY_RESCUE_DELAY,
+                    staticGraph,
+                    SimulatorSettings.ALTERNATIVE_PATHS_TO_EXPLORE,
+                    SimulatorSettings.EXPLORATION_REFRESH_TIME,
+                    SimulatorSettings.INTENTION_REFRESH_TIME
+            );
         }
 
         // TickListener for creation of new delivery tasks
@@ -126,7 +138,12 @@ public class PizzaDeliverySimulator {
             @Override
             public void tick(@NotNull TimeLapse time) {
                 if (rng.nextDouble() < SimulatorSettings.PROB_NEW_DELIVERY_TASK) {
-                    pizzeriaModel.createNewDeliveryTask(rng, SimulatorSettings.PIZZA_AMOUNT_MEAN, SimulatorSettings.PIZZA_AMOUNT_STD, time.getStartTime());
+                    pizzeriaModel.createNewDeliveryTask(
+                            rng,
+                            SimulatorSettings.PIZZA_AMOUNT_MEAN,
+                            SimulatorSettings.PIZZA_AMOUNT_STD,
+                            time.getStartTime()
+                    );
                 }
             }
 
@@ -151,9 +168,5 @@ public class PizzaDeliverySimulator {
 
         // Start the simulation.
         sim.start();
-    }
-
-    public static int getNextRobotID() {
-        return robotID++;
     }
 }

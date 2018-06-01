@@ -18,7 +18,6 @@ import com.github.rinde.rinsim.geom.LengthData;
 import com.github.rinde.rinsim.geom.ListenableGraph;
 import com.github.rinde.rinsim.geom.Point;
 import com.google.common.base.Optional;
-import mas.SimulatorSettings;
 import mas.agents.Battery;
 import mas.agents.ResourceAgent;
 import mas.agents.RobotAgent;
@@ -37,21 +36,20 @@ import java.util.List;
 
 public class PizzeriaModel extends AbstractModel<PizzeriaUser> {
 
-    private final EventDispatcher eventDispatcher;
     private Simulator sim;
+    private RandomGenerator rng;
     private RoadModel roadModel;
+    private EventDispatcher eventDispatcher;
+
     private ListenableGraph dynamicGraph;
     private DynamicGraphRoadModelImpl dynamicGraphRoadModel;
-    private RandomGenerator rng;
-    private Clock clock;
+    private int robotID = 1;
     private HashMap<Point, Pizzeria> pizzerias = new HashMap<>();
     private HashMap<Point, ChargingStation> chargingStations = new HashMap<>();
     private HashMap<Integer, DeliveryTask> deliveryTasks = new HashMap<>();
     private HashMap<Point, ResourceAgent> resourceAgents = new HashMap<>();
-    private static int robotID = 1;
 
     public PizzeriaModel(Clock clock, RandomProvider provider, RoadModel roadModel, SimulatorAPI simAPI) {
-        this.clock = clock;
         this.rng = provider.masterInstance();
         this.roadModel = roadModel;
         this.sim = (Simulator) simAPI;
@@ -92,27 +90,33 @@ public class PizzeriaModel extends AbstractModel<PizzeriaUser> {
         return false;
     }
 
-    public Pizzeria openPizzeria() {
+    public void openPizzeria() {
         Point position = this.roadModel.getRandomPosition(rng);
 
         Pizzeria pizzeria = new Pizzeria(position);
 
         this.pizzerias.put(position, pizzeria);
         this.sim.register(pizzeria);
-
-        return pizzeria;
     }
 
-    public ChargingStation openChargingStation() {
+    public void openChargingStation(int stationCapacity, double rechargeCapacity) {
         Point position = roadModel.getRandomPosition(sim.getRandomGenerator());
 
-        ChargingStation chargingStation = new ChargingStation(position, SimulatorSettings.CHARGING_STATION_CAPACITY);
+        ChargingStation chargingStation = new ChargingStation(position, stationCapacity, rechargeCapacity);
 
         this.chargingStations.put(position, chargingStation);
         this.sim.register(chargingStation);
+    }
 
+    public void createResourceAgent(Point position, long reservationLifetime, int nodeDistance, double robotSpeed) {
+        ResourceAgent agent = new ResourceAgent(position, reservationLifetime, nodeDistance, robotSpeed);
 
-        return chargingStation;
+        if (this.chargingStations.containsKey(position)) {
+            agent.setChargingStation(this.chargingStations.get(position));
+        }
+
+        this.resourceAgents.put(position, agent);
+        this.sim.register(agent);
     }
 
     public Optional<ChargingStation> getChargingStationAtPosition(Point position) {
@@ -124,7 +128,7 @@ public class PizzeriaModel extends AbstractModel<PizzeriaUser> {
     }
 
     public void createNewDeliveryTask(RandomGenerator rng, double pizzaMean, double pizzaStd, long time) {
-        int pizzaAmount = 1; //(int) (rng.nextGaussian() * pizzaStd + pizzaMean);
+        int pizzaAmount = Math.toIntExact(Math.round(rng.nextGaussian() * pizzaStd + pizzaMean));
 
         // Try to place the task on the graph up to 3 times.
         int attempts = 3;
@@ -157,28 +161,33 @@ public class PizzeriaModel extends AbstractModel<PizzeriaUser> {
         }
     }
 
-    public void newRobot(ListenableGraph<LengthData> staticGraph, int capacityRobot, double robotSpeed, double batteryCap, int pathsToExplore){
+    public void newRobot(
+            int robotCapacity,
+            double robotSpeed,
+            double batteryCapacity,
+            long batteryRescueDelay,
+            ListenableGraph<LengthData> staticGraph,
+            int alternativePathsToExplore,
+            long explorationRefreshTime,
+            long intentionRefreshTime
+    ) {
 
-        Point pizzaPos = pizzerias.keySet().iterator().next();
-        Point chargingPos = chargingStations.keySet().iterator().next();
-
-        VehicleDTO vdto = VehicleDTO.builder()
-                .capacity(capacityRobot)
-                //.startPosition(pizzeria.getPosition())
-                .startPosition(pizzaPos)
-                .speed(robotSpeed)
-                .build();
-
-        Battery battery = new Battery(batteryCap);
+        Point pizzeriaPosition = pizzerias.keySet().iterator().next();
+        Point chargingStationPosition = chargingStations.keySet().iterator().next();
 
         sim.register(new RobotAgent(
-                getNextRobotID(), vdto, battery, staticGraph, pizzaPos,
-                pathsToExplore, chargingPos)
-        );
-    }
-
-    public int getNextRobotID(){
-        return robotID++;
+                robotID++,
+                robotCapacity,
+                robotSpeed,
+                staticGraph,
+                new Battery(batteryCapacity),
+                batteryRescueDelay,
+                pizzeriaPosition,
+                chargingStationPosition,
+                alternativePathsToExplore,
+                explorationRefreshTime,
+                intentionRefreshTime
+        ));
     }
 
     public PizzaParcel newPizzaParcel(int deliveryTaskID, Point startPosition, int pizzaAmount, long time) {
@@ -268,18 +277,7 @@ public class PizzeriaModel extends AbstractModel<PizzeriaUser> {
         this.resourceAgents.get(cs.position).dropReservation(r);
     }
 
-    public void createResourceAgent(Point position) {
-        ResourceAgent agent = new ResourceAgent(position);
-
-        if (this.chargingStations.containsKey(position)) {
-            agent.setChargingStation(this.chargingStations.get(position));
-        }
-
-        this.resourceAgents.put(position, agent);
-        this.sim.register(agent);
-    }
-
-    synchronized public void newRoadWorks(long time) {
+    public void newRoadWorks(long endTimestamp) {
         // Road works can only be set on positions where there is no robot, building, or delivery task.
         // Try to create new road works up to 5 times.
         int attempts = 5;
@@ -291,7 +289,7 @@ public class PizzeriaModel extends AbstractModel<PizzeriaUser> {
             // Check if the position is free.
             if (this.dynamicGraphRoadModel.getRoadUsersOnNode(position).isEmpty()) {
 
-                RoadWorks roadWorks = new RoadWorks(position, time + SimulatorSettings.TIME_ROAD_WORKS);
+                RoadWorks roadWorks = new RoadWorks(position, endTimestamp);
 
                 // First, register the works on the road.
                 this.sim.register(roadWorks);

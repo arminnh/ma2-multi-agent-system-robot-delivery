@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class Pizzeria implements RoadUser {
 
-    private Point position;
+    public final Point position;
 
     public Pizzeria(Point position) {
         this.position = position;
