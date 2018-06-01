@@ -11,6 +11,7 @@ import com.github.rinde.rinsim.core.model.road.DynamicGraphRoadModelImpl;
 import com.github.rinde.rinsim.core.model.road.RoadModel;
 import com.github.rinde.rinsim.core.model.road.RoadUser;
 import com.github.rinde.rinsim.core.model.time.Clock;
+import com.github.rinde.rinsim.core.model.time.TimeLapse;
 import com.github.rinde.rinsim.event.EventAPI;
 import com.github.rinde.rinsim.event.EventDispatcher;
 import com.github.rinde.rinsim.geom.LengthData;
@@ -248,11 +249,13 @@ public class PizzeriaModel extends AbstractModel<PizzeriaUser> {
         this.sim.unregister(parcel);
     }
 
-    public void robotArrivedAtChargingStation(RobotAgent r, ChargingStation cs) {
+    public void robotArrivedAtChargingStation(RobotAgent r, ChargingStation cs, TimeLapse time, double capacityUsed) {
+
         if (cs.addRobot(r)) {
             this.eventDispatcher.dispatchEvent(new PizzeriaEvent(
                     PizzeriaEventType.ROBOT_AT_CHARGING_STATION, 0, null, null, r
             ));
+            this.resourceAgents.get(cs.position).robotArrivesAtChargingStation(r.id, capacityUsed, time);
         }
     }
 

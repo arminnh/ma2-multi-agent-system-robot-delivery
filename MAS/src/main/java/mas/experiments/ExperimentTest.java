@@ -73,25 +73,6 @@ public class ExperimentTest {
     private static final ListenableGraph<LengthData> staticGraph = CityGraphCreator.createGraph(citySize, robotLength);
     private static final ListenableGraph<LengthData> dynamicGraph = CityGraphCreator.createGraph(citySize, robotLength);
 
-    private static final Point P1_PICKUP = new Point(1, 2);
-    private static final Point P1_DELIVERY = new Point(4, 2);
-    private static final Point P2_PICKUP = new Point(1, 1);
-    private static final Point P2_DELIVERY = new Point(4, 1);
-    private static final Point P3_PICKUP = new Point(1, 3);
-    private static final Point P3_DELIVERY = new Point(4, 3);
-
-    private static final long M1 = 60 * 1000L;
-    private static final long M4 = 4 * 60 * 1000L;
-    private static final long M5 = 5 * 60 * 1000L;
-    private static final long M7 = 7 * 60 * 1000L;
-    private static final long M10 = 10 * 60 * 1000L;
-    private static final long M12 = 12 * 60 * 1000L;
-    private static final long M13 = 13 * 60 * 1000L;
-    private static final long M18 = 18 * 60 * 1000L;
-    private static final long M20 = 20 * 60 * 1000L;
-    private static final long M25 = 25 * 60 * 1000L;
-    private static final long M30 = 30 * 60 * 1000L;
-    private static final long M40 = 40 * 60 * 1000L;
     private static final long END_TIME = 60 * 60 * 1000L;
 
     public static void main(String[] args) {

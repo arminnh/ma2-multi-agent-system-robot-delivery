@@ -5,6 +5,7 @@ import com.github.rinde.rinsim.core.model.road.RoadUser;
 import com.github.rinde.rinsim.core.model.time.TickListener;
 import com.github.rinde.rinsim.core.model.time.TimeLapse;
 import com.github.rinde.rinsim.geom.Point;
+import mas.SimulatorSettings;
 import mas.agents.RobotAgent;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,6 +36,9 @@ public class ChargingStation implements RoadUser, TickListener {
     synchronized public void tick(@NotNull TimeLapse time) {
         if (!time.hasTimeLeft()) {
             return;
+        }
+        if(this.chargingRobots.size() > SimulatorSettings.CHARGING_STATION_CAPACITY){
+            throw new IllegalStateException("More robots than allowed!");
         }
 
         for (RobotAgent robot : this.chargingRobots) {

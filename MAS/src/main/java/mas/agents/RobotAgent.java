@@ -558,7 +558,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
             this.deleteIntention();
 
             if (this.goingToCharge) {
-                this.arriveAtChargingStation();
+                this.arriveAtChargingStation(time);
             } else if (this.goingToPizzeria) {
                 this.arriveAtPizzeria();
             }
@@ -883,7 +883,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
     /**
      * Sets the robot up for charging at a charging station. The robot is linked to the ChargingStation it arrived at.
      */
-    private void arriveAtChargingStation() {
+    private void arriveAtChargingStation(TimeLapse time) {
         System.out.println("arriveAtChargingStation");
         this.goingToCharge = false;
         this.isCharging = true;
@@ -892,7 +892,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
         Optional<ChargingStation> station = this.pizzeriaModel.getChargingStationAtPosition(this.getPosition().get());
 
         if (station.isPresent()) {
-            this.pizzeriaModel.robotArrivedAtChargingStation(this, station.get());
+            this.pizzeriaModel.robotArrivedAtChargingStation(this, station.get(), time, this.battery.getCapacityUsed());
             this.currentChargingStation = station;
 
         } else {

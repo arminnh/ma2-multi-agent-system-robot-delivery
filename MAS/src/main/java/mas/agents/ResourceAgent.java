@@ -16,10 +16,14 @@ import mas.messages.*;
 import mas.tasks.DeliveryTask;
 import org.jetbrains.annotations.NotNull;
 
+import java.sql.Time;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import static mas.SimulatorSettings.BATTERY_CAPACITY;
+import static mas.SimulatorSettings.TICK_LENGTH;
 
 public class ResourceAgent implements CommUser, TickListener {
 
@@ -144,6 +148,7 @@ public class ResourceAgent implements CommUser, TickListener {
         }
 
         // Remove charging station reservations
+        // int oldSize = this.chargingStationReservations.size();
         this.chargingStationReservations.removeIf(r -> r.evaporationTimestamp < timeLapse.getStartTime());
     }
 
@@ -275,6 +280,21 @@ public class ResourceAgent implements CommUser, TickListener {
         }
     }
 
+
+    private boolean canRobotChargeAtTime(TimeLapse currentTime, long travelTime){
+        int usedSlots = 0;
+        int maxCap = this.chargingStation.get().capacity;
+        long arrivalTime = currentTime.getEndTime() + travelTime;
+
+        for(ChargingStationReservation resv: this.chargingStationReservations){
+            if(resv.evaporationTimestamp >= arrivalTime){
+                usedSlots++;
+            }
+        }
+
+        return usedSlots < maxCap;
+    }
+
     private void handleIntentionAntForChargingStation(TimeLapse timeLapse, IntentionAnt ant) {
         if (this.chargingStation.isPresent()) {
             List<IntentionData> newDeliveriesData = new LinkedList<>();
@@ -292,7 +312,7 @@ public class ResourceAgent implements CommUser, TickListener {
                 System.out.println("this.chargingStationReservations.size() = " + this.chargingStationReservations.size());
                 System.out.println("this.chargingStation.get().getChargeCapacity() = " + this.chargingStation.get().capacity);
 
-                if (this.chargingStationReservations.size() < this.chargingStation.get().capacity) {
+                if (canRobotChargeAtTime(timeLapse, ant.estimatedTime)) {
                     // Confirm the reservation
                     newDeliveriesData.add(intentionData.copy(true));
 
@@ -301,7 +321,7 @@ public class ResourceAgent implements CommUser, TickListener {
                     this.chargingStationReservations.add(resv);
                     System.out.println("Creating Reservation at charging station. " + this.chargingStationReservations.size() + "/ " + this.chargingStation.get().capacity + " resv in total.");
                 } else {
-                    newDeliveriesData.add(intentionData);
+                    newDeliveriesData.add(intentionData.copy(false));
                 }
             }
 
@@ -353,6 +373,21 @@ public class ResourceAgent implements CommUser, TickListener {
         this.deliveryReservations.get(task.id).add(reservation);
         System.out.println("Reservation created for task " + task.id + ", evaporation at: " + evaporationTimestamp);
         System.out.println("Reservation for task " + task.id + ": " + this.getReservationsForTask(task.id));
+    }
+
+    public void robotArrivesAtChargingStation(Integer robotId, double amRechargeNeeded,  TimeLapse time){
+        ChargingStationReservation oldResv = null;
+        ChargingStationReservation newResv = null;
+
+        for(ChargingStationReservation resv: this.chargingStationReservations){
+            if(resv.robotID == robotId){
+                oldResv = resv;
+                Double chargeTime =  TICK_LENGTH * amRechargeNeeded / SimulatorSettings.BATTERY_CHARGE_CAPACITY;
+                newResv = new ChargingStationReservation(robotId, time.getEndTime() + chargeTime.longValue());
+            }
+        }
+        this.chargingStationReservations.remove(oldResv);
+        this.chargingStationReservations.add(newResv);
     }
 
     private boolean updateDeliveryReservation(DeliveryTask task, IntentionData intentionData, TimeLapse timeLapse) {

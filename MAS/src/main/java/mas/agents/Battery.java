@@ -13,6 +13,10 @@ public class Battery {
         return Math.round(100.0 * this.capacity / this.maxCapacity) / 100.0;
     }
 
+    public double getCapacityUsed(){
+        return this.maxCapacity - this.capacity;
+    }
+
     public boolean isAtMaxCapacity() {
         return capacity >= maxCapacity;
     }
