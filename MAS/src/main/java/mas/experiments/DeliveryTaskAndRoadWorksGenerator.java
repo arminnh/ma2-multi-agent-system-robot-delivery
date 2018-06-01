@@ -38,7 +38,6 @@ public class DeliveryTaskAndRoadWorksGenerator implements Parcels.ParcelGenerato
         int numRoadWorks = (int) (ticks * probNewRoadWorks);
 
         List<Double> deliveryTaskTimes = TimeSeries.homogenousPoisson(endTime, numDeliveryTasks).generate(seed);
-        List<Double> roadWorksTimes = TimeSeries.homogenousPoisson(endTime, numRoadWorks).generate(seed);
 
         for (Double time : deliveryTaskTimes) {
             long ttime = DoubleMath.roundToLong(time, RoundingMode.FLOOR);
@@ -57,21 +56,26 @@ public class DeliveryTaskAndRoadWorksGenerator implements Parcels.ParcelGenerato
             ));
         }
 
-        for (Double time : roadWorksTimes) {
-            long ttime = DoubleMath.roundToLong(time, RoundingMode.FLOOR);
+        if(numRoadWorks > 0) {
+            List<Double> roadWorksTimes = TimeSeries.homogenousPoisson(endTime, numRoadWorks).generate(seed);
 
-            if (ttime >= endTime) {
-                break;
+
+            for (Double time : roadWorksTimes) {
+                long ttime = DoubleMath.roundToLong(time, RoundingMode.FLOOR);
+
+                if (ttime >= endTime) {
+                    break;
+                }
+
+                eventList.add(AddParcelEvent.create(Parcel
+                        // Just put some random positions. Not that important as they will be chosen randomly in handler.
+                        .builder(new Point(6, 4), new Point(2, 2))
+                        .orderAnnounceTime(ttime)
+                        .pickupTimeWindow(TimeWindow.create(ttime, 2 * ttime))
+                        .neededCapacity(ROAD_WORKS_EVENT)
+                        .buildDTO()
+                ));
             }
-
-            eventList.add(AddParcelEvent.create(Parcel
-                    // Just put some random positions. Not that important as they will be chosen randomly in handler.
-                    .builder(new Point(6, 4), new Point(2, 2))
-                    .orderAnnounceTime(ttime)
-                    .pickupTimeWindow(TimeWindow.create(ttime, 2 * ttime))
-                    .neededCapacity(ROAD_WORKS_EVENT)
-                    .buildDTO()
-            ));
         }
 
         return eventList.build();
