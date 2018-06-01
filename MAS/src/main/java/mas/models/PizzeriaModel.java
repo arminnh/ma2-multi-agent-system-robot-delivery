@@ -45,8 +45,9 @@ public class PizzeriaModel extends AbstractModel<PizzeriaUser> {
     private HashMap<Point, ChargingStation> chargingStations = new HashMap<>();
     private HashMap<Integer, DeliveryTask> deliveryTasks = new HashMap<>();
     private HashMap<Point, ResourceAgent> resourceAgents = new HashMap<>();
+    private long tickLength;
 
-    public PizzeriaModel(RoadModel roadModel, SimulatorAPI simAPI) {
+    public PizzeriaModel(RoadModel roadModel, SimulatorAPI simAPI, long tickLength) {
         this.roadModel = roadModel;
         this.sim = (Simulator) simAPI;
 
@@ -54,10 +55,11 @@ public class PizzeriaModel extends AbstractModel<PizzeriaUser> {
         this.dynamicGraph = this.dynamicGraphRoadModel.getGraph();
 
         this.eventDispatcher = new EventDispatcher(PizzeriaEventType.values());
+        this.tickLength = tickLength;
     }
 
-    public static PizzeriaModelBuilder builder() {
-        return new PizzeriaModelBuilder();
+    public static PizzeriaModelBuilder builder(long tickLength) {
+        return new PizzeriaModelBuilder(tickLength);
     }
 
     @Nonnull
@@ -103,7 +105,7 @@ public class PizzeriaModel extends AbstractModel<PizzeriaUser> {
     }
 
     public void createResourceAgent(Point position, long reservationLifetime, int nodeDistance, double robotSpeed) {
-        ResourceAgent agent = new ResourceAgent(position, reservationLifetime, nodeDistance, robotSpeed);
+        ResourceAgent agent = new ResourceAgent(position, reservationLifetime, nodeDistance, robotSpeed, tickLength);
 
         if (this.chargingStations.containsKey(position)) {
             agent.setChargingStation(this.chargingStations.get(position));

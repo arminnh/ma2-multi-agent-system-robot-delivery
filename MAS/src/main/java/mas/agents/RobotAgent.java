@@ -256,7 +256,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
             return;
         }
 
-         System.out.println(this);
+        //System.out.println(this + " at time " + time);
 
         if (this.getRemainingBatteryCapacityPercentage() == 0.0 && !this.isCharging) {
             this.rechargeBatteryIfRescued(time);

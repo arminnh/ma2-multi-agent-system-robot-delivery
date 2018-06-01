@@ -11,7 +11,11 @@ import org.jetbrains.annotations.NotNull;
 
 public class PizzeriaModelBuilder extends AbstractModelBuilder<PizzeriaModel, PizzeriaUser> {
 
-    PizzeriaModelBuilder() {
+    public final long tickLength;
+
+    PizzeriaModelBuilder(long tickLength) {
+        this.tickLength = tickLength;
+
         setProvidingTypes(PizzeriaModel.class);
 
         setDependencies(RoadModel.class, SimulatorAPI.class);
@@ -21,7 +25,8 @@ public class PizzeriaModelBuilder extends AbstractModelBuilder<PizzeriaModel, Pi
     public PizzeriaModel build(@NotNull DependencyProvider dependencyProvider) {
         return new PizzeriaModel(
                 dependencyProvider.get(RoadModel.class),
-                dependencyProvider.get(SimulatorAPI.class)
+                dependencyProvider.get(SimulatorAPI.class),
+                tickLength
         );
     }
 }

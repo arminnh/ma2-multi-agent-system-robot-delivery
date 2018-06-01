@@ -83,6 +83,7 @@ public class Experiments {
         // probNewRoadWorks
         // alternativePathsToExplore
 //        probNewRoadWorks = 0;
+        numRobots = 1;
 
         long simulationLength = 30 * 60 * 1000;
 
@@ -114,15 +115,11 @@ public class Experiments {
                 .vehicles(getVehicleGenerator(numRobots, robotCapacity, robotSpeed))
                 .parcels(getDeliveryTaskAndRoadWorksGenerator())
                 .depots(getDepotGenerator())
-                .addModel(TimeModel.builder().withTickLength(tickLength))
-                .addModel(RoadModelBuilders.dynamicGraph(dynamicGraph)
+                .addModel(RoadModelBuilders.dynamicGraph(CityGraphCreator.createGraph(citySize, robotLength))
                         .withDistanceUnit(distanceUnit)
                         .withSpeedUnit(speedUnit)
                         .withModificationCheck(true)
                 )
-                .addModel(DefaultPDPModel.builder())
-                .addModel(CommModel.builder())
-                .addModel(PizzeriaModel.builder())
                 .build();
 
         // The seed is strong
@@ -158,6 +155,9 @@ public class Experiments {
                         // Note: if your multi-agent system requires the aid of a model (e.g. CommModel) it can be added
                         // directly in the configuration. Models that are only used for the solution side should not
                         // be added in the scenario as they are not part of the problem.
+                        .addModel(DefaultPDPModel.builder())
+                        .addModel(CommModel.builder())
+                        .addModel(PizzeriaModel.builder(tickLength))
                         .addModel(StatsTracker.builder())
                         .build()
                 )
@@ -168,7 +168,7 @@ public class Experiments {
 
                 // The number of repetitions for each simulation.
                 // Each repetition will have a unique random seed that is given to the simulator.
-                .repeat(2)
+                .repeat(20)
 
                 // The master random seed from which all random seeds for the simulations will be drawn.
                 .withRandomSeed(randomSeed)
@@ -183,7 +183,7 @@ public class Experiments {
                 .usePostProcessor(new PizzaPostProcessor())
 
                 .showGui(viewBuilder)
-                .showGui(true)
+                .showGui(false)
 
                 // Starts the experiment, but first reads the command-line arguments that are specified for this
                 // application. By supplying the '-h' option you can see an overview of the supported options.

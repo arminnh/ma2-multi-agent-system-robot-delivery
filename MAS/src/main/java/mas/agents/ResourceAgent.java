@@ -15,14 +15,10 @@ import mas.messages.*;
 import mas.tasks.DeliveryTask;
 import org.jetbrains.annotations.NotNull;
 
-import java.sql.Time;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import static mas.SimulatorSettings.BATTERY_CAPACITY;
-import static mas.SimulatorSettings.TICK_LENGTH;
 
 public class ResourceAgent implements CommUser, TickListener {
 
@@ -39,13 +35,20 @@ public class ResourceAgent implements CommUser, TickListener {
     private List<ChargingStationReservation> chargingStationReservations = new LinkedList<>();
     private long intentionReservationLifetime;
     private long robotTimePerHop;
+    private long tickLength;
 
-    public ResourceAgent(Point position, long intentionReservationLifetime, int nodeDistance, double robotSpeed) {
+    public ResourceAgent(
+            Point position,
+            long intentionReservationLifetime,
+            int nodeDistance,
+            double robotSpeed,
+            long tickLength
+    ) {
         this.position = position;
         this.intentionReservationLifetime = intentionReservationLifetime;
-
         // distance in m, speed in m/s, travel time between two nodes = (distance / speed)
         this.robotTimePerHop = (long) (nodeDistance / robotSpeed);
+        this.tickLength = tickLength;
     }
 
     @Override
@@ -281,22 +284,22 @@ public class ResourceAgent implements CommUser, TickListener {
         }
     }
 
-    public boolean hasRobotChargeReservation(int robotID){
-        for(ChargingStationReservation resv: this.chargingStationReservations){
-            if(resv.robotID == robotID){
+    public boolean hasRobotChargeReservation(int robotID) {
+        for (ChargingStationReservation resv : this.chargingStationReservations) {
+            if (resv.robotID == robotID) {
                 return true;
             }
         }
         return false;
     }
 
-    private boolean canRobotChargeAtTime(TimeLapse currentTime, long travelTime){
+    private boolean canRobotChargeAtTime(TimeLapse currentTime, long travelTime) {
         int usedSlots = 0;
         int maxCap = this.chargingStation.get().capacity;
         long arrivalTime = currentTime.getEndTime() + travelTime;
 
-        for(ChargingStationReservation resv: this.chargingStationReservations){
-            if(resv.evaporationTimestamp >= arrivalTime){
+        for (ChargingStationReservation resv : this.chargingStationReservations) {
+            if (resv.evaporationTimestamp >= arrivalTime) {
                 System.out.println("ArrivalTime: " + arrivalTime + " evapTime: " + resv.evaporationTimestamp);
                 usedSlots++;
             }
@@ -385,14 +388,14 @@ public class ResourceAgent implements CommUser, TickListener {
         System.out.println("Reservation for task " + task.id + ": " + this.getReservationsForTask(task.id));
     }
 
-    public void robotArrivesAtChargingStation(Integer robotId, double amRechargeNeeded,  TimeLapse time){
+    public void robotArrivesAtChargingStation(Integer robotId, double amRechargeNeeded, TimeLapse time) {
         ChargingStationReservation oldResv = null;
         ChargingStationReservation newResv = null;
 
-        for(ChargingStationReservation resv: this.chargingStationReservations){
-            if(resv.robotID == robotId){
+        for (ChargingStationReservation resv : this.chargingStationReservations) {
+            if (resv.robotID == robotId) {
                 oldResv = resv;
-                Double chargeTime =  TICK_LENGTH * amRechargeNeeded / this.chargingStation.get().rechargeCapacity;
+                Double chargeTime = tickLength * amRechargeNeeded / this.chargingStation.get().rechargeCapacity;
                 newResv = new ChargingStationReservation(robotId, time.getEndTime() + chargeTime.longValue());
             }
         }
@@ -427,17 +430,17 @@ public class ResourceAgent implements CommUser, TickListener {
         long arrivalTime = timeLapse.getEndTime() + estimatedTime;
         ChargingStationReservation myResv = null;
 
-        for(ChargingStationReservation resv: this.chargingStationReservations){
-            if(resv.evaporationTimestamp >= arrivalTime && resv.robotID != intentionData.robotID){
+        for (ChargingStationReservation resv : this.chargingStationReservations) {
+            if (resv.evaporationTimestamp >= arrivalTime && resv.robotID != intentionData.robotID) {
                 //System.out.println("ArrivalTime: " + rechargeTill + " evapTime: " + resv.evaporationTimestamp);
                 usedSlots++;
             }
-            if(resv.robotID == intentionData.robotID){
+            if (resv.robotID == intentionData.robotID) {
                 myResv = resv;
             }
         }
 
-        if(usedSlots < maxCap && myResv != null){
+        if (usedSlots < maxCap && myResv != null) {
             // Update the timer.
             ChargingStationReservation new_reservation = myResv.copy(timeLapse.getEndTime() + this.intentionReservationLifetime);
 
@@ -506,12 +509,12 @@ public class ResourceAgent implements CommUser, TickListener {
     }
 
     public boolean robotCanChargeUntil(int robotId, TimeLapse time, double capacityUsed) {
-        Double rechargeTill = time.getEndTime() + TICK_LENGTH * capacityUsed / this.chargingStation.get().rechargeCapacity;
+        Double rechargeTill = time.getEndTime() + tickLength * capacityUsed / this.chargingStation.get().rechargeCapacity;
         int usedSlots = 0;
         int maxCap = this.chargingStation.get().capacity;
 
-        for(ChargingStationReservation resv: this.chargingStationReservations){
-            if(resv.evaporationTimestamp >= rechargeTill.longValue() && resv.robotID != robotId){
+        for (ChargingStationReservation resv : this.chargingStationReservations) {
+            if (resv.evaporationTimestamp >= rechargeTill.longValue() && resv.robotID != robotId) {
                 //System.out.println("ArrivalTime: " + rechargeTill + " evapTime: " + resv.evaporationTimestamp);
                 usedSlots++;
             }

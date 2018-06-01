@@ -93,7 +93,7 @@ public class PizzaDeliverySimulator {
                 )
                 .addModel(DefaultPDPModel.builder())
                 .addModel(CommModel.builder())
-                .addModel(PizzeriaModel.builder())
+                .addModel(PizzeriaModel.builder(SimulatorSettings.TICK_LENGTH))
                 .addModel(StatsTracker.builder())
                 // in case a GUI is not desired simply don't add it.
                 .addModel(viewBuilder)
