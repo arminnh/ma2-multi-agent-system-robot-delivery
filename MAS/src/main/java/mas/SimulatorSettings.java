@@ -40,10 +40,10 @@ public class SimulatorSettings {
     public static final long BATTERY_RESCUE_DELAY = (long) (5 * (BATTERY_CAPACITY / BATTERY_RECHARGE_CAPACITY) * TICK_LENGTH);
     // Lifetime of a reservation. Make it long enough so that the robot can make one revolution around the city block
     public static final long INTENTION_RESERVATION_LIFETIME = (long) (4 * CITY_SIZE * NODE_DISTANCE / ROBOT_SPEED) * 1000;
-    // Time to refresh intentions
-    public static final long REFRESH_INTENTIONS = (long) (0.5 * INTENTION_RESERVATION_LIFETIME);
     // Time to refresh explorations
-    public static final long REFRESH_EXPLORATIONS = (long) (0.4 * INTENTION_RESERVATION_LIFETIME);
+    public static final long EXPLORATION_REFRESH_TIME = (long) (0.4 * INTENTION_RESERVATION_LIFETIME);
+    // Time to refresh intentions
+    public static final long INTENTION_REFRESH_TIME = (long) (0.5 * INTENTION_RESERVATION_LIFETIME);
 
 
     // PROBABILITIES

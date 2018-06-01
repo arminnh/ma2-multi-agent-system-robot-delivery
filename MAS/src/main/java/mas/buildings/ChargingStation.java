@@ -21,9 +21,9 @@ public class ChargingStation implements RoadUser, TickListener {
     public final double rechargeCapacity;
     private Queue<RobotAgent> chargingRobots;
 
-    public ChargingStation(Point position, int robotCapacity, double rechargeCapacity) {
+    public ChargingStation(Point position, int stationCapacity, double rechargeCapacity) {
         this.position = position;
-        this.capacity = robotCapacity;
+        this.capacity = stationCapacity;
         this.chargingRobots = new ConcurrentLinkedDeque<>();
         this.rechargeCapacity = rechargeCapacity;
     }

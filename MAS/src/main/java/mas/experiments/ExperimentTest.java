@@ -5,7 +5,6 @@ import com.github.rinde.rinsim.core.model.pdp.DefaultPDPModel;
 import com.github.rinde.rinsim.core.model.rand.RandomModel;
 import com.github.rinde.rinsim.core.model.road.RoadModelBuilders;
 import com.github.rinde.rinsim.core.model.time.TimeModel;
-import com.github.rinde.rinsim.examples.experiment.ExamplePostProcessor;
 import com.github.rinde.rinsim.experiment.Experiment;
 import com.github.rinde.rinsim.experiment.ExperimentResults;
 import com.github.rinde.rinsim.experiment.MASConfiguration;
@@ -38,7 +37,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class ExperimentTest {
     // TODO: CHANGE THESE VALUES
@@ -47,13 +45,13 @@ public class ExperimentTest {
     private static final int robotCapacity = SimulatorSettings.ROBOT_CAPACITY;
     private static final int chargingStationCapacity = SimulatorSettings.CHARGING_STATION_ROBOT_CAPACITY;
     private static final double batteryCapacity = SimulatorSettings.BATTERY_CAPACITY;
-    private static final double batteryChargeCapacity = SimulatorSettings.BATTERY_RECHARGE_CAPACITY;
+    private static final double batteryRechargeCapacity = SimulatorSettings.BATTERY_RECHARGE_CAPACITY;
     private static final int alternativePathsToExplore = SimulatorSettings.ALTERNATIVE_PATHS_TO_EXPLORE;
-    private static final double timeRoadWorks = SimulatorSettings.TIME_ROAD_WORKS;
-    private static final double batteryRescueDelay = SimulatorSettings.BATTERY_RESCUE_DELAY;
-    private static final double intentionReservationLifetime = SimulatorSettings.INTENTION_RESERVATION_LIFETIME;
-    private static final double refreshIntentions = SimulatorSettings.REFRESH_INTENTIONS;
-    private static final double refreshExplorations = SimulatorSettings.REFRESH_EXPLORATIONS;
+    private static final long timeRoadWorks = SimulatorSettings.TIME_ROAD_WORKS;
+    private static final long batteryRescueDelay = SimulatorSettings.BATTERY_RESCUE_DELAY;
+    private static final long intentionReservationLifetime = SimulatorSettings.INTENTION_RESERVATION_LIFETIME;
+    private static final long explorationRefreshTime = SimulatorSettings.EXPLORATION_REFRESH_TIME;
+    private static final long intentionRefreshTime = SimulatorSettings.INTENTION_REFRESH_TIME;
     private static final double probNewDeliveryTask = SimulatorSettings.PROB_NEW_DELIVERY_TASK;
     private static final double probNewRoadWorks = SimulatorSettings.PROB_NEW_ROAD_WORKS;
     private static final double pizzaAmountStd = SimulatorSettings.PIZZA_AMOUNT_STD;
@@ -83,6 +81,7 @@ public class ExperimentTest {
     private static int citySize = SimulatorSettings.CITY_SIZE;
     private static int numRobots = SimulatorSettings.NUM_ROBOTS;
     private static int robotLength = SimulatorSettings.ROBOT_LENGTH;
+    private static int nodeDistance = SimulatorSettings.NODE_DISTANCE;
     private static final ListenableGraph<LengthData> staticGraph = CityGraphCreator.createGraph(citySize, robotLength);
     private static final ListenableGraph<LengthData> dynamicGraph = CityGraphCreator.createGraph(citySize, robotLength);
     private static Unit<Length> distanceUnit = SimulatorSettings.DISTANCE_UNIT;
@@ -137,12 +136,12 @@ public class ExperimentTest {
                         // NOTE: this example uses 'namedHandler's for Depots and Parcels, while very useful for
                         // debugging these should not be used in production as these are not thread safe.
                         // Use the 'defaultHandler()' instead.
-                        .addEventHandler(AddDepotEvent.class, AddPizzeriaAndChargingStationAndResourceAgentsEventHandlers.defaultHandler(staticGraph, pizzeriaPosition, chargingStationPosition, chargingStationCapacity))
+                        .addEventHandler(AddDepotEvent.class, AddPizzeriaAndChargingStationAndResourceAgentsEventHandlers.defaultHandler(staticGraph, chargingStationCapacity, batteryRechargeCapacity, intentionReservationLifetime, nodeDistance, robotSpeed))
 
                         .addEventHandler(AddParcelEvent.class, AddDeliveryTaskEventHandlers.defaultHandler(pizzaAmountMean, pizzaAmountStd))
                         // There is no default handle for vehicle events, here a non functioning handler is added,
                         // it can be changed to add a custom vehicle to the simulator.
-                        .addEventHandler(AddVehicleEvent.class, AddRobotAgentEventHandlers.defaultHandler(dynamicGraph, batteryCapacity, robotSpeed, robotCapacity, alternativePathsToExplore))
+                        .addEventHandler(AddVehicleEvent.class, AddRobotAgentEventHandlers.defaultHandler(robotCapacity, robotSpeed, batteryCapacity, batteryRescueDelay, staticGraph, alternativePathsToExplore, explorationRefreshTime, intentionRefreshTime))
                         .addEventHandler(TimeOutEvent.class, TimeOutEvent.ignoreHandler())
                         // Note: if youe multi-agent system requires the aid of a model (e.g. CommModel) it can be added
                         // directly in the configuration. Models that are only used for the solution side should not

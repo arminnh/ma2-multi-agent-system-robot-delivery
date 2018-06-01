@@ -83,7 +83,8 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
 
     public RobotAgent(
             int id,
-            VehicleDTO vdto,
+            int capacity,
+            double speed,
             ListenableGraph<LengthData> staticGraph,
             Battery battery,
             long batteryRescueDelay,
@@ -93,7 +94,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
             long explorationRefreshTime,
             long intentionRefreshTime
     ) {
-        super(vdto);
+        super(VehicleDTO.builder().capacity(capacity).startPosition(pizzeriaPosition).speed(speed).build());
 
         this.id = id;
         this.battery = battery;
