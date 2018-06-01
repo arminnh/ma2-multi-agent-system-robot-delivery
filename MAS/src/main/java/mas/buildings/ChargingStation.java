@@ -39,7 +39,8 @@ public class ChargingStation implements RoadUser, TickListener {
         if (!time.hasTimeLeft()) {
             return;
         }
-        if(this.chargingRobots.size() > SimulatorSettings.CHARGING_STATION_CAPACITY){
+
+        if(this.chargingRobots.size() > this.capacity){
             throw new IllegalStateException("More robots than allowed!");
         }
 

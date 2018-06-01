@@ -98,7 +98,7 @@ public class PizzaDeliverySimulator {
                 .addModel(PizzeriaModel.builder())
                 .addModel(StatsTracker.builder())
                 // in case a GUI is not desired simply don't add it.
-                //.addModel(viewBuilder)
+                .addModel(viewBuilder)
                 .build();
 
         final RandomGenerator rng = sim.getRandomGenerator();

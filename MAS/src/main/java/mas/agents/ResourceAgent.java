@@ -281,6 +281,15 @@ public class ResourceAgent implements CommUser, TickListener {
         }
     }
 
+    public boolean hasRobotChargeReservation(int robotID){
+        for(ChargingStationReservation resv: this.chargingStationReservations){
+            if(resv.robotID == robotID){
+                return true;
+            }
+        }
+        return false;
+    }
+
     private boolean canRobotChargeAtTime(TimeLapse currentTime, long travelTime){
         int usedSlots = 0;
         int maxCap = this.chargingStation.get().capacity;
@@ -288,6 +297,7 @@ public class ResourceAgent implements CommUser, TickListener {
 
         for(ChargingStationReservation resv: this.chargingStationReservations){
             if(resv.evaporationTimestamp >= arrivalTime){
+                System.out.println("ArrivalTime: " + arrivalTime + " evapTime: " + resv.evaporationTimestamp);
                 usedSlots++;
             }
         }
@@ -304,7 +314,7 @@ public class ResourceAgent implements CommUser, TickListener {
 
             IntentionData intentionData = ant.intentions.get(0);
 
-            boolean update = updateChargingReservation(intentionData, time);
+            boolean update = updateChargingReservation(ant.estimatedTime, intentionData, time);
             if (update) {
                 newDeliveriesData.add(intentionData.copy(true));
             } else {
@@ -409,17 +419,29 @@ public class ResourceAgent implements CommUser, TickListener {
         return false;
     }
 
-    private boolean updateChargingReservation(IntentionData intentionData, TimeLapse timeLapse) {
-        List<ChargingStationReservation> reservations = this.chargingStationReservations.stream()
-                .filter(r -> r.robotID == intentionData.robotID)
-                .collect(Collectors.toList());
+    private boolean updateChargingReservation(long estimatedTime, IntentionData intentionData, TimeLapse timeLapse) {
 
-        if (reservations.size() > 0) {
+
+        int usedSlots = 0;
+        int maxCap = this.chargingStation.get().capacity;
+        long arrivalTime = timeLapse.getEndTime() + estimatedTime;
+        ChargingStationReservation myResv = null;
+
+        for(ChargingStationReservation resv: this.chargingStationReservations){
+            if(resv.evaporationTimestamp >= arrivalTime && resv.robotID != intentionData.robotID){
+                //System.out.println("ArrivalTime: " + rechargeTill + " evapTime: " + resv.evaporationTimestamp);
+                usedSlots++;
+            }
+            if(resv.robotID == intentionData.robotID){
+                myResv = resv;
+            }
+        }
+
+        if(usedSlots < maxCap && myResv != null){
             // Update the timer.
-            ChargingStationReservation r = reservations.get(0);
-            ChargingStationReservation new_reservation = r.copy(timeLapse.getEndTime() + this.intentionReservationLifetime);
+            ChargingStationReservation new_reservation = myResv.copy(timeLapse.getEndTime() + this.intentionReservationLifetime);
 
-            this.chargingStationReservations.remove(r);
+            this.chargingStationReservations.remove(myResv);
             this.chargingStationReservations.add(new_reservation);
             return true;
         }
@@ -481,5 +503,20 @@ public class ResourceAgent implements CommUser, TickListener {
 
     public List<DeliveryTaskReservation> getReservationsForTask(int taskID) {
         return this.deliveryReservations.get(taskID);
+    }
+
+    public boolean robotCanChargeUntil(int robotId, TimeLapse time, double capacityUsed) {
+        Double rechargeTill = time.getEndTime() + TICK_LENGTH * capacityUsed / this.chargingStation.get().rechargeCapacity;
+        int usedSlots = 0;
+        int maxCap = this.chargingStation.get().capacity;
+
+        for(ChargingStationReservation resv: this.chargingStationReservations){
+            if(resv.evaporationTimestamp >= rechargeTill.longValue() && resv.robotID != robotId){
+                //System.out.println("ArrivalTime: " + rechargeTill + " evapTime: " + resv.evaporationTimestamp);
+                usedSlots++;
+            }
+        }
+
+        return usedSlots < maxCap;
     }
 }
