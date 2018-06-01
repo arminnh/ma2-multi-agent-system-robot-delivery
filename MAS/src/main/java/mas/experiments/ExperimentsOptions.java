@@ -100,7 +100,7 @@ public class ExperimentsOptions  extends OptionsBase {
             name = "showGUI",
             abbrev = 'g',
             help = "Show the gui",
-            defaultValue = "false",
+            defaultValue = "true",
             category = "Startup"
     )
     public boolean showGUI;
