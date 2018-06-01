@@ -42,43 +42,29 @@ import java.util.stream.Collectors;
 public class ExperimentTest {
     // TODO: CHANGE THESE VALUES
 
-    private static long tickLength = SimulatorSettings.TICK_LENGTH;
-
-    private static int citySize = SimulatorSettings.CITY_SIZE;
-    private static int numRobots = SimulatorSettings.NUM_ROBOTS;
-    private static int robotLength = SimulatorSettings.ROBOT_LENGTH;
     private static final double robotSpeed = SimulatorSettings.ROBOT_SPEED;
-    private static Unit<Length> distanceUnit = SimulatorSettings.DISTANCE_UNIT;
-    private static Unit<Velocity> speedUnit = SimulatorSettings.SPEED_UNIT;
     private static final int robotCapacity = SimulatorSettings.ROBOT_CAPACITY;
-    private static final int chargingStationCapacity = SimulatorSettings.CHARGING_STATION_CAPACITY;
+    private static final int chargingStationCapacity = SimulatorSettings.CHARGING_STATION_ROBOT_CAPACITY;
     private static final double batteryCapacity = SimulatorSettings.BATTERY_CAPACITY;
-    private static final double batteryChargeCapacity = SimulatorSettings.BATTERY_CHARGE_CAPACITY;
+    private static final double batteryChargeCapacity = SimulatorSettings.BATTERY_RECHARGE_CAPACITY;
     private static final int alternativePathsToExplore = SimulatorSettings.ALTERNATIVE_PATHS_TO_EXPLORE;
-
     private static final double timeRoadWorks = SimulatorSettings.TIME_ROAD_WORKS;
     private static final double batteryRescueDelay = SimulatorSettings.BATTERY_RESCUE_DELAY;
     private static final double intentionReservationLifetime = SimulatorSettings.INTENTION_RESERVATION_LIFETIME;
     private static final double refreshIntentions = SimulatorSettings.REFRESH_INTENTIONS;
     private static final double refreshExplorations = SimulatorSettings.REFRESH_EXPLORATIONS;
-
     private static final double probNewDeliveryTask = SimulatorSettings.PROB_NEW_DELIVERY_TASK;
     private static final double probNewRoadWorks = SimulatorSettings.PROB_NEW_ROAD_WORKS;
     private static final double pizzaAmountStd = SimulatorSettings.PIZZA_AMOUNT_STD;
     private static final double pizzaAmountMean = SimulatorSettings.PIZZA_AMOUNT_MEAN;
-
     private static final Point pizzeriaPosition = new Point(4, 2);
     private static final Point chargingStationPosition = new Point(2, 2);
-    private static final ListenableGraph<LengthData> staticGraph = CityGraphCreator.createGraph(citySize, robotLength);
-    private static final ListenableGraph<LengthData> dynamicGraph = CityGraphCreator.createGraph(citySize, robotLength);
-
     private static final Point P1_PICKUP = new Point(1, 2);
     private static final Point P1_DELIVERY = new Point(4, 2);
     private static final Point P2_PICKUP = new Point(1, 1);
     private static final Point P2_DELIVERY = new Point(4, 1);
     private static final Point P3_PICKUP = new Point(1, 3);
     private static final Point P3_DELIVERY = new Point(4, 3);
-
     private static final long M1 = 60 * 1000L;
     private static final long M4 = 4 * 60 * 1000L;
     private static final long M5 = 5 * 60 * 1000L;
@@ -92,6 +78,14 @@ public class ExperimentTest {
     private static final long M30 = 30 * 60 * 1000L;
     private static final long M40 = 40 * 60 * 1000L;
     private static final long END_TIME = 60 * 60 * 1000L;
+    private static long tickLength = SimulatorSettings.TICK_LENGTH;
+    private static int citySize = SimulatorSettings.CITY_SIZE;
+    private static int numRobots = SimulatorSettings.NUM_ROBOTS;
+    private static int robotLength = SimulatorSettings.ROBOT_LENGTH;
+    private static final ListenableGraph<LengthData> staticGraph = CityGraphCreator.createGraph(citySize, robotLength);
+    private static final ListenableGraph<LengthData> dynamicGraph = CityGraphCreator.createGraph(citySize, robotLength);
+    private static Unit<Length> distanceUnit = SimulatorSettings.DISTANCE_UNIT;
+    private static Unit<Velocity> speedUnit = SimulatorSettings.SPEED_UNIT;
 
     public static void main(String[] args) {
         int uiSpeedUp = 1;

@@ -42,7 +42,7 @@ public class AddPizzeriaAndChargingStationAndResourceAgentsEventHandlers {
 
                 PizzeriaModel pm = ((Simulator) sim).getModelProvider().getModel(PizzeriaModel.class);
                 for (Point p : graph.getNodes()) {
-                    pm.createResourceAgent(p);
+                    pm.createResourceAgent(p, intentionReservationLifetime, nodeDistance, robotSpeed);
                 }
             }
 

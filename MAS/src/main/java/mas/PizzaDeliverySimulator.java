@@ -13,7 +13,9 @@ import com.github.rinde.rinsim.geom.ListenableGraph;
 import com.github.rinde.rinsim.geom.Point;
 import com.github.rinde.rinsim.pdptw.common.StatsPanel;
 import com.github.rinde.rinsim.ui.View;
-import com.github.rinde.rinsim.ui.renderers.*;
+import com.github.rinde.rinsim.ui.renderers.CommRenderer;
+import com.github.rinde.rinsim.ui.renderers.GraphRoadModelRenderer;
+import com.github.rinde.rinsim.ui.renderers.RoadUserRenderer;
 import mas.agents.Battery;
 import mas.agents.RobotAgent;
 import mas.buildings.ChargingStation;
@@ -108,14 +110,17 @@ public class PizzaDeliverySimulator {
         final Pizzeria pizzeria = pizzeriaModel.openPizzeria();
 
         // Create charging station
-        final ChargingStation chargingStation = pizzeriaModel.openChargingStation();
+        final ChargingStation chargingStation = pizzeriaModel.openChargingStation(
+                SimulatorSettings.ROBOT_CAPACITY,
+                SimulatorSettings.BATTERY_RECHARGE_CAPACITY
+        );
 
         // Create robots
         for (int i = 0; i < SimulatorSettings.NUM_ROBOTS; i++) {
             VehicleDTO vdto = VehicleDTO.builder()
                     .capacity(SimulatorSettings.ROBOT_CAPACITY)
                     //.startPosition(pizzeria.getPosition())
-                    .startPosition(pizzeria.getPosition())
+                    .startPosition(pizzeria.position)
                     .speed(SimulatorSettings.ROBOT_SPEED)
                     .build();
 
@@ -123,14 +128,27 @@ public class PizzaDeliverySimulator {
 
             // Robots start at the pizzeria
             sim.register(new RobotAgent(
-                    getNextRobotID(), vdto, battery, staticGraph, pizzeria.getPosition(),
-                    SimulatorSettings.ALTERNATIVE_PATHS_TO_EXPLORE, chargingStation.position)
-            );
+                    getNextRobotID(),
+                    vdto,
+                    staticGraph,
+                    battery,
+                    SimulatorSettings.BATTERY_RESCUE_DELAY,
+                    pizzeria.position,
+                    chargingStation.position,
+                    SimulatorSettings.ALTERNATIVE_PATHS_TO_EXPLORE,
+                    SimulatorSettings.REFRESH_EXPLORATIONS,
+                    SimulatorSettings.REFRESH_INTENTIONS
+            ));
         }
 
         // At every node, insert a ResourceAgent
         for (Point node : staticGraph.getNodes()) {
-            pizzeriaModel.createResourceAgent(node);
+            pizzeriaModel.createResourceAgent(
+                    node,
+                    SimulatorSettings.INTENTION_RESERVATION_LIFETIME,
+                    SimulatorSettings.NODE_DISTANCE,
+                    SimulatorSettings.ROBOT_SPEED
+            );
         }
 
         // TickListener for creation of new delivery tasks
@@ -138,7 +156,12 @@ public class PizzaDeliverySimulator {
             @Override
             public void tick(@NotNull TimeLapse time) {
                 if (rng.nextDouble() < SimulatorSettings.PROB_NEW_DELIVERY_TASK) {
-                    pizzeriaModel.createNewDeliveryTask(rng, SimulatorSettings.PIZZA_AMOUNT_MEAN, SimulatorSettings.PIZZA_AMOUNT_STD, time.getStartTime());
+                    pizzeriaModel.createNewDeliveryTask(
+                            rng,
+                            SimulatorSettings.PIZZA_AMOUNT_MEAN,
+                            SimulatorSettings.PIZZA_AMOUNT_STD,
+                            time.getStartTime()
+                    );
                 }
             }
 
