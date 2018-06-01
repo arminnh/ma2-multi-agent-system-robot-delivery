@@ -48,7 +48,7 @@ public class DeliveryTask implements RoadUser {
     }
 
     public boolean isFinished() {
-        return this.pizzasDelivered == this.pizzasRequested;
+        return this.pizzasDelivered >= this.pizzasRequested;
     }
 
     public void deliverPizzas(int amount) {

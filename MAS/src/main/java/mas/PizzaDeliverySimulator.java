@@ -84,7 +84,7 @@ public class PizzaDeliverySimulator {
                 .setTickLength(SimulatorSettings.TICK_LENGTH)
                 .addModel(RandomModel.builder()
                         // set the random seed we use in this 'experiment'
-                        //.withSeed(SimulatorSettings.RANDOM_SEED)
+                        .withSeed(System.currentTimeMillis())
                 )
                 .addModel(RoadModelBuilders.dynamicGraph(dynamicGraph)
                         .withDistanceUnit(SimulatorSettings.DISTANCE_UNIT)
