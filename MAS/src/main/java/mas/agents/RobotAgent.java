@@ -441,7 +441,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
                 // If a reservation has been confirmed, create a new parcel if necessary
                 if (intentionData.reservationConfirmed) {
                     if (!parcelForTask.isPresent()) {
-                        PizzaParcel parcel = this.pizzeriaModel.newPizzaParcel(intentionData.deliveryTaskID,
+                        PizzaParcel parcel = this.pizzeriaModel.createPizzaParcel(intentionData.deliveryTaskID,
                                 this.getPosition().get(), intentionData.pizzas, time.getStartTime());
 
                         this.pdpModel.pickup(this, parcel, time);

@@ -47,7 +47,7 @@ public class AddRobotAgentEventHandlers {
             public void handleTimedEvent(@NotNull AddVehicleEvent event, @NotNull SimulatorAPI sim) {
                 PizzeriaModel pm = ((Simulator) sim).getModelProvider().getModel(PizzeriaModel.class);
 
-                pm.newRobot(
+                pm.createRobot(
                         robotCapacity,
                         robotSpeed,
                         batteryCapacity,

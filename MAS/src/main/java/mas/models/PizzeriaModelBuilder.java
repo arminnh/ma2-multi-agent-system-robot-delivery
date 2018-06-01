@@ -14,14 +14,12 @@ public class PizzeriaModelBuilder extends AbstractModelBuilder<PizzeriaModel, Pi
     PizzeriaModelBuilder() {
         setProvidingTypes(PizzeriaModel.class);
 
-        setDependencies(RoadModel.class, Clock.class, SimulatorAPI.class, RandomProvider.class);
+        setDependencies(RoadModel.class, SimulatorAPI.class);
     }
 
     @Override
     public PizzeriaModel build(@NotNull DependencyProvider dependencyProvider) {
         return new PizzeriaModel(
-                dependencyProvider.get(Clock.class),
-                dependencyProvider.get(RandomProvider.class),
                 dependencyProvider.get(RoadModel.class),
                 dependencyProvider.get(SimulatorAPI.class)
         );

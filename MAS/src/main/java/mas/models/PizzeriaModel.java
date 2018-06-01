@@ -5,12 +5,9 @@ import com.github.rinde.rinsim.core.SimulatorAPI;
 import com.github.rinde.rinsim.core.model.Model.AbstractModel;
 import com.github.rinde.rinsim.core.model.pdp.Parcel;
 import com.github.rinde.rinsim.core.model.pdp.ParcelDTO;
-import com.github.rinde.rinsim.core.model.pdp.VehicleDTO;
-import com.github.rinde.rinsim.core.model.rand.RandomProvider;
 import com.github.rinde.rinsim.core.model.road.DynamicGraphRoadModelImpl;
 import com.github.rinde.rinsim.core.model.road.RoadModel;
 import com.github.rinde.rinsim.core.model.road.RoadUser;
-import com.github.rinde.rinsim.core.model.time.Clock;
 import com.github.rinde.rinsim.core.model.time.TimeLapse;
 import com.github.rinde.rinsim.event.EventAPI;
 import com.github.rinde.rinsim.event.EventDispatcher;
@@ -37,20 +34,19 @@ import java.util.List;
 public class PizzeriaModel extends AbstractModel<PizzeriaUser> {
 
     private Simulator sim;
-    private RandomGenerator rng;
     private RoadModel roadModel;
     private EventDispatcher eventDispatcher;
 
     private ListenableGraph dynamicGraph;
     private DynamicGraphRoadModelImpl dynamicGraphRoadModel;
+
     private int robotID = 1;
     private HashMap<Point, Pizzeria> pizzerias = new HashMap<>();
     private HashMap<Point, ChargingStation> chargingStations = new HashMap<>();
     private HashMap<Integer, DeliveryTask> deliveryTasks = new HashMap<>();
     private HashMap<Point, ResourceAgent> resourceAgents = new HashMap<>();
 
-    public PizzeriaModel(Clock clock, RandomProvider provider, RoadModel roadModel, SimulatorAPI simAPI) {
-        this.rng = provider.masterInstance();
+    public PizzeriaModel(RoadModel roadModel, SimulatorAPI simAPI) {
         this.roadModel = roadModel;
         this.sim = (Simulator) simAPI;
 
@@ -58,8 +54,6 @@ public class PizzeriaModel extends AbstractModel<PizzeriaUser> {
         this.dynamicGraph = this.dynamicGraphRoadModel.getGraph();
 
         this.eventDispatcher = new EventDispatcher(PizzeriaEventType.values());
-
-
     }
 
     public static PizzeriaModelBuilder builder() {
@@ -90,7 +84,7 @@ public class PizzeriaModel extends AbstractModel<PizzeriaUser> {
         return false;
     }
 
-    public void openPizzeria() {
+    public void createPizzeria(RandomGenerator rng) {
         Point position = this.roadModel.getRandomPosition(rng);
 
         Pizzeria pizzeria = new Pizzeria(position);
@@ -99,8 +93,8 @@ public class PizzeriaModel extends AbstractModel<PizzeriaUser> {
         this.sim.register(pizzeria);
     }
 
-    public void openChargingStation(int stationCapacity, double rechargeCapacity) {
-        Point position = roadModel.getRandomPosition(sim.getRandomGenerator());
+    public void createChargingStation(RandomGenerator rng, int stationCapacity, double rechargeCapacity) {
+        Point position = roadModel.getRandomPosition(rng);
 
         ChargingStation chargingStation = new ChargingStation(position, stationCapacity, rechargeCapacity);
 
@@ -127,7 +121,7 @@ public class PizzeriaModel extends AbstractModel<PizzeriaUser> {
         return new LinkedList<>(this.deliveryTasks.values());
     }
 
-    public void createNewDeliveryTask(RandomGenerator rng, double pizzaMean, double pizzaStd, long time) {
+    public void createDeliveryTask(RandomGenerator rng, double pizzaMean, double pizzaStd, long time) {
         int pizzaAmount = Math.toIntExact(Math.round(rng.nextGaussian() * pizzaStd + pizzaMean));
 
         // Try to place the task on the graph up to 3 times.
@@ -155,13 +149,13 @@ public class PizzeriaModel extends AbstractModel<PizzeriaUser> {
                 this.sim.register(task);
 
                 this.eventDispatcher.dispatchEvent(new PizzeriaEvent(PizzeriaEventType.NEW_TASK, time, task, null, null));
-                System.out.println("PizzeriaModel.createNewDeliveryTask: " + task);
+                System.out.println("PizzeriaModel.createDeliveryTask: " + task + " at time " + time);
                 return;
             }
         }
     }
 
-    public void newRobot(
+    public void createRobot(
             int robotCapacity,
             double robotSpeed,
             double batteryCapacity,
@@ -171,7 +165,6 @@ public class PizzeriaModel extends AbstractModel<PizzeriaUser> {
             long explorationRefreshTime,
             long intentionRefreshTime
     ) {
-
         Point pizzeriaPosition = pizzerias.keySet().iterator().next();
         Point chargingStationPosition = chargingStations.keySet().iterator().next();
 
@@ -190,10 +183,10 @@ public class PizzeriaModel extends AbstractModel<PizzeriaUser> {
         ));
     }
 
-    public PizzaParcel newPizzaParcel(int deliveryTaskID, Point startPosition, int pizzaAmount, long time) {
+    public PizzaParcel createPizzaParcel(int deliveryTaskID, Point startPosition, int pizzaAmount, long time) {
         DeliveryTask task = this.deliveryTasks.get(deliveryTaskID);
 
-        System.out.println("task " + deliveryTaskID + ", time " + time);
+        System.out.println("Created PizzaParcel for task " + deliveryTaskID + " at time " + time);
 
         ParcelDTO pdto = Parcel.builder(startPosition, task.position)
                 .neededCapacity(pizzaAmount)
@@ -277,14 +270,14 @@ public class PizzeriaModel extends AbstractModel<PizzeriaUser> {
         this.resourceAgents.get(cs.position).dropReservation(r);
     }
 
-    public void newRoadWorks(long endTimestamp) {
+    public void createRoadWorks(RandomGenerator rng, long endTimestamp) {
         // Road works can only be set on positions where there is no robot, building, or delivery task.
-        // Try to create new road works up to 5 times.
+        // Try to create road works up to 5 times.
         int attempts = 5;
 
         while (attempts-- > 0) {
-            // Find a new random position.
-            Point position = this.roadModel.getRandomPosition(this.rng);
+            // Find a random position.
+            Point position = this.roadModel.getRandomPosition(rng);
 
             // Check if the position is free.
             if (this.dynamicGraphRoadModel.getRoadUsersOnNode(position).isEmpty()) {
@@ -305,7 +298,7 @@ public class PizzeriaModel extends AbstractModel<PizzeriaUser> {
                         PizzeriaEventType.STARTED_ROADWORKS, 0, null, null, null
                 ));
 
-                System.out.println("PizzeriaModel.newRoadWorks: " + roadWorks);
+                System.out.println("PizzeriaModel.createRoadWorks: " + roadWorks);
                 return;
             }
         }

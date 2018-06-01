@@ -30,8 +30,6 @@ import org.jetbrains.annotations.NotNull;
 
 public class PizzaDeliverySimulator {
 
-    private static int robotID = 1;
-
     /**
      * @param args - No args.
      */
@@ -98,15 +96,19 @@ public class PizzaDeliverySimulator {
                 .addModel(PizzeriaModel.builder())
                 .addModel(StatsTracker.builder())
                 // in case a GUI is not desired simply don't add it.
-                //.addModel(viewBuilder)
+                .addModel(viewBuilder)
                 .build();
 
         final RandomGenerator rng = sim.getRandomGenerator();
         final PizzeriaModel pizzeriaModel = sim.getModelProvider().getModel(PizzeriaModel.class);
 
         // Create pizzeria and charging station
-        pizzeriaModel.openPizzeria();
-        pizzeriaModel.openChargingStation(SimulatorSettings.ROBOT_CAPACITY, SimulatorSettings.BATTERY_RECHARGE_CAPACITY);
+        pizzeriaModel.createPizzeria(rng);
+        pizzeriaModel.createChargingStation(
+                rng,
+                SimulatorSettings.ROBOT_CAPACITY,
+                SimulatorSettings.BATTERY_RECHARGE_CAPACITY
+        );
 
         // At every node in the graph, insert a ResourceAgent
         for (Point node : staticGraph.getNodes()) {
@@ -121,7 +123,7 @@ public class PizzaDeliverySimulator {
         // Create robots
         for (int i = 0; i < SimulatorSettings.NUM_ROBOTS; i++) {
             // Robots start at the pizzeria
-            pizzeriaModel.newRobot(
+            pizzeriaModel.createRobot(
                     SimulatorSettings.ROBOT_CAPACITY,
                     SimulatorSettings.ROBOT_SPEED,
                     SimulatorSettings.BATTERY_CAPACITY,
@@ -138,7 +140,7 @@ public class PizzaDeliverySimulator {
             @Override
             public void tick(@NotNull TimeLapse time) {
                 if (rng.nextDouble() < SimulatorSettings.PROB_NEW_DELIVERY_TASK) {
-                    pizzeriaModel.createNewDeliveryTask(
+                    pizzeriaModel.createDeliveryTask(
                             rng,
                             SimulatorSettings.PIZZA_AMOUNT_MEAN,
                             SimulatorSettings.PIZZA_AMOUNT_STD,
@@ -156,7 +158,10 @@ public class PizzaDeliverySimulator {
             @Override
             public void tick(@NotNull TimeLapse timeLapse) {
                 if (rng.nextDouble() < SimulatorSettings.PROB_NEW_ROAD_WORKS) {
-                    pizzeriaModel.newRoadWorks(timeLapse.getEndTime());
+                    pizzeriaModel.createRoadWorks(
+                            rng,
+                            timeLapse.getEndTime() + SimulatorSettings.TIME_ROAD_WORKS
+                    );
                 }
             }
 

@@ -38,9 +38,7 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
-public class ExperimentTest {
-    // TODO: CHANGE THESE VALUES
-
+public class Experiments {
     private static final double robotSpeed = SimulatorSettings.ROBOT_SPEED;
     private static final int robotCapacity = SimulatorSettings.ROBOT_CAPACITY;
     private static final int chargingStationCapacity = SimulatorSettings.CHARGING_STATION_ROBOT_CAPACITY;
@@ -82,7 +80,7 @@ public class ExperimentTest {
                 .vehicles(getVehicleGenerator(
                         1, robotCapacity, robotSpeed, pizzeriaPosition
                 ))
-                .parcels(getParcelGenerator())
+                .parcels(getDeliveryTaskAndRoadWorksGenerator())
                 .depots(getDepotGenerator(positions))
                 .addModel(TimeModel.builder().withTickLength(tickLength))
                 .addModel(RandomModel.builder())
@@ -121,7 +119,7 @@ public class ExperimentTest {
                         // Use the 'defaultHandler()' instead.
                         .addEventHandler(AddDepotEvent.class, AddPizzeriaAndChargingStationAndResourceAgentsEventHandlers.defaultHandler(staticGraph, chargingStationCapacity, batteryRechargeCapacity, intentionReservationLifetime, nodeDistance, robotSpeed))
 
-                        .addEventHandler(AddParcelEvent.class, AddDeliveryTaskEventHandlers.defaultHandler(pizzaAmountMean, pizzaAmountStd))
+                        .addEventHandler(AddParcelEvent.class, AddDeliveryTaskAndRoadWorksEventHandlers.defaultHandler(pizzaAmountMean, pizzaAmountStd, timeRoadWorks))
                         // There is no default handle for vehicle events, here a non functioning handler is added,
                         // it can be changed to add a custom vehicle to the simulator.
                         .addEventHandler(AddVehicleEvent.class, AddRobotAgentEventHandlers.defaultHandler(robotCapacity, robotSpeed, batteryCapacity, batteryRescueDelay, staticGraph, alternativePathsToExplore, explorationRefreshTime, intentionRefreshTime))
@@ -193,8 +191,12 @@ public class ExperimentTest {
                 .build();
     }
 
-    public static Parcels.ParcelGenerator getParcelGenerator() {
-        return new DeliveryTaskGenerator(tickLength, probNewDeliveryTask);
+    public static Parcels.ParcelGenerator getDeliveryTaskAndRoadWorksGenerator() {
+        return new DeliveryTaskAndRoadWorksGenerator(
+                tickLength,
+                probNewDeliveryTask,
+                probNewRoadWorks
+        );
     }
 }
 

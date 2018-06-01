@@ -43,9 +43,10 @@ public class AddPizzeriaAndChargingStationAndResourceAgentsEventHandlers {
             public void handleTimedEvent(@NotNull AddDepotEvent event, @NotNull SimulatorAPI sim) {
                 PizzeriaModel pm = ((Simulator) sim).getModelProvider().getModel(PizzeriaModel.class);
 
-                pm.openPizzeria();
+                pm.createPizzeria(sim.getRandomGenerator());
 
-                pm.openChargingStation(
+                pm.createChargingStation(
+                        sim.getRandomGenerator(),
                         chargingStationCapacity,
                         rechargeCapacity
                 );
