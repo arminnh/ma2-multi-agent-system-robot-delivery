@@ -357,4 +357,10 @@ public class PizzeriaModel extends AbstractModel<PizzeriaUser> {
         // Unregister the works from the simulator
         this.sim.unregister(roadWorks);
     }
+
+    public boolean canArriveAtChargingStation(RobotAgent r, TimeLapse time, double capacityUsed) {
+        ResourceAgent agent = this.resourceAgents.get(r.getPosition().get());
+
+        return agent.hasRobotChargeReservation(r.id) && agent.robotCanChargeUntil(r.id, time, capacityUsed);
+    }
 }
