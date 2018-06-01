@@ -91,4 +91,24 @@ public class StatisticsDTO extends com.github.rinde.rinsim.pdptw.common.Statisti
         this.roadWorks = roadWorks;
         this.totalRoadWorks = totalRoadWorks;
     }
+
+    @Override
+    public String toString() {
+        return "{droppedParcels: " + this.droppedParcels +
+                ", tasksWaitingTime: " + this.tasksWaitingTime +
+                ", totalTasksWaitingTime: " + this.totalTasksWaitingTime +
+                ", totalIdleTime: " + this.totalIdleTime +
+                ", totalChargingTime: " + this.totalChargingTime +
+                ", tasks: " + this.tasks +
+                ", totalTasks: " + this.totalTasks +
+                ", totalTasksFinished: " + this.totalTasksFinished +
+                ", pizzas: " + this.pizzas +
+                ", totalPizzas: " + this.totalPizzas +
+                ", avgPizzasPerRobot" + this.avgPizzasPerRobot +
+                ", roaWorks: " + this.roadWorks +
+                ", totalRoadWorks: " + this.totalRoadWorks +
+                "}";
+    }
+
+
 }

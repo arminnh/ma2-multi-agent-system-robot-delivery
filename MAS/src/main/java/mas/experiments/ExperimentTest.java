@@ -5,6 +5,7 @@ import com.github.rinde.rinsim.core.model.pdp.DefaultPDPModel;
 import com.github.rinde.rinsim.core.model.rand.RandomModel;
 import com.github.rinde.rinsim.core.model.road.RoadModelBuilders;
 import com.github.rinde.rinsim.core.model.time.TimeModel;
+import com.github.rinde.rinsim.examples.experiment.ExamplePostProcessor;
 import com.github.rinde.rinsim.experiment.Experiment;
 import com.github.rinde.rinsim.experiment.ExperimentResults;
 import com.github.rinde.rinsim.experiment.MASConfiguration;
@@ -104,7 +105,7 @@ public class ExperimentTest {
                 .collect(Collectors.toList());
 
         ScenarioGenerator generator = ScenarioGenerator.builder()
-                .scenarioLength(100 * 1000)
+                .scenarioLength(1000 * 1000)
                 .setStopCondition(StatsStopConditions.timeOutEvent())
                 .vehicles(getVehicleGenerator(
                         1, robotCapacity, robotSpeed, pizzeriaPosition
@@ -166,7 +167,7 @@ public class ExperimentTest {
 
                 // The number of repetitions for each simulation.
                 // Each repetition will have a unique random seed that is given to the simulator.
-                .repeat(5)
+                .repeat(1)
 
                 // The master random seed from which all random seeds for the simulations will be drawn.
                 .withRandomSeed(1234567890)
@@ -178,10 +179,7 @@ public class ExperimentTest {
                 // We add a post processor to the experiment. A post processor can read the state of the simulator
                 // after it has finished. It can be used to gather simulation results. The objects created by the
                 // post processor end up in the ExperimentResults object that is returned by the perform(..) method
-                // TODO
-                // TODO
-                // of Experiment.usePostProcessor(new ExamplePostProcessor())
-
+                .usePostProcessor(new PizzaPostProcessor())
                 // Starts the experiment, but first reads the command-line arguments that are specified for this
                 // application. By supplying the '-h' option you can see an overview of the supported options.
                 .perform(System.out, arguments);
