@@ -62,8 +62,6 @@ public class Experiments {
     private static final double probNewRoadWorks = SimulatorSettings.PROB_NEW_ROAD_WORKS;
     private static final double pizzaAmountStd = SimulatorSettings.PIZZA_AMOUNT_STD;
     private static final double pizzaAmountMean = SimulatorSettings.PIZZA_AMOUNT_MEAN;
-    private static final Point pizzeriaPosition = new Point(4, 2);
-    private static final Point chargingStationPosition = new Point(2, 2);
 
     private static long tickLength = SimulatorSettings.TICK_LENGTH;
     private static int citySize = SimulatorSettings.CITY_SIZE;
@@ -79,9 +77,16 @@ public class Experiments {
         int uiSpeedUp = 1;
         String[] arguments = args;
 
-        long simulationLength = 60 * 60 * 1000;
+        // SOME MEMBERS CAN BE SET USING ARGUMENTS
+        // numRobots
+        // citySize
+        // chargingStationCapacity
+        // probNewDeliveryTask
+        // probNewRoadWorks
+        // alternativePathsToExplore
 
-        LinkedList<Point> positions = new LinkedList<>(Arrays.asList(pizzeriaPosition, chargingStationPosition));
+
+        long simulationLength = 60 * 60 * 1000;
 
         View.Builder viewBuilder = View.builder()
                 .withTitleAppendix("Pizza delivery multi agent system simulator")
@@ -108,9 +113,9 @@ public class Experiments {
         ScenarioGenerator generator = ScenarioGenerator.builder()
                 .scenarioLength(simulationLength)
                 .setStopCondition(StatsStopConditions.timeOutEvent())
-                .vehicles(getVehicleGenerator(numRobots, robotCapacity, robotSpeed, pizzeriaPosition))
+                .vehicles(getVehicleGenerator(numRobots, robotCapacity, robotSpeed))
                 .parcels(getDeliveryTaskAndRoadWorksGenerator())
-                .depots(getDepotGenerator(positions))
+                .depots(getDepotGenerator())
                 .addModel(TimeModel.builder().withTickLength(tickLength))
                 .addModel(RandomModel.builder())
                 .addModel(RoadModelBuilders.dynamicGraph(dynamicGraph)
@@ -207,21 +212,17 @@ public class Experiments {
      *
      * @return A newly constructed scenario.
      */
-    public static Vehicles.VehicleGenerator getVehicleGenerator(int vehiclesAm, int vehicleCap,
-                                                                double vehicleSpeed, Point pizzeriaPos) {
+    public static Vehicles.VehicleGenerator getVehicleGenerator(int vehiclesAm, int vehicleCap, double vehicleSpeed) {
         return Vehicles.builder()
                 .numberOfVehicles(StochasticSuppliers.constant(vehiclesAm))
                 .capacities(StochasticSuppliers.constant(vehicleCap))
                 .speeds(StochasticSuppliers.constant(vehicleSpeed))
-                .startPositions(StochasticSuppliers.constant(pizzeriaPos))
                 .build();
     }
 
-    public static Depots.DepotGenerator getDepotGenerator(LinkedList<Point> points) {
-
+    public static Depots.DepotGenerator getDepotGenerator() {
         return Depots.builder()
                 .numerOfDepots(StochasticSuppliers.constant(1))
-                .positions(StochasticSuppliers.fromIterable(points))
                 .build();
     }
 
