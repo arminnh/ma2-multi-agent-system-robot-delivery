@@ -42,8 +42,6 @@ import javax.measure.quantity.Length;
 import javax.measure.quantity.Velocity;
 import javax.measure.unit.Unit;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedList;
 import java.util.List;
 
 public class Experiments {
@@ -67,9 +65,9 @@ public class Experiments {
     private static int citySize = SimulatorSettings.CITY_SIZE;
     private static int numRobots = SimulatorSettings.NUM_ROBOTS;
     private static int robotLength = SimulatorSettings.ROBOT_LENGTH;
-    private static int nodeDistance = SimulatorSettings.NODE_DISTANCE;
     private static final ListenableGraph<LengthData> staticGraph = CityGraphCreator.createGraph(citySize, robotLength);
     private static final ListenableGraph<LengthData> dynamicGraph = CityGraphCreator.createGraph(citySize, robotLength);
+    private static int nodeDistance = SimulatorSettings.NODE_DISTANCE;
     private static Unit<Length> distanceUnit = SimulatorSettings.DISTANCE_UNIT;
     private static Unit<Velocity> speedUnit = SimulatorSettings.SPEED_UNIT;
 
@@ -85,8 +83,7 @@ public class Experiments {
         // probNewRoadWorks
         // alternativePathsToExplore
 
-
-        long simulationLength = 60 * 60 * 1000;
+        long simulationLength = 5 * 60 * 1000;
 
         View.Builder viewBuilder = View.builder()
                 .withTitleAppendix("Pizza delivery multi agent system simulator")
@@ -217,6 +214,7 @@ public class Experiments {
                 .numberOfVehicles(StochasticSuppliers.constant(vehiclesAm))
                 .capacities(StochasticSuppliers.constant(vehicleCap))
                 .speeds(StochasticSuppliers.constant(vehicleSpeed))
+                .startPositions(StochasticSuppliers.constant(new Point(2, 2)))
                 .build();
     }
 
