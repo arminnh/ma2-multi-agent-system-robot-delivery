@@ -44,7 +44,7 @@ public class ChargingStation implements RoadUser, TickListener {
         }
 
         for (RobotAgent robot : this.chargingRobots) {
-            robot.chargeBattery(this.rechargeCapacity);
+            robot.chargeBattery(this.rechargeCapacity, time);
         }
     }
 

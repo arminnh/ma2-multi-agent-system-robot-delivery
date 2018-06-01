@@ -65,7 +65,6 @@ public class Experiments {
     private static final Point pizzeriaPosition = new Point(4, 2);
     private static final Point chargingStationPosition = new Point(2, 2);
 
-    private static final long END_TIME = 60 * 60 * 1000L;
     private static long tickLength = SimulatorSettings.TICK_LENGTH;
     private static int citySize = SimulatorSettings.CITY_SIZE;
     private static int numRobots = SimulatorSettings.NUM_ROBOTS;
@@ -80,14 +79,18 @@ public class Experiments {
         int uiSpeedUp = 1;
         String[] arguments = args;
 
+        long simulationLength = 60 * 60 * 1000;
+
         LinkedList<Point> positions = new LinkedList<>(Arrays.asList(pizzeriaPosition, chargingStationPosition));
 
         View.Builder viewBuilder = View.builder()
                 .withTitleAppendix("Pizza delivery multi agent system simulator")
                 .withAutoPlay()
+                .withSimulatorEndTime(simulationLength)
+                .withAutoClose()
                 .withSpeedUp(SimulatorSettings.SIM_SPEEDUP)
                 .with(GraphRoadModelRenderer.builder()
-                        .withMargin(SimulatorSettings.ROBOT_LENGTH)
+                        .withMargin(robotLength)
                 )
                 .with(RoadUserRenderer.builder()
                         .withImageAssociation(RobotAgent.class, "/robot.png")
@@ -96,22 +99,16 @@ public class Experiments {
                         .withImageAssociation(DeliveryTask.class, "/graphics/flat/person-black-32.png")
                         .withImageAssociation(RoadWorks.class, "/road_works.png")
                 )
-                .with(CommRenderer.builder().withMessageCount()
-                        //.withReliabilityColors()
-                        //.withToString()
-                        //.withMessageCount()
-                )
+                .with(CommRenderer.builder().withMessageCount())
                 .with(DeliveryTaskRenderer.builder())
                 .with(RobotRenderer.builder())
                 .with(StatsPanel.builder())
                 .withResolution(SimulatorSettings.WINDOW_WIDTH, SimulatorSettings.WINDOW_HEIGHT);
 
         ScenarioGenerator generator = ScenarioGenerator.builder()
-                .scenarioLength(1000 * 1000)
+                .scenarioLength(simulationLength)
                 .setStopCondition(StatsStopConditions.timeOutEvent())
-                .vehicles(getVehicleGenerator(
-                        1, robotCapacity, robotSpeed, pizzeriaPosition
-                ))
+                .vehicles(getVehicleGenerator(numRobots, robotCapacity, robotSpeed, pizzeriaPosition))
                 .parcels(getDeliveryTaskAndRoadWorksGenerator())
                 .depots(getDepotGenerator(positions))
                 .addModel(TimeModel.builder().withTickLength(tickLength))
@@ -119,7 +116,8 @@ public class Experiments {
                 .addModel(RoadModelBuilders.dynamicGraph(dynamicGraph)
                         .withDistanceUnit(distanceUnit)
                         .withSpeedUnit(speedUnit)
-                        .withModificationCheck(true))
+                        .withModificationCheck(true)
+                )
                 .addModel(DefaultPDPModel.builder())
                 .addModel(CommModel.builder())
                 .addModel(PizzeriaModel.builder())
@@ -184,7 +182,7 @@ public class Experiments {
                 .usePostProcessor(new PizzaPostProcessor())
 
                 .showGui(viewBuilder)
-                .showGui(false)
+                .showGui(true)
 
                 // Starts the experiment, but first reads the command-line arguments that are specified for this
                 // application. By supplying the '-h' option you can see an overview of the supported options.
@@ -194,7 +192,7 @@ public class Experiments {
             for (final Experiment.SimulationResult sr : results.get().getResults()) {
                 // The SimulationResult contains all information about a specific simulation,
                 // the result object is the object created by the post processor, a String in this case.
-                System.out.println(sr.getSimArgs().getRandomSeed() + " " + sr.getResultObject());
+                System.out.println(sr.getSimArgs().getScenario().getProblemInstanceId() + " " + sr.getResultObject());
             }
         } else {
             throw new IllegalStateException("Experiment did not complete.");

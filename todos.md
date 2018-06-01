@@ -7,7 +7,3 @@
   * Improve scoring function and selection function
   * Reorder chosen desired so that the shortest path is followed from when the robot starts driving again:
     * From the point the robot starts driving, the shortest path will always be the best one w.r.t. decreasing total waiting time.
-
-* Test with multiple pizzas per task
-
-* Do experiments

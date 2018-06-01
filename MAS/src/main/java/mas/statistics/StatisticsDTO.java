@@ -94,20 +94,27 @@ public class StatisticsDTO extends com.github.rinde.rinsim.pdptw.common.Statisti
 
     @Override
     public String toString() {
-        return "{droppedParcels: " + this.droppedParcels +
-                ", tasksWaitingTime: " + this.tasksWaitingTime +
+        return "{" +
+                "totalTasks: " + this.totalTasks +
+                ", totalTasksFinished: " + this.totalTasksFinished +
+                ", totalRoadWorks: " + this.totalRoadWorks +
                 ", totalTasksWaitingTime: " + this.totalTasksWaitingTime +
+                ", totalPizzas: " + this.totalPizzas +
+                ", totalDistance: " + this.totalDistance +
+                ", totalTravelTime: " + this.totalTravelTime +
                 ", totalIdleTime: " + this.totalIdleTime +
                 ", totalChargingTime: " + this.totalChargingTime +
-                ", tasks: " + this.tasks +
-                ", totalTasks: " + this.totalTasks +
-                ", totalTasksFinished: " + this.totalTasksFinished +
-                ", pizzas: " + this.pizzas +
-                ", totalPizzas: " + this.totalPizzas +
-                ", avgPizzasPerRobot" + this.avgPizzasPerRobot +
-                ", roaWorks: " + this.roadWorks +
-                ", totalRoadWorks: " + this.totalRoadWorks +
+                ", totalPickups: " + this.totalPickups +
+                ", totalDeliveries: " + this.totalDeliveries +
+                ", acceptedParcels (= totalParcels): " + this.acceptedParcels +
+                ", droppedParcels: " + this.droppedParcels +
+                ", totalVehicles: " + this.totalVehicles +
+                ", timeUnit: " + this.timeUnit +
+                ", distanceUnit: " + this.distanceUnit +
+                ", speedUnit: " + this.speedUnit +
                 "}";
+
+
     }
 
 

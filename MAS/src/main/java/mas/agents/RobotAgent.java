@@ -65,6 +65,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
     private boolean isCharging = false;
     private Optional<ChargingStation> currentChargingStation = Optional.absent();
     private long idleTime = 0;
+    private long chargeTime = 0;
 
     private int currentAmountOfPizzas = 0;
     private Queue<PizzaParcel> currentParcels = new LinkedList<>();
@@ -196,6 +197,12 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
     public long getAndResetIdleTime() {
         long time = this.idleTime;
         this.idleTime = 0;
+        return time;
+    }
+
+    public long getAndResetChargeTime() {
+        long time = this.chargeTime;
+        this.chargeTime = 0;
         return time;
     }
 
@@ -896,6 +903,7 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
         System.out.println("arriveAtChargingStation");
         this.goingToCharge = false;
         this.isCharging = true;
+        this.chargeTime = 0;
 
         // Find the charging station the robot arrived at.
         Optional<ChargingStation> station = this.pizzeriaModel.getChargingStationAtPosition(this.getPosition().get());
@@ -914,8 +922,9 @@ public class RobotAgent extends Vehicle implements MovingRoadUser, TickListener,
     /**
      * Charges the battery of the robot.
      */
-    public void chargeBattery(double capacity) {
+    public void chargeBattery(double capacity, TimeLapse time) {
         this.battery.increaseCapacity(capacity);
+        this.chargeTime += time.getTickLength();
 
         if (this.battery.isAtMaxCapacity()) {
             this.isCharging = false;

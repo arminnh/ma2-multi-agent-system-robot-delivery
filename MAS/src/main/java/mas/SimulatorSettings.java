@@ -15,7 +15,7 @@ public class SimulatorSettings {
     public static final int WINDOW_HEIGHT = 800;
 
     // CITY AND ROBOTS
-    public static final int CITY_SIZE = 10;
+    public static final int CITY_SIZE = 12;
     public static final int NUM_ROBOTS = 4;
     public static final int ROBOT_LENGTH = 1;
     public static final int NODE_DISTANCE = 2 * ROBOT_LENGTH;
@@ -47,7 +47,7 @@ public class SimulatorSettings {
 
 
     // PROBABILITIES
-    public static final double PROB_NEW_DELIVERY_TASK = 0.002 * CITY_SIZE;
+    public static final double PROB_NEW_DELIVERY_TASK = 0.001 * CITY_SIZE;
     public static final double PROB_NEW_ROAD_WORKS = 0.0025 * CITY_SIZE;
     public static final double PIZZA_AMOUNT_STD = 0.75;
     public static final double PIZZA_AMOUNT_MEAN = 4;

@@ -32,7 +32,7 @@ public abstract class AddDeliveryTaskAndRoadWorksEventHandlers {
                     pizzeriaModel.createDeliveryTask(sim.getRandomGenerator(), pizzaMean, pizzaStd, event.getTime());
 
                 } else if (capacity == DeliveryTaskAndRoadWorksGenerator.ROAD_WORKS_EVENT) {
-                    pizzeriaModel.createRoadWorks(sim.getRandomGenerator(), timeRoadWorks);
+                    pizzeriaModel.createRoadWorks(sim.getRandomGenerator(), event.getParcelDTO().getOrderAnnounceTime() + timeRoadWorks);
                 }
 
             }

@@ -255,7 +255,12 @@ public class TheListener implements Listener {
             vehiclesCharging++;
 
         } else if (e.getEventType() == PizzeriaEventType.ROBOT_LEAVING_CHARGING_STATION) {
+            final PizzeriaEvent ev = (PizzeriaEvent) e;
+            final RobotAgent robot = (RobotAgent) ev.vehicle;
+            assert robot != null;
+
             vehiclesCharging--;
+            totalChargingTime += robot.getAndResetChargeTime();
 
         } else {
             try {
