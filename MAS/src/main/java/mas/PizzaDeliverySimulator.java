@@ -112,20 +112,8 @@ public class PizzaDeliverySimulator {
 
         // Create robots
         for (int i = 0; i < SimulatorSettings.NUM_ROBOTS; i++) {
-            VehicleDTO vdto = VehicleDTO.builder()
-                    .capacity(SimulatorSettings.ROBOT_CAPACITY)
-                    //.startPosition(pizzeria.getPosition())
-                    .startPosition(pizzeria.getPosition())
-                    .speed(SimulatorSettings.ROBOT_SPEED)
-                    .build();
-
-            Battery battery = new Battery(SimulatorSettings.BATTERY_CAPACITY);
-
-            // Robots start at the pizzeria
-            sim.register(new RobotAgent(
-                    getNextRobotID(), vdto, battery, staticGraph, pizzeria.getPosition(),
-                    SimulatorSettings.ALTERNATIVE_PATHS_TO_EXPLORE, chargingStation.position)
-            );
+            pizzeriaModel.newRobot(staticGraph, SimulatorSettings.ROBOT_CAPACITY, SimulatorSettings.ROBOT_SPEED,
+                    SimulatorSettings.BATTERY_CAPACITY, SimulatorSettings.ALTERNATIVE_PATHS_TO_EXPLORE);
         }
 
         // At every node, insert a ResourceAgent

@@ -5,6 +5,7 @@ import com.github.rinde.rinsim.core.SimulatorAPI;
 import com.github.rinde.rinsim.core.model.Model.AbstractModel;
 import com.github.rinde.rinsim.core.model.pdp.Parcel;
 import com.github.rinde.rinsim.core.model.pdp.ParcelDTO;
+import com.github.rinde.rinsim.core.model.pdp.VehicleDTO;
 import com.github.rinde.rinsim.core.model.rand.RandomProvider;
 import com.github.rinde.rinsim.core.model.road.DynamicGraphRoadModelImpl;
 import com.github.rinde.rinsim.core.model.road.RoadModel;
@@ -12,10 +13,12 @@ import com.github.rinde.rinsim.core.model.road.RoadUser;
 import com.github.rinde.rinsim.core.model.time.Clock;
 import com.github.rinde.rinsim.event.EventAPI;
 import com.github.rinde.rinsim.event.EventDispatcher;
+import com.github.rinde.rinsim.geom.LengthData;
 import com.github.rinde.rinsim.geom.ListenableGraph;
 import com.github.rinde.rinsim.geom.Point;
 import com.google.common.base.Optional;
 import mas.SimulatorSettings;
+import mas.agents.Battery;
 import mas.agents.ResourceAgent;
 import mas.agents.RobotAgent;
 import mas.buildings.ChargingStation;
@@ -44,6 +47,7 @@ public class PizzeriaModel extends AbstractModel<PizzeriaUser> {
     private HashMap<Point, ChargingStation> chargingStations = new HashMap<>();
     private HashMap<Integer, DeliveryTask> deliveryTasks = new HashMap<>();
     private HashMap<Point, ResourceAgent> resourceAgents = new HashMap<>();
+    private static int robotID = 1;
 
     public PizzeriaModel(Clock clock, RandomProvider provider, RoadModel roadModel, SimulatorAPI simAPI) {
         this.clock = clock;
@@ -150,7 +154,30 @@ public class PizzeriaModel extends AbstractModel<PizzeriaUser> {
                 return;
             }
         }
+    }
 
+    public void newRobot(ListenableGraph<LengthData> staticGraph, int capacityRobot, double robotSpeed, double batteryCap, int pathsToExplore){
+
+        Point pizzaPos = pizzerias.keySet().iterator().next();
+        Point chargingPos = chargingStations.keySet().iterator().next();
+
+        VehicleDTO vdto = VehicleDTO.builder()
+                .capacity(capacityRobot)
+                //.startPosition(pizzeria.getPosition())
+                .startPosition(pizzaPos)
+                .speed(robotSpeed)
+                .build();
+
+        Battery battery = new Battery(batteryCap);
+
+        sim.register(new RobotAgent(
+                getNextRobotID(), vdto, battery, staticGraph, pizzaPos,
+                pathsToExplore, chargingPos)
+        );
+    }
+
+    public int getNextRobotID(){
+        return robotID++;
     }
 
     public PizzaParcel newPizzaParcel(int deliveryTaskID, Point startPosition, int pizzaAmount, long time) {

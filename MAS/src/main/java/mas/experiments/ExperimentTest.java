@@ -100,17 +100,13 @@ public class ExperimentTest {
 
         LinkedList<Point> positions = new LinkedList<>(Arrays.asList(pizzeriaPosition, chargingStationPosition));
 
-        List<Point> availablePos = staticGraph.getNodes().stream()
-                .filter(n -> !n.equals(pizzeriaPosition) && !n.equals(chargingStationPosition))
-                .collect(Collectors.toList());
-
         ScenarioGenerator generator = ScenarioGenerator.builder()
                 .scenarioLength(1000 * 1000)
                 .setStopCondition(StatsStopConditions.timeOutEvent())
                 .vehicles(getVehicleGenerator(
                         1, robotCapacity, robotSpeed, pizzeriaPosition
                 ))
-                .parcels(getParcelGenerator(availablePos))
+                .parcels(getParcelGenerator())
                 .depots(getDepotGenerator(positions))
                 .addModel(TimeModel.builder().withTickLength(tickLength))
                 .addModel(RandomModel.builder())
@@ -152,7 +148,7 @@ public class ExperimentTest {
                         .addEventHandler(AddParcelEvent.class, AddDeliveryTaskEventHandlers.defaultHandler(pizzaAmountMean, pizzaAmountStd))
                         // There is no default handle for vehicle events, here a non functioning handler is added,
                         // it can be changed to add a custom vehicle to the simulator.
-                        .addEventHandler(AddVehicleEvent.class, AddRobotAgentEventHandlers.defaultHandler(dynamicGraph, pizzeriaPosition, chargingStationPosition, batteryCapacity, alternativePathsToExplore))
+                        .addEventHandler(AddVehicleEvent.class, AddRobotAgentEventHandlers.defaultHandler(dynamicGraph, batteryCapacity, robotSpeed, robotCapacity, alternativePathsToExplore))
                         .addEventHandler(TimeOutEvent.class, TimeOutEvent.ignoreHandler())
                         // Note: if youe multi-agent system requires the aid of a model (e.g. CommModel) it can be added
                         // directly in the configuration. Models that are only used for the solution side should not
@@ -221,7 +217,7 @@ public class ExperimentTest {
                 .build();
     }
 
-    public static Parcels.ParcelGenerator getParcelGenerator(List<Point> p) {
+    public static Parcels.ParcelGenerator getParcelGenerator() {
         return new DeliveryTaskGenerator(tickLength, probNewDeliveryTask);
     }
 }
