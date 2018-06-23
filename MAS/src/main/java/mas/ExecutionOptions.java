@@ -1,21 +1,14 @@
-package mas.experiments;
+package mas;
 
 import com.google.devtools.common.options.Option;
 import com.google.devtools.common.options.OptionsBase;
 
-public class ExperimentsOptions  extends OptionsBase {
-    // numRobots
-    // citySize
-    // chargingStationCapacity
-    // probNewDeliveryTask
-    // probNewRoadWorks
-    // alternativePathsToExplore
-
+public class ExecutionOptions extends OptionsBase {
     @Option(
             name = "numRobots",
             abbrev = 'n',
-            help = "The amount of robots used",
-            category="Startup",
+            help = "The amount of robots to use.",
+            category = "Startup",
             defaultValue = "3"
     )
     public int numRobots;
@@ -23,8 +16,8 @@ public class ExperimentsOptions  extends OptionsBase {
     @Option(
             name = "citySize",
             abbrev = 's',
-            help = "The size of the city",
-            category="Startup",
+            help = "The size of the city.",
+            category = "Startup",
             defaultValue = "12"
     )
     public int citySize;
@@ -32,8 +25,8 @@ public class ExperimentsOptions  extends OptionsBase {
     @Option(
             name = "chargingStationCapacity",
             abbrev = 'c',
-            help = "The capacity of the charging station. (How many robots can be there at one given point in time)",
-            category="Startup",
+            help = "The capacity of the charging station. (The amount of robots that can charge at once)",
+            category = "Startup",
             defaultValue = "3"
     )
     public int chargingStationCapacity;
@@ -42,18 +35,18 @@ public class ExperimentsOptions  extends OptionsBase {
     @Option(
             name = "probTask",
             abbrev = 't',
-            help = "The probability for a new task each tick.",
-            category="Startup",
+            help = "The probability for a new task at each tick.",
+            category = "Startup",
 
-            defaultValue = "0.03"
+            defaultValue = "0.018"
     )
     public double probNewDeliveryTask;
 
     @Option(
             name = "probRoadWork",
             abbrev = 'w',
-            help = "The probability for a new roadwork each tick.",
-            category="Startup",
+            help = "The probability for a new roadwork at each tick.",
+            category = "Startup",
             defaultValue = "0.03"
     )
     public double probNewRoadWorks;
@@ -61,8 +54,8 @@ public class ExperimentsOptions  extends OptionsBase {
     @Option(
             name = "alterativePaths",
             abbrev = 'p',
-            help = "The amount of paths the robot check before making a decision.",
-            category="Startup",
+            help = "The amount of paths the robot explores when searching for a new path.",
+            category = "Startup",
 
             defaultValue = "3"
     )
@@ -71,8 +64,8 @@ public class ExperimentsOptions  extends OptionsBase {
     @Option(
             name = "repeat",
             abbrev = 'r',
-            help = "How many times to repeat the experiment. Only for experiments.",
-            category="Startup",
+            help = "How many times to repeat a experiment (only for experiments).",
+            category = "Startup",
 
             defaultValue = "1"
     )
@@ -83,15 +76,15 @@ public class ExperimentsOptions  extends OptionsBase {
             abbrev = 'h',
             help = "Prints usage info.",
             defaultValue = "false",
-            category="Startup"
+            category = "Startup"
     )
     public boolean help;
 
     @Option(
             name = "simSpeedUp",
             abbrev = 'u',
-            help = "Speeds up the simulation time between two GUI draw operations",
-            defaultValue = "1",
+            help = "Speeds up the simulation time between two GUI draw operations.",
+            defaultValue = "2",
             category = "Startup"
     )
     public int simSpeedUp;
@@ -99,7 +92,7 @@ public class ExperimentsOptions  extends OptionsBase {
     @Option(
             name = "showGUI",
             abbrev = 'g',
-            help = "Show the gui",
+            help = "Whether or not to show the GUI.",
             defaultValue = "true",
             category = "Startup"
     )

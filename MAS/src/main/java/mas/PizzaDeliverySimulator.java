@@ -20,7 +20,6 @@ import mas.agents.RobotAgent;
 import mas.buildings.ChargingStation;
 import mas.buildings.Pizzeria;
 import mas.buildings.RoadWorks;
-import mas.experiments.ExperimentsOptions;
 import mas.graphs.CityGraphCreator;
 import mas.models.PizzeriaModel;
 import mas.renderers.DeliveryTaskRenderer;
@@ -45,13 +44,7 @@ public class PizzaDeliverySimulator {
     private static boolean showGUI;
     private static int simSpeedUp;
 
-    private static void printUsage(OptionsParser parser) {
-        System.out.println("Usage: java -jar MAR.jar OPTIONS");
-        System.out.println(parser.describeOptions(Collections.<String, String>emptyMap(),
-                OptionsParser.HelpVerbosity.LONG));
-    }
-
-    private static void assignOptions(ExperimentsOptions options) {
+    private static void assignOptions(ExecutionOptions options) {
         alternativePathsToExplore = options.alternativePaths;
         chargingStationCapacity = options.chargingStationCapacity;
         citySize = options.citySize;
@@ -67,12 +60,13 @@ public class PizzaDeliverySimulator {
      * @param args - No args.
      */
     public static void main(String[] args) {
-
-        OptionsParser parser = OptionsParser.newOptionsParser(ExperimentsOptions.class);
+        System.out.println("Robot Pizza Delivery MAS Usage: java -jar mas.jar OPTIONS");
+        OptionsParser parser = OptionsParser.newOptionsParser(ExecutionOptions.class);
         parser.parseAndExitUponError(args);
-        ExperimentsOptions options = parser.getOptions(ExperimentsOptions.class);
+        ExecutionOptions options = parser.getOptions(ExecutionOptions.class);
         if (options.help) {
-            printUsage(parser);
+            System.out.println(parser.describeOptions(Collections.<String, String>emptyMap(),
+                    OptionsParser.HelpVerbosity.LONG));
             return;
         }
         assignOptions(options);

@@ -2,9 +2,7 @@ package mas.experiments;
 
 import com.github.rinde.rinsim.core.model.comm.CommModel;
 import com.github.rinde.rinsim.core.model.pdp.DefaultPDPModel;
-import com.github.rinde.rinsim.core.model.rand.RandomModel;
 import com.github.rinde.rinsim.core.model.road.RoadModelBuilders;
-import com.github.rinde.rinsim.core.model.time.TimeModel;
 import com.github.rinde.rinsim.experiment.Experiment;
 import com.github.rinde.rinsim.experiment.ExperimentResults;
 import com.github.rinde.rinsim.experiment.MASConfiguration;
@@ -24,7 +22,8 @@ import com.github.rinde.rinsim.ui.renderers.GraphRoadModelRenderer;
 import com.github.rinde.rinsim.ui.renderers.RoadUserRenderer;
 import com.github.rinde.rinsim.util.StochasticSuppliers;
 import com.google.common.base.Optional;
-import com.google.devtools.common.options.Option;
+import com.google.devtools.common.options.OptionsParser;
+import mas.ExecutionOptions;
 import mas.SimulatorSettings;
 import mas.agents.RobotAgent;
 import mas.buildings.ChargingStation;
@@ -37,14 +36,13 @@ import mas.renderers.RobotRenderer;
 import mas.statistics.StatsTracker;
 import mas.tasks.DeliveryTask;
 import org.apache.commons.math3.random.MersenneTwister;
-import org.apache.commons.math3.random.RandomGenerator;
 
 import javax.measure.quantity.Length;
 import javax.measure.quantity.Velocity;
 import javax.measure.unit.Unit;
-import java.util.*;
-
-import com.google.devtools.common.options.OptionsParser;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public class Experiments {
     private static double robotSpeed = SimulatorSettings.ROBOT_SPEED;
@@ -67,16 +65,14 @@ public class Experiments {
     private static int citySize = SimulatorSettings.CITY_SIZE;
     private static int numRobots = SimulatorSettings.NUM_ROBOTS;
     private static int robotLength = SimulatorSettings.ROBOT_LENGTH;
-    private static final ListenableGraph<LengthData> staticGraph = CityGraphCreator.createGraph(citySize, robotLength);
-    private static final ListenableGraph<LengthData> dynamicGraph = CityGraphCreator.createGraph(citySize, robotLength);
     private static int nodeDistance = SimulatorSettings.NODE_DISTANCE;
     private static Unit<Length> distanceUnit = SimulatorSettings.DISTANCE_UNIT;
     private static Unit<Velocity> speedUnit = SimulatorSettings.SPEED_UNIT;
     private static int repeat;
     private static int simSpeedUp;
     private static boolean showGUI;
-    
-    private static void assignOptions(ExperimentsOptions options){
+
+    private static void assignOptions(ExecutionOptions options) {
         alternativePathsToExplore = options.alternativePaths;
         chargingStationCapacity = options.chargingStationCapacity;
         citySize = options.citySize;
@@ -89,38 +85,33 @@ public class Experiments {
     }
 
     private static void printUsage(OptionsParser parser) {
-        System.out.println("Usage: java -jar experiments.jar OPTIONS");
+        System.out.println("Robot Pizza Delivery MAS experiments Usage: java -jar experiments.jar OPTIONS");
+        System.out.println("Experiment iterations last for 2 simulation hours.");
         System.out.println(parser.describeOptions(Collections.<String, String>emptyMap(),
                 OptionsParser.HelpVerbosity.LONG));
     }
+
     public static void main(String[] args) {
 
-        OptionsParser parser = OptionsParser.newOptionsParser(ExperimentsOptions.class);
+        OptionsParser parser = OptionsParser.newOptionsParser(ExecutionOptions.class);
         parser.parseAndExitUponError(args);
-        ExperimentsOptions options = parser.getOptions(ExperimentsOptions.class);
-        if(options.help){
+        ExecutionOptions options = parser.getOptions(ExecutionOptions.class);
+        if (options.help) {
             printUsage(parser);
             return;
         }
-
         assignOptions(options);
-        System.out.println("numRobots = " + numRobots);
 
-        //int uiSpeedUp = 1;
-        //String[] arguments = args;
+        final ListenableGraph<LengthData> staticGraph = CityGraphCreator.createGraph(citySize, robotLength);
+        final ListenableGraph<LengthData> dynamicGraph = CityGraphCreator.createGraph(citySize, robotLength);
+
+        if (probNewRoadWorks != 0 && repeat > 1) {
+            throw new IllegalArgumentException("Cannot have a probability for road works if repeat > 1 because " +
+                    "the RoadModel does not work as expected in later iterations.");
+        }
 
 
-        // SOME MEMBERS CAN BE SET USING ARGUMENTS
-        // numRobots
-        // citySize
-        // chargingStationCapacity
-        // probNewDeliveryTask
-        // probNewRoadWorks
-        // alternativePathsToExplore
-//        probNewRoadWorks = 0;
-        numRobots = 1;
-
-        long simulationLength = 30 * 60 * 1000;
+        long simulationLength = 2 * 60 * 60 * 1000;
 
         View.Builder viewBuilder = View.builder()
                 .withTitleAppendix("Pizza delivery multi agent system simulator")
