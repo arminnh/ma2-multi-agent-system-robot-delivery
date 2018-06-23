@@ -34,6 +34,16 @@ public class ExperimentParameters {
     public double pizzaAmountMean = SimulatorSettings.PIZZA_AMOUNT_MEAN;
     public double pizzaAmountStd = SimulatorSettings.PIZZA_AMOUNT_STD;
 
+    static public ExperimentParameters copyDefault(){
+        ExperimentParameters exp =  new ExperimentParameters();
+        exp.repeat = 50;
+        exp.simSpeedUp = 10;
+        exp.showGUI = true;
+        exp.citySize = 20;
+        exp.chargingStationCapacity = 3;
+        return exp;
+    }
+
     public String toJson() {
         return "{" +
                 "\"simSpeedUp\": " + simSpeedUp + ", " +
