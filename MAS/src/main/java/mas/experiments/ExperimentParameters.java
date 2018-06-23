@@ -37,8 +37,8 @@ public class ExperimentParameters {
     static public ExperimentParameters copyDefault(){
         ExperimentParameters exp =  new ExperimentParameters();
         exp.repeat = 50;
-        exp.simSpeedUp = 10;
-        exp.showGUI = true;
+        //exp.simSpeedUp = -1;
+        exp.showGUI = false;
         exp.citySize = 20;
         exp.chargingStationCapacity = 3;
         exp.probNewRoadWorks = 0;
