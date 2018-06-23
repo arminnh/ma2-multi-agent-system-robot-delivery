@@ -14,9 +14,10 @@ public class ExperimentParameters {
     public int nodeDistance = SimulatorSettings.NODE_DISTANCE;
     public Unit<Length> distanceUnit = SimulatorSettings.DISTANCE_UNIT;
     public Unit<Velocity> speedUnit = SimulatorSettings.SPEED_UNIT;
-    public int repeat;
-    public int simSpeedUp;
-    public boolean showGUI;
+    public int simSpeedUp = SimulatorSettings.SIM_SPEEDUP;
+    public boolean verbose = SimulatorSettings.VERBOSE;
+    public boolean showGUI = SimulatorSettings.SHOW_GUI;
+    public int repeat = SimulatorSettings.REPEATS;
 
     public double robotSpeed = SimulatorSettings.ROBOT_SPEED;
     public int robotCapacity = SimulatorSettings.ROBOT_CAPACITY;

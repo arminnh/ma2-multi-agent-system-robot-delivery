@@ -134,7 +134,6 @@ public class TheListener implements Listener {
 
             totalDistance += moveDistance;
             totalTravelTime += me.pathProgress.time().getValue();
-            // System.out.println(moveDistance);
 
             double distanceFromDepot = Point.distance(
                     me.roadModel.getPosition(me.roadUser),

@@ -89,6 +89,15 @@ public class ExecutionOptions extends OptionsBase {
     public int simSpeedUp;
 
     @Option(
+            name = "verbose",
+            abbrev = 'v',
+            help = "Whether or not to print more output.",
+            defaultValue = "false",
+            category = "Startup"
+    )
+    public boolean verbose;
+
+    @Option(
             name = "showGUI",
             abbrev = 'g',
             help = "Whether or not to show the GUI.",

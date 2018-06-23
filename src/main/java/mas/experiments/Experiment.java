@@ -47,7 +47,7 @@ public class Experiment {
         this.p = params;
     }
 
-    public static Vehicles.VehicleGenerator getVehicleGenerator(
+    private static Vehicles.VehicleGenerator getVehicleGenerator(
             int vehiclesAm, int vehicleCap, double vehicleSpeed
     ) {
         return Vehicles.builder()
@@ -58,13 +58,13 @@ public class Experiment {
                 .build();
     }
 
-    public static Depots.DepotGenerator getDepotGenerator() {
+    private static Depots.DepotGenerator getDepotGenerator() {
         return Depots.builder()
                 .numerOfDepots(StochasticSuppliers.constant(1))
                 .build();
     }
 
-    public static Parcels.ParcelGenerator getDeliveryTaskAndRoadWorksGenerator(
+    private static Parcels.ParcelGenerator getDeliveryTaskAndRoadWorksGenerator(
             long tickLength, double probNewDeliveryTask, double probNewRoadWorks
     ) {
         return new DeliveryTaskAndRoadWorksGenerator(
@@ -74,7 +74,7 @@ public class Experiment {
         );
     }
 
-    public void run() {
+    void run() {
         final ListenableGraph<LengthData> staticGraph = CityGraphCreator.createGraph(p.citySize, p.robotLength);
 
 //        if (p.probNewRoadWorks != 0 && p.repeat > 1) {
@@ -131,10 +131,8 @@ public class Experiment {
             ));
         }
 
-        final Optional<ExperimentResults> results;
-
         // Starts the experiment builder.
-        results = com.github.rinde.rinsim.experiment.Experiment.builder()
+        final Optional<ExperimentResults> results = com.github.rinde.rinsim.experiment.Experiment.builder()
                 // Adds a configuration to the experiment. A configuration configures an algorithm that is supposed to
                 // handle or 'solve' a problem specified by a scenario. A configuration can handle a scenario if it
                 // contains an event handler for all events that occur in the scenario. The scenario in this example
@@ -155,7 +153,7 @@ public class Experiment {
                         // be added in the scenario as they are not part of the problem.
                         .addModel(DefaultPDPModel.builder())
                         .addModel(CommModel.builder())
-                        .addModel(PizzeriaModel.builder(p.tickLength))
+                        .addModel(PizzeriaModel.builder(p.tickLength, p.verbose))
                         .addModel(StatsTracker.builder())
                         .build()
                 )

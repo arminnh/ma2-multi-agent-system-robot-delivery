@@ -36,19 +36,21 @@ public class ResourceAgent implements CommUser, TickListener {
     private long intentionReservationLifetime;
     private long robotTimePerHop;
     private long tickLength;
+    private boolean verbose;
 
     public ResourceAgent(
             Point position,
             long intentionReservationLifetime,
             int nodeDistance,
             double robotSpeed,
-            long tickLength
-    ) {
+            long tickLength,
+            boolean verbose) {
         this.position = position;
         this.intentionReservationLifetime = intentionReservationLifetime;
         // distance in m, speed in m/s, travel time between two nodes = (distance / speed)
         this.robotTimePerHop = (long) (nodeDistance / robotSpeed);
         this.tickLength = tickLength;
+        this.verbose = verbose;
     }
 
     @Override
@@ -146,7 +148,7 @@ public class ResourceAgent implements CommUser, TickListener {
         for (Integer k1 : this.deliveryReservations.keySet()) {
             int oldSize = this.deliveryReservations.get(k1).size();
             this.deliveryReservations.get(k1).removeIf(r -> r.evaporationTimestamp < timeLapse.getStartTime());
-            if (oldSize > this.deliveryReservations.get(k1).size()) {
+            if (oldSize > this.deliveryReservations.get(k1).size() && this.verbose) {
                 System.out.println("Evaporation of task " + k1 + " at " + timeLapse.getStartTime());
             }
         }
@@ -158,7 +160,9 @@ public class ResourceAgent implements CommUser, TickListener {
 
     private void handleDesireAnt(Message m, TimeLapse time) {
         DesireAnt ant = (DesireAnt) m.getContents();
-        System.out.println("Desire ant at " + this.position + ": " + ant);
+        if (this.verbose) {
+            System.out.println("Desire ant at " + this.position + ": " + ant);
+        }
 
         if (ant.hasReachedDestination()) {
             if (ant.isReturning) {
@@ -189,7 +193,9 @@ public class ResourceAgent implements CommUser, TickListener {
 
     private void handleExplorationAnt(Message m, TimeLapse time) {
         ExplorationAnt ant = (ExplorationAnt) m.getContents();
-        System.out.println("Exploration ant at " + this.position + ": " + ant);
+        if (this.verbose) {
+            System.out.println("Exploration ant at " + this.position + ": " + ant);
+        }
 
         // Check if the ant reached its current destination. Once the ant reached the original destination, the
         // destination and path are reversed towards the RobotAgent that sent the ant.
@@ -215,7 +221,9 @@ public class ResourceAgent implements CommUser, TickListener {
 
     private void handleIntentionAnt(Message m, TimeLapse time) {
         IntentionAnt ant = (IntentionAnt) m.getContents();
-        System.out.println("Intention ant at " + this.position + ": " + ant);
+        if (this.verbose) {
+            System.out.println("Intention ant at " + this.position + ": " + ant);
+        }
 
         if (ant.hasReachedDestination(this.position)) {
             if (ant.isReturning) {
@@ -233,7 +241,9 @@ public class ResourceAgent implements CommUser, TickListener {
     }
 
     private void handleIntentionAntForDeliveryTask(IntentionAnt ant, TimeLapse time) {
-        System.out.println("ResourceAgent.handleIntentionAntForDeliveryTask");
+        if (this.verbose) {
+            System.out.println("ResourceAgent.handleIntentionAntForDeliveryTask");
+        }
         // Get data of all DeliveryTasks on this position
         List<IntentionData> newDeliveriesData = new LinkedList<>();
 
@@ -241,7 +251,9 @@ public class ResourceAgent implements CommUser, TickListener {
             if (intentionData.position.equals(this.position) && intentionData.deliveryTaskID != 0) {
                 // Fetch the relevant DeliveryTask
                 DeliveryTask task = this.deliveryTasks.get(intentionData.deliveryTaskID);
-                System.out.println("task = " + task);
+                if (this.verbose) {
+                    System.out.println("task = " + task);
+                }
                 // Check if a reservation can be updated or can be made (= if the task has pizzas to be delivered)
                 if (task != null) {
                     boolean updated = this.updateDeliveryReservation(task, intentionData, time);
@@ -251,7 +263,10 @@ public class ResourceAgent implements CommUser, TickListener {
                         newDeliveriesData.add(intentionData.copy(true));
 
                     } else {
-                        System.out.println("Not updated, Pizzas: " + intentionData.pizzas + ", Pizzas left for task: " + this.getPizzasLeftForDeliveryTask(task.id) + " taskID: " + intentionData.deliveryTaskID + " pos: " + intentionData.position);
+                        if (this.verbose) {
+                            System.out.println("Not updated, Pizzas: " + intentionData.pizzas + ", Pizzas left for task: " + this.getPizzasLeftForDeliveryTask(task.id) + " taskID: " + intentionData.deliveryTaskID + " pos: " + intentionData.position);
+                        }
+
                         if (this.getPizzasLeftForDeliveryTask(task.id) > 0
                                 && intentionData.pizzas <= this.getPizzasLeftForDeliveryTask(task.id)) {
 
@@ -261,7 +276,9 @@ public class ResourceAgent implements CommUser, TickListener {
                             newDeliveriesData.add(intentionData.copy(true));
 
                         } else {
-                            System.out.println("Denied ant = [" + ant + "]");
+                            if (this.verbose) {
+                                System.out.println("Denied ant = [" + ant + "]");
+                            }
                             // A reservation could not be created, set 'confirmed' to true in the delivery data.
                             newDeliveriesData.add(intentionData.copy(false));
                         }
@@ -300,7 +317,9 @@ public class ResourceAgent implements CommUser, TickListener {
 
         for (ChargingStationReservation resv : this.chargingStationReservations) {
             if (resv.evaporationTimestamp >= arrivalTime) {
-                System.out.println("ArrivalTime: " + arrivalTime + " evapTime: " + resv.evaporationTimestamp);
+                if (this.verbose) {
+                    System.out.println("ArrivalTime: " + arrivalTime + " evapTime: " + resv.evaporationTimestamp);
+                }
                 usedSlots++;
             }
         }
@@ -322,8 +341,10 @@ public class ResourceAgent implements CommUser, TickListener {
                 newDeliveriesData.add(intentionData.copy(true));
             } else {
                 // We have less reservations than the total capacity of the charging station
-                System.out.println("this.chargingStationReservations.size() = " + this.chargingStationReservations.size());
-                System.out.println("this.chargingStation.get().getChargeCapacity() = " + this.chargingStation.get().capacity);
+                if (this.verbose) {
+                    System.out.println("this.chargingStationReservations.size() = " + this.chargingStationReservations.size());
+                    System.out.println("this.chargingStation.get().getChargeCapacity() = " + this.chargingStation.get().capacity);
+                }
 
                 if (canRobotChargeAtTime(time, ant.estimatedTime)) {
                     // Confirm the reservation
@@ -332,13 +353,17 @@ public class ResourceAgent implements CommUser, TickListener {
                     // Add new reservation to the list
                     ChargingStationReservation resv = new ChargingStationReservation(ant.robotID, time.getEndTime() + this.intentionReservationLifetime);
                     this.chargingStationReservations.add(resv);
-                    System.out.println("Creating Reservation at charging station. " + this.chargingStationReservations.size() + "/ " + this.chargingStation.get().capacity + " resv in total.");
+                    if (this.verbose) {
+                        System.out.println("Creating Reservation at charging station. " + this.chargingStationReservations.size() + "/ " + this.chargingStation.get().capacity + " resv in total.");
+                    }
                 } else {
                     newDeliveriesData.add(intentionData.copy(false));
                 }
             }
 
-            System.out.println("ResourceAgent.handleIntentionAntForChargingStation: " + this.chargingStation.get());
+            if (this.verbose) {
+                System.out.println("ResourceAgent.handleIntentionAntForChargingStation: " + this.chargingStation.get());
+            }
             this.sendAntToNextHop(ant.copy(Lists.reverse(ant.path), true, newDeliveriesData, 0), time);
         } else {
             throw new IllegalStateException("Ant arrived at destination with `toChargingStation = true`," +
@@ -356,7 +381,9 @@ public class ResourceAgent implements CommUser, TickListener {
                 DeliveryTask task = this.deliveryTasks.get(intentionData.deliveryTaskID);
 
                 // Calculate the (possibly new) amount of pizzas that the robot can send for this task
-                System.out.println("updateExplorationAntIntentionData for task " + task);
+                if (this.verbose) {
+                    System.out.println("updateExplorationAntIntentionData for task " + task);
+                }
                 Integer newPizzaAmount = 0;
 
                 if (this.deliveryTasks.containsKey(intentionData.deliveryTaskID)) {
@@ -384,8 +411,10 @@ public class ResourceAgent implements CommUser, TickListener {
         );
 
         this.deliveryReservations.get(task.id).add(reservation);
-        System.out.println("Reservation created for task " + task.id + ", evaporation at: " + evaporationTimestamp);
-        System.out.println("Reservation for task " + task.id + ": " + this.getReservationsForTask(task.id));
+        if (this.verbose) {
+            System.out.println("Reservation created for task " + task.id + ", evaporation at: " + evaporationTimestamp);
+            System.out.println("Reservation for task " + task.id + ": " + this.getReservationsForTask(task.id));
+        }
     }
 
     public void robotArrivesAtChargingStation(Integer robotId, double amRechargeNeeded, TimeLapse time) {
@@ -432,7 +461,6 @@ public class ResourceAgent implements CommUser, TickListener {
 
         for (ChargingStationReservation resv : this.chargingStationReservations) {
             if (resv.evaporationTimestamp >= arrivalTime && resv.robotID != intentionData.robotID) {
-                //System.out.println("ArrivalTime: " + rechargeTill + " evapTime: " + resv.evaporationTimestamp);
                 usedSlots++;
             }
             if (resv.robotID == intentionData.robotID) {
@@ -453,7 +481,9 @@ public class ResourceAgent implements CommUser, TickListener {
     }
 
     private void sendAntToNextHop(Ant ant, TimeLapse time) {
-        System.out.println("ResourceAgent.sendAntToNextHop");
+        if (this.verbose) {
+            System.out.println("ResourceAgent.sendAntToNextHop");
+        }
 
         if (ant.path.size() == 0) {
             throw new IllegalStateException("Cannot send an ant to next hop with an empty path");
@@ -515,7 +545,6 @@ public class ResourceAgent implements CommUser, TickListener {
 
         for (ChargingStationReservation resv : this.chargingStationReservations) {
             if (resv.evaporationTimestamp >= rechargeTill.longValue() && resv.robotID != robotId) {
-                //System.out.println("ArrivalTime: " + rechargeTill + " evapTime: " + resv.evaporationTimestamp);
                 usedSlots++;
             }
         }

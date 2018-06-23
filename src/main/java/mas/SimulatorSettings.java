@@ -11,8 +11,11 @@ public class SimulatorSettings {
     // Tick length = 1s, do not change this, probabilities for new task and new road works are done per tick.
     public static final long TICK_LENGTH = 1000L;
     public static final int SIM_SPEEDUP = 10;
+    public static final boolean VERBOSE = false;
+    public static final boolean SHOW_GUI = false;
     public static final int WINDOW_WIDTH = 1200;
     public static final int WINDOW_HEIGHT = 800;
+    public static final int REPEATS = 3;
 
     // CITY AND ROBOTS
     public static final int CITY_SIZE = 12;

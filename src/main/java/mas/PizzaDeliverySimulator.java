@@ -32,16 +32,15 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 
 public class PizzaDeliverySimulator {
-
-
-    private static int alternativePathsToExplore;
-    private static int citySize;
-    private static int chargingStationCapacity;
-    private static int numRobots;
-    private static double probNewDeliveryTask;
-    private static double probNewRoadWorks;
-    private static boolean showGUI;
-    private static int simSpeedUp;
+    private static int alternativePathsToExplore = SimulatorSettings.ALTERNATIVE_PATHS_TO_EXPLORE;
+    private static int citySize = SimulatorSettings.CITY_SIZE;
+    private static int chargingStationCapacity = SimulatorSettings.CHARGING_STATION_ROBOT_CAPACITY;
+    private static int numRobots = SimulatorSettings.NUM_ROBOTS;
+    private static double probNewDeliveryTask = SimulatorSettings.PROB_NEW_DELIVERY_TASK;
+    private static double probNewRoadWorks = SimulatorSettings.PROB_NEW_ROAD_WORKS;
+    private static int simSpeedUp = SimulatorSettings.SIM_SPEEDUP;
+    private static boolean verbose = SimulatorSettings.VERBOSE;
+    private static boolean showGUI = SimulatorSettings.SHOW_GUI;
 
     private static void assignOptions(ExecutionOptions options) {
         alternativePathsToExplore = options.alternativePaths;
@@ -50,8 +49,9 @@ public class PizzaDeliverySimulator {
         numRobots = options.numRobots;
         probNewDeliveryTask = options.probNewDeliveryTask;
         probNewRoadWorks = options.probNewRoadWorks;
-        showGUI = options.showGUI;
         simSpeedUp = options.simSpeedUp;
+        verbose = options.verbose;
+        showGUI = options.showGUI;
     }
 
     /**
@@ -62,9 +62,9 @@ public class PizzaDeliverySimulator {
         OptionsParser parser = OptionsParser.newOptionsParser(ExecutionOptions.class);
         parser.parseAndExitUponError(args);
         ExecutionOptions options = parser.getOptions(ExecutionOptions.class);
+        assert options != null;
         if (options.help) {
-            System.out.println(parser.describeOptions(Collections.<String, String>emptyMap(),
-                    OptionsParser.HelpVerbosity.LONG));
+            System.out.println(parser.describeOptions(Collections.emptyMap(), OptionsParser.HelpVerbosity.LONG));
             return;
         }
         assignOptions(options);
@@ -128,7 +128,7 @@ public class PizzaDeliverySimulator {
                 )
                 .addModel(DefaultPDPModel.builder())
                 .addModel(CommModel.builder())
-                .addModel(PizzeriaModel.builder(SimulatorSettings.TICK_LENGTH))
+                .addModel(PizzeriaModel.builder(SimulatorSettings.TICK_LENGTH, verbose))
                 .addModel(StatsTracker.builder());
 
         if (showGUI) {

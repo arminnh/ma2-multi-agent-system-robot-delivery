@@ -12,9 +12,11 @@ import org.jetbrains.annotations.NotNull;
 public class PizzeriaModelBuilder extends AbstractModelBuilder<PizzeriaModel, PizzeriaUser> {
 
     public final long tickLength;
+    public final boolean verbose;
 
-    PizzeriaModelBuilder(long tickLength) {
+    PizzeriaModelBuilder(long tickLength, boolean verbose) {
         this.tickLength = tickLength;
+        this.verbose = verbose;
 
         setProvidingTypes(PizzeriaModel.class);
 
@@ -26,7 +28,8 @@ public class PizzeriaModelBuilder extends AbstractModelBuilder<PizzeriaModel, Pi
         return new PizzeriaModel(
                 dependencyProvider.get(RoadModel.class),
                 dependencyProvider.get(SimulatorAPI.class),
-                tickLength
+                tickLength,
+                verbose
         );
     }
 }

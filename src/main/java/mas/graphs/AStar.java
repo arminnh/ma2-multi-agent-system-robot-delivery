@@ -35,9 +35,7 @@ public class AStar {
         // The set of currently discovered nodes that are not evaluated yet.
         // Initially, only the start node is known.
         List<Point> openSet = new LinkedList<>();
-        //System.out.println("start = " + start);
         start = roundStartPointToEven(start);
-        //System.out.println("start2 = " + start);
 
         openSet.add(start);
 
@@ -121,7 +119,6 @@ public class AStar {
         Point minPoint = null;
         double minVal = Double.MAX_VALUE;
         for (Point p : points) {
-            //System.out.println("p = " + p);
             double fVal = fScore.get(p);
             if (fVal < minVal) {
                 minVal = fVal;

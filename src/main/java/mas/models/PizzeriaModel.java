@@ -46,8 +46,9 @@ public class PizzeriaModel extends AbstractModel<PizzeriaUser> {
     private HashMap<Integer, DeliveryTask> deliveryTasks = new HashMap<>();
     private HashMap<Point, ResourceAgent> resourceAgents = new HashMap<>();
     private long tickLength;
+    private final boolean verbose;
 
-    public PizzeriaModel(RoadModel roadModel, SimulatorAPI simAPI, long tickLength) {
+    public PizzeriaModel(RoadModel roadModel, SimulatorAPI simAPI, long tickLength, boolean verbose) {
         this.roadModel = roadModel;
         this.sim = (Simulator) simAPI;
 
@@ -56,10 +57,11 @@ public class PizzeriaModel extends AbstractModel<PizzeriaUser> {
 
         this.eventDispatcher = new EventDispatcher(PizzeriaEventType.values());
         this.tickLength = tickLength;
+        this.verbose = verbose;
     }
 
-    public static PizzeriaModelBuilder builder(long tickLength) {
-        return new PizzeriaModelBuilder(tickLength);
+    public static PizzeriaModelBuilder builder(long tickLength, boolean verbose) {
+        return new PizzeriaModelBuilder(tickLength, verbose);
     }
 
     @Nonnull
@@ -105,7 +107,7 @@ public class PizzeriaModel extends AbstractModel<PizzeriaUser> {
     }
 
     public void createResourceAgent(Point position, long reservationLifetime, int nodeDistance, double robotSpeed) {
-        ResourceAgent agent = new ResourceAgent(position, reservationLifetime, nodeDistance, robotSpeed, tickLength);
+        ResourceAgent agent = new ResourceAgent(position, reservationLifetime, nodeDistance, robotSpeed, tickLength, verbose);
 
         if (this.chargingStations.containsKey(position)) {
             agent.setChargingStation(this.chargingStations.get(position));
@@ -151,7 +153,9 @@ public class PizzeriaModel extends AbstractModel<PizzeriaUser> {
                 this.sim.register(task);
 
                 this.eventDispatcher.dispatchEvent(new PizzeriaEvent(PizzeriaEventType.NEW_TASK, time, task, null, null));
-                System.out.println("PizzeriaModel.createDeliveryTask: " + task + " at time " + time);
+                if (verbose) {
+                    System.out.println("PizzeriaModel.createDeliveryTask: " + task + " at time " + time);
+                }
                 return;
             }
         }
@@ -181,14 +185,16 @@ public class PizzeriaModel extends AbstractModel<PizzeriaUser> {
                 chargingStationPosition,
                 alternativePathsToExplore,
                 explorationRefreshTime,
-                intentionRefreshTime
-        ));
+                intentionRefreshTime,
+                verbose));
     }
 
     public PizzaParcel createPizzaParcel(int deliveryTaskID, Point startPosition, int pizzaAmount, long time) {
         DeliveryTask task = this.deliveryTasks.get(deliveryTaskID);
 
-        System.out.println("Created PizzaParcel for task " + deliveryTaskID + " at time " + time);
+        if (verbose) {
+            System.out.println("PizzeriaModel.createPizzaParcel for task " + deliveryTaskID + " at time " + time);
+        }
 
         ParcelDTO pdto = Parcel.builder(startPosition, task.position)
                 .neededCapacity(pizzaAmount)
@@ -215,8 +221,6 @@ public class PizzeriaModel extends AbstractModel<PizzeriaUser> {
         }
 
         ResourceAgent resourceAgent = this.resourceAgents.get(position);
-
-        System.out.println("pizzaParcel = " + pizzaParcel);
 
         // The two alternatives mentioned in the comment.
         if (resourceAgent.robotHasReservation(robot.id, task.id) ||
@@ -300,7 +304,10 @@ public class PizzeriaModel extends AbstractModel<PizzeriaUser> {
                         PizzeriaEventType.STARTED_ROADWORKS, 0, null, null, null
                 ));
 
-                System.out.println("PizzeriaModel.createRoadWorks: " + roadWorks);
+                if (verbose) {
+                    System.out.println("PizzeriaModel.createRoadWorks: " + roadWorks);
+                }
+
                 return;
             }
         }
