@@ -40,7 +40,7 @@ public class Experiments {
             printUsage(parser);
             return;
         }
-        options.showGUI = false;
+        options.showGUI = true;
         options.probNewRoadWorks = 0;
 
         ExperimentParameters params = getExperimentParameters(options);
