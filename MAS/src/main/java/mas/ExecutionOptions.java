@@ -31,7 +31,6 @@ public class ExecutionOptions extends OptionsBase {
     )
     public int chargingStationCapacity;
 
-
     @Option(
             name = "probTask",
             abbrev = 't',
@@ -67,7 +66,7 @@ public class ExecutionOptions extends OptionsBase {
             help = "How many times to repeat a experiment (only for experiments).",
             category = "Startup",
 
-            defaultValue = "1"
+            defaultValue = "2"
     )
     public int repeat;
 
@@ -84,7 +83,7 @@ public class ExecutionOptions extends OptionsBase {
             name = "simSpeedUp",
             abbrev = 'u',
             help = "Speeds up the simulation time between two GUI draw operations.",
-            defaultValue = "2",
+            defaultValue = "29",
             category = "Startup"
     )
     public int simSpeedUp;
