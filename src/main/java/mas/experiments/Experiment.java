@@ -82,13 +82,10 @@ public class Experiment {
 //                    "the RoadModel does not work as expected in later iterations.");
 //        }
 
-        long simulationLength = 10 * 60 * 60 * 1000;
-        //simulationLength = 10 * 60 * 60 * 1000;
-
         View.Builder viewBuilder = View.builder()
                 .withTitleAppendix("Pizza delivery multi agent system simulator")
                 .withAutoPlay()
-                .withSimulatorEndTime(simulationLength)
+                .withSimulatorEndTime(p.simulationLength)
                 .withAutoClose()
                 .withSpeedUp(p.simSpeedUp)
                 .with(GraphRoadModelRenderer.builder()
@@ -108,7 +105,7 @@ public class Experiment {
                 .withResolution(SimulatorSettings.WINDOW_WIDTH, SimulatorSettings.WINDOW_HEIGHT);
 
         ScenarioGenerator generator = ScenarioGenerator.builder()
-                .scenarioLength(simulationLength)
+                .scenarioLength(p.simulationLength)
                 .setStopCondition(StatsStopConditions.timeOutEvent())
                 .vehicles(getVehicleGenerator(p.numRobots, p.robotCapacity, p.robotSpeed))
                 .parcels(getDeliveryTaskAndRoadWorksGenerator(p.tickLength, p.probNewDeliveryTask, p.probNewRoadWorks))
@@ -147,7 +144,7 @@ public class Experiment {
                         // There is no default handle for vehicle events, here a non functioning handler is added,
                         // it can be changed to add a custom vehicle to the simulator.
                         .addEventHandler(AddVehicleEvent.class, AddRobotAgentEventHandlers.defaultHandler(p.robotCapacity, p.robotSpeed, p.batteryCapacity, p.batteryRescueDelay, staticGraph, p.alternativePathsToExplore, p.explorationRefreshTime, p.intentionRefreshTime))
-                        .addEventHandler(TimeOutEvent.class, TimeOutStopper.stopHandler())
+                        .addEventHandler(TimeOutEvent.class, TimeOutStopper.stopHandler(this.id))
                         // Note: if your multi-agent system requires the aid of a model (e.g. CommModel) it can be added
                         // directly in the configuration. Models that are only used for the solution side should not
                         // be added in the scenario as they are not part of the problem.

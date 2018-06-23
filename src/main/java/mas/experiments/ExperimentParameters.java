@@ -8,6 +8,7 @@ import javax.measure.unit.Unit;
 
 public class ExperimentParameters {
     public long tickLength = SimulatorSettings.TICK_LENGTH;
+    public long simulationLength = SimulatorSettings.SIMULATION_LENGTH;
     public int citySize = SimulatorSettings.CITY_SIZE;
     public int numRobots = SimulatorSettings.NUM_ROBOTS;
     public int robotLength = SimulatorSettings.ROBOT_LENGTH;
@@ -34,17 +35,6 @@ public class ExperimentParameters {
     public double probNewRoadWorks = SimulatorSettings.PROB_NEW_ROAD_WORKS;
     public double pizzaAmountMean = SimulatorSettings.PIZZA_AMOUNT_MEAN;
     public double pizzaAmountStd = SimulatorSettings.PIZZA_AMOUNT_STD;
-
-    static public ExperimentParameters copyDefault(){
-        ExperimentParameters exp =  new ExperimentParameters();
-        exp.repeat = 50;
-        //exp.simSpeedUp = -1;
-        exp.showGUI = false;
-        exp.citySize = 20;
-        exp.chargingStationCapacity = 3;
-        exp.probNewRoadWorks = 0;
-        return exp;
-    }
 
     public String toJson() {
         return "{" +
