@@ -31,6 +31,28 @@ public class ExperimentParameters {
     public long intentionRefreshTime = SimulatorSettings.INTENTION_REFRESH_TIME;
     public double probNewDeliveryTask = SimulatorSettings.PROB_NEW_DELIVERY_TASK;
     public double probNewRoadWorks = SimulatorSettings.PROB_NEW_ROAD_WORKS;
-    public double pizzaAmountStd = SimulatorSettings.PIZZA_AMOUNT_STD;
     public double pizzaAmountMean = SimulatorSettings.PIZZA_AMOUNT_MEAN;
+    public double pizzaAmountStd = SimulatorSettings.PIZZA_AMOUNT_STD;
+
+    public String toJson() {
+        return "{" +
+                "simSpeedUp: " + simSpeedUp + ", " +
+                "repeat: " + repeat + ", " +
+                "citySize: " + citySize + ", " +
+                "numRobots: " + numRobots + ", " +
+                "robotSpeed: " + robotSpeed + ", " +
+                "robotCapacity: " + robotCapacity + ", " +
+                "chargingStationCapacity: " + chargingStationCapacity + ", " +
+                "batteryCapacity: " + batteryCapacity + ", " +
+                "alternativePathsToExplore: " + alternativePathsToExplore + ", " +
+                "timeRoadWorks: " + timeRoadWorks + ", " +
+                "batteryRescueDelay: " + batteryRescueDelay + ", " +
+                "intentionReservationLifetime: " + intentionReservationLifetime + ", " +
+                "explorationRefreshTime: " + explorationRefreshTime + ", " +
+                "probNewDeliveryTask: " + probNewDeliveryTask + ", " +
+                "probNewRoadWorks: " + probNewRoadWorks + ", " +
+                "pizzaAmountMean: " + pizzaAmountMean + ", " +
+                "pizzaAmountStd: " + pizzaAmountStd +
+                "}";
+    }
 }

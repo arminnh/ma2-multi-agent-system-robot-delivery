@@ -106,13 +106,14 @@ public class StatisticsDTO extends com.github.rinde.rinsim.pdptw.common.Statisti
                 ", totalChargingTime: " + this.totalChargingTime +
                 ", totalPickups: " + this.totalPickups +
                 ", totalDeliveries: " + this.totalDeliveries +
-                ", acceptedParcels (= totalParcels): " + this.acceptedParcels +
+                ", totalParcels: " + this.acceptedParcels +
                 ", droppedParcels: " + this.droppedParcels +
                 ", totalVehicles: " + this.totalVehicles +
                 ", timeUnit: " + this.timeUnit +
                 ", distanceUnit: " + this.distanceUnit +
                 ", speedUnit: " + this.speedUnit +
-                ", simulationTime in min: " + this.simulationTime / 1000.0 / 60.0 +
+                ", simulationTime: " + this.simulationTime +
+                ", simulationTimeInMin: " + this.simulationTime / 1000.0 / 60.0 +
                 "}";
 
 

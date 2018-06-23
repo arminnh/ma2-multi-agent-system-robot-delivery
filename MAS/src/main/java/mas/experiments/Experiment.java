@@ -190,11 +190,7 @@ public class Experiment {
                 .perform(System.out);
 
         if (results.isPresent()) {
-            for (final com.github.rinde.rinsim.experiment.Experiment.SimulationResult sr : results.get().getResults()) {
-                // The SimulationResult contains all information about a specific simulation,
-                // the result object is the object created by the post processor, a String in this case.
-                StatsWriter.write(sr);
-            }
+            StatsWriter.writeToJson(this.id, this.p, results.get().getResults());
         } else {
             throw new IllegalStateException("Experiment did not complete.");
         }

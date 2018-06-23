@@ -35,10 +35,13 @@ public class Experiments {
         parser.parseAndExitUponError(args);
 
         ExecutionOptions options = parser.getOptions(ExecutionOptions.class);
+        assert options != null;
         if (options.help) {
             printUsage(parser);
             return;
         }
+        options.showGUI = false;
+        options.probNewRoadWorks = 0;
 
         ExperimentParameters params = getExperimentParameters(options);
         Experiment experiment = new Experiment(1, params);
