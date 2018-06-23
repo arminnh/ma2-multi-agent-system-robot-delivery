@@ -41,6 +41,7 @@ public class ExperimentParameters {
         exp.showGUI = true;
         exp.citySize = 20;
         exp.chargingStationCapacity = 3;
+        exp.probNewRoadWorks = 0;
         return exp;
     }
 
