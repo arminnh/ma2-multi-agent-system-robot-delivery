@@ -36,23 +36,23 @@ public class ExperimentParameters {
 
     public String toJson() {
         return "{" +
-                "simSpeedUp: " + simSpeedUp + ", " +
-                "repeat: " + repeat + ", " +
-                "citySize: " + citySize + ", " +
-                "numRobots: " + numRobots + ", " +
-                "robotSpeed: " + robotSpeed + ", " +
-                "robotCapacity: " + robotCapacity + ", " +
-                "chargingStationCapacity: " + chargingStationCapacity + ", " +
-                "batteryCapacity: " + batteryCapacity + ", " +
-                "alternativePathsToExplore: " + alternativePathsToExplore + ", " +
-                "timeRoadWorks: " + timeRoadWorks + ", " +
-                "batteryRescueDelay: " + batteryRescueDelay + ", " +
-                "intentionReservationLifetime: " + intentionReservationLifetime + ", " +
-                "explorationRefreshTime: " + explorationRefreshTime + ", " +
-                "probNewDeliveryTask: " + probNewDeliveryTask + ", " +
-                "probNewRoadWorks: " + probNewRoadWorks + ", " +
-                "pizzaAmountMean: " + pizzaAmountMean + ", " +
-                "pizzaAmountStd: " + pizzaAmountStd +
+                "\"simSpeedUp\": " + simSpeedUp + ", " +
+                "\"repeat\": " + repeat + ", " +
+                "\"citySize\": " + citySize + ", " +
+                "\"numRobots\": " + numRobots + ", " +
+                "\"robotSpeed\": " + robotSpeed + ", " +
+                "\"robotCapacity\": " + robotCapacity + ", " +
+                "\"chargingStationCapacity\": " + chargingStationCapacity + ", " +
+                "\"batteryCapacity\": " + batteryCapacity + ", " +
+                "\"alternativePathsToExplore\": " + alternativePathsToExplore + ", " +
+                "\"timeRoadWorks\": " + timeRoadWorks + ", " +
+                "\"batteryRescueDelay\": " + batteryRescueDelay + ", " +
+                "\"intentionReservationLifetime\": " + intentionReservationLifetime + ", " +
+                "\"explorationRefreshTime\": " + explorationRefreshTime + ", " +
+                "\"probNewDeliveryTask\": " + probNewDeliveryTask + ", " +
+                "\"probNewRoadWorks\": " + probNewRoadWorks + ", " +
+                "\"pizzaAmountMean\": " + pizzaAmountMean + ", " +
+                "\"pizzaAmountStd\": " + pizzaAmountStd +
                 "}";
     }
 }

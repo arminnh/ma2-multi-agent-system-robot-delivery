@@ -95,25 +95,25 @@ public class StatisticsDTO extends com.github.rinde.rinsim.pdptw.common.Statisti
     @Override
     public String toString() {
         return "{" +
-                "totalTasks: " + this.totalTasks +
-                ", totalTasksFinished: " + this.totalTasksFinished +
-                ", totalRoadWorks: " + this.totalRoadWorks +
-                ", totalTasksWaitingTime: " + this.totalTasksWaitingTime +
-                ", totalPizzas: " + this.totalPizzas +
-                ", totalDistance: " + this.totalDistance +
-                ", totalTravelTime: " + this.totalTravelTime +
-                ", totalIdleTime: " + this.totalIdleTime +
-                ", totalChargingTime: " + this.totalChargingTime +
-                ", totalPickups: " + this.totalPickups +
-                ", totalDeliveries: " + this.totalDeliveries +
-                ", totalParcels: " + this.acceptedParcels +
-                ", droppedParcels: " + this.droppedParcels +
-                ", totalVehicles: " + this.totalVehicles +
-                ", timeUnit: " + this.timeUnit +
-                ", distanceUnit: " + this.distanceUnit +
-                ", speedUnit: " + this.speedUnit +
-                ", simulationTime: " + this.simulationTime +
-                ", simulationTimeInMin: " + this.simulationTime / 1000.0 / 60.0 +
+                "\"totalTasks\": " + this.totalTasks +
+                ", \"totalTasksFinished\": " + this.totalTasksFinished +
+                ", \"totalRoadWorks\": " + this.totalRoadWorks +
+                ", \"totalTasksWaitingTime\": " + this.totalTasksWaitingTime +
+                ", \"totalPizzas\": " + this.totalPizzas +
+                ", \"totalDistance\": " + this.totalDistance +
+                ", \"totalTravelTime\": " + this.totalTravelTime +
+                ", \"totalIdleTime\": " + this.totalIdleTime +
+                ", \"totalChargingTime\": " + this.totalChargingTime +
+                ", \"totalPickups\": " + this.totalPickups +
+                ", \"totalDeliveries\": " + this.totalDeliveries +
+                ", \"totalParcels\": " + this.acceptedParcels +
+                ", \"droppedParcels\": " + this.droppedParcels +
+                ", \"totalVehicles\": " + this.totalVehicles +
+                ", \"timeUnit\": \"" + this.timeUnit + "\"" +
+                ", \"distanceUnit\": \"" + this.distanceUnit + "\"" +
+                ", \"speedUnit\": \"" + this.speedUnit + "\"" +
+                ", \"simulationTime\": " + this.simulationTime +
+                ", \"simulationTimeInMin\": " + this.simulationTime / 1000.0 / 60.0 +
                 "}";
 
 

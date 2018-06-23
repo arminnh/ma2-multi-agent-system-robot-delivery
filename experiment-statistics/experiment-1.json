@@ -1,0 +1,9 @@
+{
+    "experiment": 1,
+    "parameters": {"simSpeedUp": 29, "repeat": 3, "citySize": 12, "numRobots": 3, "robotSpeed": 1.0, "robotCapacity": 5, "chargingStationCapacity": 3, "batteryCapacity": 288.0, "alternativePathsToExplore": 3, "timeRoadWorks": 288000, "batteryRescueDelay": 500000, "intentionReservationLifetime": 96000, "explorationRefreshTime": 38400, "probNewDeliveryTask": 0.018, "probNewRoadWorks": 0.0, "pizzaAmountMean": 4.0, "pizzaAmountStd": 0.75},
+    "results": [
+        {"totalTasks": 7, "totalTasksFinished": 6, "totalRoadWorks": 0, "totalTasksWaitingTime": 572645, "totalPizzas": 25, "totalDistance": 156.0, "totalTravelTime": 156000.0, "totalIdleTime": 1571000, "totalChargingTime": 0, "totalPickups": 6, "totalDeliveries": 6, "totalParcels": 6, "droppedParcels": 0, "totalVehicles": 3, "timeUnit": "ms", "distanceUnit": "m", "speedUnit": "m/s", "simulationTime": 600000, "simulationTimeInMin": 10.0},
+        {"totalTasks": 7, "totalTasksFinished": 6, "totalRoadWorks": 0, "totalTasksWaitingTime": 420645, "totalPizzas": 29, "totalDistance": 125.0, "totalTravelTime": 125000.0, "totalIdleTime": 1417000, "totalChargingTime": 0, "totalPickups": 6, "totalDeliveries": 6, "totalParcels": 6, "droppedParcels": 0, "totalVehicles": 3, "timeUnit": "ms", "distanceUnit": "m", "speedUnit": "m/s", "simulationTime": 600000, "simulationTimeInMin": 10.0},
+        {"totalTasks": 7, "totalTasksFinished": 6, "totalRoadWorks": 0, "totalTasksWaitingTime": 472645, "totalPizzas": 31, "totalDistance": 158.0, "totalTravelTime": 158000.0, "totalIdleTime": 1513000, "totalChargingTime": 0, "totalPickups": 7, "totalDeliveries": 6, "totalParcels": 7, "droppedParcels": 0, "totalVehicles": 3, "timeUnit": "ms", "distanceUnit": "m", "speedUnit": "m/s", "simulationTime": 600000, "simulationTimeInMin": 10.0}
+    ]
+}
