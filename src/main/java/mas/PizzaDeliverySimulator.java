@@ -37,7 +37,6 @@ public class PizzaDeliverySimulator {
     private static int alternativePathsToExplore;
     private static int citySize;
     private static int chargingStationCapacity;
-    private static int repeat;
     private static int numRobots;
     private static double probNewDeliveryTask;
     private static double probNewRoadWorks;
@@ -48,7 +47,6 @@ public class PizzaDeliverySimulator {
         alternativePathsToExplore = options.alternativePaths;
         chargingStationCapacity = options.chargingStationCapacity;
         citySize = options.citySize;
-        repeat = options.repeat;
         numRobots = options.numRobots;
         probNewDeliveryTask = options.probNewDeliveryTask;
         probNewRoadWorks = options.probNewRoadWorks;

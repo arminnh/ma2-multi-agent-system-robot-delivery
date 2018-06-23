@@ -1,8 +1,5 @@
 package mas.experiments;
 
-import mas.ExecutionOptions;
-
-
 public class Experiments {
 
     public static void main(String[] args) {
@@ -56,7 +53,7 @@ public class Experiments {
         new Experiment(8, exp4).run();
     }
 
-    private static void checkWaitingTimeOnIncreaseRoadworksTest(){
+    private static void checkWaitingTimeOnIncreaseRoadworksTest() {
         // How do waiting times change as the amount of road works changes (dynamism)?
         ExperimentParameters exp1 = ExperimentParameters.copyDefault();
         new Experiment(9, exp1).run();
