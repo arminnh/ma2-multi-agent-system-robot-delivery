@@ -19,13 +19,16 @@
 \usepackage{listings}
 \usepackage{caption}
 
+\makeatletter
+\patchcmd{\beamer@sectionintoc}{\vskip1.5em}{\vskip0.5em}{}{}
+\makeatother
 
 %%% TITLE PAGE INFO:
-\title[Multi-agent systems]{Multi-agent systems \\ based solution for \\ Pickup-and-delivery} %[]] will appear in footline
+\title[Multi-Agent Systems]{Multi-Agent Systems \\ Based Solution for \\ Pickup-And-Delivery} %[]] will appear in footline
 % \subtitle{Overview and examples}
 
 \author{Thierry Deruyttere (r0660485) \\Armin Halilovic (r0679689)}
-\institute{KU Leuven - Multi-agent systems}
+\institute{KU Leuven - Multi-Agent Systems}
 \date{}
 
 
@@ -50,8 +53,7 @@
 
 \input{problem-definition}
 \input{objectives}
-\input{questions}
-\input{hypotheses}
+\input{questions-hypotheses}
 \input{variables}
 \input{mas-design}
 \input{experiments}
