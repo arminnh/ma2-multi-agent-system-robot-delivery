@@ -19,6 +19,9 @@
 \usepackage{listings}
 \usepackage{caption}
 
+\makeatletter
+\patchcmd{\beamer@sectionintoc}{\vskip1.5em}{\vskip0.5em}{}{}
+\makeatother
 
 %%% TITLE PAGE INFO:
 \title[Multi-agent systems]{Multi-agent systems \\ based solution for \\ Pickup-and-delivery} %[]] will appear in footline
@@ -50,8 +53,7 @@
 
 \input{problem-definition}
 \input{objectives}
-\input{questions}
-\input{hypotheses}
+\input{questions-hypotheses}
 \input{variables}
 \input{mas-design}
 \input{experiments}
