@@ -4,8 +4,8 @@ public class Experiments {
 
     public static void main(String[] args) {
 //        waitingTimeCustomersAndRoadTimeRobotsTest();
-        waitingTimeIncreaseRobotAndOccupancyChargingStationTest();
-        //checkWaitingTimeOnIncreaseRoadworksTest();
+        //waitingTimeIncreaseRobotAndOccupancyChargingStationTest();
+        checkWaitingTimeOnIncreaseRoadworksTest();
     }
 
     private static void waitingTimeCustomersAndRoadTimeRobotsTest() {
@@ -53,19 +53,32 @@ public class Experiments {
     private static void checkWaitingTimeOnIncreaseRoadworksTest() {
         // How do waiting times change as the amount of road works changes (dynamism)?
         ExperimentParameters exp1 = new ExperimentParameters();
-        new Experiment(9, exp1).run();
+        exp1.repeat = 1;
+        for (int i =0; i<100; i++){
+            new Experiment(100 + i, exp1).run();
+        }
 
         ExperimentParameters exp2 = new ExperimentParameters();
         exp2.probNewRoadWorks *= 1.5;
-        new Experiment(10, exp2).run();
+        exp2.repeat = 1;
+        for (int i =0; i<100; i++){
+            new Experiment(200 + i, exp2).run();
+        }
 
         ExperimentParameters exp3 = new ExperimentParameters();
         exp3.probNewRoadWorks *= 2;
-        new Experiment(11, exp3).run();
+        exp3.repeat = 1;
+        for (int i =0; i<100; i++) {
+
+            new Experiment(300 + i, exp3).run();
+        }
 
         ExperimentParameters exp4 = new ExperimentParameters();
         exp4.probNewRoadWorks *= 2;
-        new Experiment(12, exp4).run();
+        exp4.repeat = 1;
+        for (int i =0; i<100; i++) {
+            new Experiment(400 + i, exp4).run();
+        }
     }
 }
 
