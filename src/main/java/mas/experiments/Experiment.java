@@ -168,7 +168,7 @@ public class Experiment {
 
                 // The number of threads the experiment will use, this allows to run several simulations in parallel.
                 // Note that when the GUI is used the number of threads must be set to 1.
-                .withThreads(6)
+                .withThreads(p.threads)
 
                 // We add a post processor to the experiment. A post processor can read the state of the simulator
                 // after it has finished. It can be used to gather simulation results. The objects created by the
