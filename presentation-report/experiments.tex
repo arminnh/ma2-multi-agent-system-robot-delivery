@@ -19,26 +19,55 @@
 \begin{frame}{Experiments: Question 1 (1)}
     \begin{itemize}
         \item What is the relation between the amount of requests that RoboPizza receives and the waiting time for customers?
-        \begin{itemize}
-                \item $H_1$: The waiting time increases with the amount of requests.
-                \item $H_0$: The waiting time does \textbf{not} increase with the amount of requests.
-        \end{itemize}
-
         \item[]
-        \item TODO: Hypotheses in termen van $H_0: \mu_1 \geq \mu_2$ en $H_1: \mu_1 < \mu_2$
-        \item http://stattrek.com/hypothesis-test/difference-in-means.aspx
+        \item $\mu_1$: mean waiting time for lower amount of requests
+        \item $\mu_2$: mean waiting time for higher amount of requests
+        \item[]
+        \item $H_0$: The waiting time does not increase with the amount of requests. ($\mu_1 \geq \mu_2$)
+        \item $H_1$: The waiting time increases with the amount of requests. ($\mu_1 < \mu_2$)
     \end{itemize}
 \end{frame}
 
 
 \begin{frame}{Experiments: Question 1 (2)}
-    \begin{itemize}
-        \item Total task waiting time
-    \end{itemize}
+    \begin{columns}
 
-    \begin{figure}[hbt]
-        \includegraphics[width=8cm]{imgs/question1-plot1}
-    \end{figure}
+    \begin{column}{0.5\textwidth}  %%<--- here
+        \begin{itemize}
+            \item Total task waiting time
+        \end{itemize}
+
+        \begin{figure}[hbt]
+            \includegraphics[width=1.1\textwidth]{imgs/question1-plot1}
+        \end{figure}
+    \end{column}
+
+    \begin{column}{0.5\textwidth}
+        \begin{itemize}
+            \item $\mu_1 \geq \mu_2$
+                \begin{itemize}
+	                \item t-value = 56.908
+	                \item p-value = 0.000
+                    \item $\rightarrow$ Reject null hypothesis
+                \end{itemize}
+
+            \item $\mu_2 \geq \mu_3$
+                \begin{itemize}
+	                \item t-value = 14.425
+	                \item p-value = 0.000
+                    \item $\rightarrow$ Reject null hypothesis
+                \end{itemize}
+
+            \item $\mu_3 \geq \mu_4$
+                \begin{itemize}
+	                \item t-value = 21.355
+	                \item p-value = 0.000
+                    \item $\rightarrow$ Reject null hypothesis
+                \end{itemize}
+        \end{itemize}
+    \end{column}
+
+    \end{columns}
 \end{frame}
 
 
