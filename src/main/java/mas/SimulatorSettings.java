@@ -17,7 +17,7 @@ public class SimulatorSettings {
     public static final int WINDOW_WIDTH = 1200;
     public static final int WINDOW_HEIGHT = 800;
     public static final int REPEATS = 100;
-    public static final int THREADS = 1;
+    public static final int THREADS = 6;
 
     // CITY AND ROBOTS
     public static final int CITY_SIZE = 20;
