@@ -5,54 +5,55 @@
         \item Pizzeria chain RoboPizza
         \item Pizza delivery using robots (AGVs)
         \item RoboPizza receives pizza delivery requests (tasks), robots deliver the pizzas
-        \item Manhattan style city blocks
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Problem definition - Environment}
+    \begin{itemize}
+        \item Grid city system
+        \item AGVs can go in both directions on streets
+        \item AGVs can pass each other
+
+        \item Dynamism:
+        \begin{itemize}
+            \item Road works cause streets to be closed off
+        \end{itemize}
+
+        \item Efficiency measure:
+        \begin{itemize}
+            \item Total waiting time for tasks
+        \end{itemize}
     \end{itemize}
 \end{frame}
 
 \begin{frame}{Problem definition - Robots}
     \begin{itemize}
         \item Can move from and to any position in the city
-        \item Have maps and can compute paths between locations
+        \item Have static maps and can compute paths between locations
         \item Can carry up to 5 pizzas at once
-        \item Can only communicate with entities that are close to them
+        \item Can only communicate with entities that are close to them (i.e. city node they are on)
+        \item Run on batteries which need to be recharged
+        \begin{itemize}
+            \item Can charge at charging station
+            \item Station supports limited amount of robots at once
+        \end{itemize}
+
+        \item Potential crash:
+        \begin{itemize}
+            \item Can run out of battery $\rightarrow$ reset battery after time delay as simulation of manual replacement
+        \end{itemize}
     \end{itemize}
 \end{frame}
 
 \begin{frame}{Problem definition - Tasks}
     \begin{itemize}
-        \item Consist of picking up (multiple) pizzas and delivering them to a position before a certain timepoint
-        \item If there are more than 5 pizzas in a task, it will have to be split up
-        \item Pizzas have no preparation time / can be picked up instantly
-        \item Will be created every time step with low probability:
+        \item Consist of picking up (multiple) pizzas and delivering them to a destination in the city
+        \item If there are more than 5 pizzas in a task, it has to be split up
+        \item Pizzas have no preparation time and can be picked up instantly
+        \item Created each simulation tick with low probability that scales with city size:
             \begin{itemize}
-                \item Delivery time window based on distance from pizzeria + randomness
-                \item Amount of pizzas from Gaussian distribution
+                \item Amount of pizzas by Gaussian distribution
                 \item Delivery position uniformly random in city
             \end{itemize}
-    \end{itemize}
-\end{frame}
-
-\begin{frame}{Problem definition - World}
-    Dynamism
-    \begin{itemize}
-        \item Streets can become closed off due to road works
-        \item Amount of pizzerias can increase/decrease
-    \end{itemize}
-
-    Potential AGV crashes
-    \begin{itemize}
-        \item Running out of battery
-        \item ?
-    \end{itemize}
-
-    Efficiency measure
-    \begin{itemize}
-        \item Total waiting time for task
-    \end{itemize}
-
-    Charging
-    \begin{itemize}
-        \item Happens on one position
-        \item Only limited amount of robots can charge at once
     \end{itemize}
 \end{frame}
