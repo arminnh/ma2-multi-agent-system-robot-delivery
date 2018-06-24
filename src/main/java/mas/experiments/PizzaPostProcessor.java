@@ -12,27 +12,19 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Set;
 
 public final class PizzaPostProcessor implements PostProcessor<String> {
-    PizzaPostProcessor() {
+    private int id;
+    private int run = 0;
+
+    PizzaPostProcessor(int id) {
+        this.id = id;
     }
 
     public String collectResults(@NotNull Simulator sim, @NotNull Experiment.SimArgs args) {
-        /*
-        Set<Vehicle> vehicles = ((RoadModel)sim.getModelProvider().getModel(RoadModel.class)).getObjectsOfType(Vehicle.class);
-        StringBuilder sb = new StringBuilder();
-        if(vehicles.isEmpty()) {
-            sb.append("No vehicles were added");
-        } else {
-            sb.append(vehicles.size()).append(" vehicles were added");
-        }
-
-        if(sim.getCurrentTime() >= args.getScenario().getTimeWindow().end()) {
-            sb.append(", simulation has completed.");
-        } else {
-            sb.append(", simulation was stopped prematurely.");
-        }
-        */
-
         StatsTracker statsTracker = sim.getModelProvider().getModel(StatsTracker.class);
+
+        long timeElapsed = (System.currentTimeMillis() - statsTracker.getTheListener().simulationStartTime) / 1000;
+        run++;
+        System.out.println("Stopping experiment " + id + ", run " + run + ", " + timeElapsed + "s");
 
         return statsTracker.getStatistics().toString();
     }

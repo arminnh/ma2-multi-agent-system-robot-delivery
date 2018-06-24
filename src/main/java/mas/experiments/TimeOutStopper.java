@@ -9,17 +9,11 @@ import org.jetbrains.annotations.NotNull;
 
 abstract class TimeOutStopper implements TimedEvent {
 
-    private static int id;
-    private static int run = 0;
-    private static long lastTime = System.currentTimeMillis();
-
     TimeOutStopper() {
     }
 
 
-    static TimedEventHandler<TimeOutEvent> stopHandler(int id) {
-        TimeOutStopper.id = id;
-
+    static TimedEventHandler<TimeOutEvent> stopHandler() {
         return Handler.INSTANCE;
     }
 
@@ -27,10 +21,6 @@ abstract class TimeOutStopper implements TimedEvent {
         INSTANCE {
             @Override
             public void handleTimedEvent(@NotNull TimeOutEvent event, @NotNull SimulatorAPI simulator) {
-                long timeElapsed = (System.currentTimeMillis() - lastTime) / 1000;
-                lastTime = System.currentTimeMillis();
-                run++;
-                System.out.println("Stopping experiment " + id + ", run " + run + ", " + timeElapsed + "s");
                 ((Simulator) simulator).stop();
             }
 

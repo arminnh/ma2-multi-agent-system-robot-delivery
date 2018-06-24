@@ -144,7 +144,7 @@ public class Experiment {
                         // There is no default handle for vehicle events, here a non functioning handler is added,
                         // it can be changed to add a custom vehicle to the simulator.
                         .addEventHandler(AddVehicleEvent.class, AddRobotAgentEventHandlers.defaultHandler(p.robotCapacity, p.robotSpeed, p.batteryCapacity, p.batteryRescueDelay, staticGraph, p.alternativePathsToExplore, p.explorationRefreshTime, p.intentionRefreshTime))
-                        .addEventHandler(TimeOutEvent.class, TimeOutStopper.stopHandler(this.id))
+                        .addEventHandler(TimeOutEvent.class, TimeOutStopper.stopHandler())
                         // Note: if your multi-agent system requires the aid of a model (e.g. CommModel) it can be added
                         // directly in the configuration. Models that are only used for the solution side should not
                         // be added in the scenario as they are not part of the problem.
@@ -168,12 +168,12 @@ public class Experiment {
 
                 // The number of threads the experiment will use, this allows to run several simulations in parallel.
                 // Note that when the GUI is used the number of threads must be set to 1.
-                .withThreads(1)
+                .withThreads(6)
 
                 // We add a post processor to the experiment. A post processor can read the state of the simulator
                 // after it has finished. It can be used to gather simulation results. The objects created by the
                 // post processor end up in the ExperimentResults object that is returned by the perform(..) method
-                .usePostProcessor(new PizzaPostProcessor())
+                .usePostProcessor(new PizzaPostProcessor(this.id))
 
                 .showGui(viewBuilder)
                 .showGui(p.showGUI)
