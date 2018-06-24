@@ -8,6 +8,7 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Iterator;
 
 public class StatsWriter {
     public static void writeToJson(int id, ExperimentParameters p, ImmutableSet<Experiment.SimulationResult> results) {
@@ -21,10 +22,17 @@ public class StatsWriter {
                     "    \"results\": [\n"
             );
 
-            for (final com.github.rinde.rinsim.experiment.Experiment.SimulationResult sr : results) {
+            final Iterator<Experiment.SimulationResult> it = results.iterator();
+            while (it.hasNext()) {
                 // The SimulationResult contains all information about a specific simulation,
                 // the result object is the object created by the post processor, a String in this case.
-                writer.write("        " + sr.getResultObject() + ",\n");
+                writer.write("        " + it.next().getResultObject());
+
+                if (it.hasNext()) {
+                    writer.write(",\n");
+                } else {
+                    writer.write("\n");
+                }
             }
 
             writer.write("    ]\n");
