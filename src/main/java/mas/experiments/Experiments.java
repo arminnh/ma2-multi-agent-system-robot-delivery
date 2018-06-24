@@ -3,7 +3,7 @@ package mas.experiments;
 public class Experiments {
 
     public static void main(String[] args) {
-        waitingTimeCustomersAndRoadTimeRobotsTest();
+//        waitingTimeCustomersAndRoadTimeRobotsTest();
         waitingTimeIncreaseRobotAndOccupancyChargingStationTest();
         //checkWaitingTimeOnIncreaseRoadworksTest();
     }

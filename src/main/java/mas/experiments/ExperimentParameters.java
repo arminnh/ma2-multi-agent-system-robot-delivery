@@ -18,8 +18,8 @@ public class ExperimentParameters {
     public int simSpeedUp = SimulatorSettings.SIM_SPEEDUP;
     public boolean verbose = SimulatorSettings.VERBOSE;
     public boolean showGUI = SimulatorSettings.SHOW_GUI;
-    public int repeat = SimulatorSettings.REPEATS;
-    public int threads = SimulatorSettings.THREADS;
+    public int repeat = SimulatorSettings.EXPERIMENT_REPEATS;
+    public int threads = SimulatorSettings.EXPERIMENT_THREADS;
 
     public double robotSpeed = SimulatorSettings.ROBOT_SPEED;
     public int robotCapacity = SimulatorSettings.ROBOT_CAPACITY;

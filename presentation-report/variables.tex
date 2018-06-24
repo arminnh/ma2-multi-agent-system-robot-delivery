@@ -1,51 +1,57 @@
 \section{Variables}
-\begin{frame}{Independent Variables}
+
+\begin{frame}{Independent Variables} % what we vary during experiments
     \begin{itemize}
-        \item $n_{robots}$ = amount of delivery robots (4)
-        \item $p_{request}$ = probability for a new request (0.001*city size)
-        \item $\mu_{pizza}, \sigma_{pizza}$ = Gaussian distribution parameters for amount of pizzas (4, 0.75)
-        \item $p_{road\_works\_start}$ = probability for road works to start (0)
-        \item city size = the size of the city (20)
-        \item timeRoadWorks = the time a roadwork takes ((city size * city size * node distance) * 1000)
-        \item chargingStationCapacity = the amount of robots that can charge at the same time (2)
+        \item $n_{robots}$ = amount of delivery robots {\tiny($4$)}
+        \item $p_{task}$ = probability for a new task {\tiny($0.001*city\_size$)}
+        \item $p_{road\_works}$ = probability for road works to start {\tiny($0.0025 * city\_size$)}
     \end{itemize}
 \end{frame}
 
-\begin{frame}{Dependent Variables}
+\begin{frame}{Dependent Variables} % what we measure when experiments end
     \begin{itemize}
-        \item $t_{wait}$ = total waiting time for customers                             % tasksWaitingTime / totalTasksWaitingTime
-        \item $t_{robots\_driving}$ = total time robots spent driving                   % totalRobotsTimeDriving
-        \item $t_{robots\_idle}$ = total time robots were idle                          % totalRobotsTimeIdle
-        \item $t_{robots\_charging}$ = total time robots were charging                  % totalRobotsTimeCharging
-        \item $n_{robots\_distance}$ = the cumulative distance all robots have traveled % totalDistance
-        \item $n_{requests}$ = amount of requests in the system                         % tasks / totalTasks
-        \item $n_{road\_works}$ = amount of road works                                  % roadWorks
-        \item $n_{deliveries}$ = amount of finished deliveries  % totalTasksFinished
-        \item $avg_{pizzas}$ = average amount of pizzas carried by robots               % avgPizzasPerRobot
+        \item $n_{task}$ = amount of tasks                        % totalTasks
+        \item $n_{finished}$ = amount of finished tasks           % totalTasksFinished
+        \item $t_{wait}$ = waiting time for customers             % totalTasksWaitingTime
+        \item $n_{pizzas}$ = amount of pizzas carried by robots   % totalPizzas
+        \item $n_{distance}$ = distance all robots have traveled  % totalDistance
+        \item $t_{driving}$ = time robots spent driving           % totalTravelTime
+        \item $t_{idle}$ = time robots were idle                  % totalIdleTime
+        \item $t_{charging}$ = time robots spent charging         % totalChargingTime
+        \item $n_{road\_works}$ = amount of road works            % totalRoadWorks
+        \item $n_{dropped}$ = amount of parcels that were dropped % droppedParcels
     \end{itemize}
 \end{frame}
 
-\begin{frame}{Other Variables}
+\begin{frame}[allowframebreaks]{Other Variables} % what we keep constant during experiments
     \begin{itemize}
-        \item $v_{robots}$ = moving speed of the robots (1)
-        \item $c_{robots}$ = the amount of pizzas a robot can carry (5)
-        \item $t_{pizza}$ = the baking time of a pizza (0)
-        \item $t_{simulation}$ = the total length of the simulation (10 hours)
-        \item ${robot\_charge}$ = amount by which a battery will be recharged in one tick (0.01 * battery capacity)
-        \item $battery\_capacity$ = the pizzas of a robot's battery (city size * city size * node distance)
-        \item node distance = the length between two nodes (2 * robot length)
-        \item robot length = the length of the robot (1)
-        \item paths to explore = amount of paths explored by A* (3)
-    \end{itemize}
-\end{frame}
+        \item $l_{tick}$ = length of a single simulator tick {\tiny($1000$)}
+        \item $l_{simulation}$ = simulation length in experiments {\tiny($10 hours$)}
+        \item $experiment\_repeats$ = amount of times experiments are ran {\tiny($100$)}
+        \item $l_{city}$ = \textbf{city grid size} {\tiny($20$)}
+        \item $l_{robots}$ = robot length {\tiny($1$)}
+        \item $d_{node}$ = distance between two nodes on city grid {\tiny($2 * l_{robot}$)}
+        \item $v_{robot}$ = robot speed {\tiny($1$)}
+        \item $distance\_unit$ = distance unit {\tiny($m$)}
+        \item $speed\_unit$ = speed unit {\tiny($m/s$)}
 
-\begin{frame}{Other Variables}
-    \begin{itemize}
-        \item battery rescue delay = The time it takes before a robot without battery is saved (5 * (battery capacity / ${robot\_charge}$) * tick length)
-        \item tick length = the length of one tick (1000L)
-        \item $t_{intentionRefresh}$ = the amount of time it takes before a robot resends intention ants (0.5 * intention reservation lifetime)
-        \item $t_{intentionReservation}$ = the amount of time an intention reservation lasts (4 * city size * node distance / robot speed) * 1000)
-        \item $t_{explorationRefresh}$ =  the amount of time it takes before a robot resends intention ants (0.4 * intention reservation lifetime)
+        \framebreak
+
+        \item $cap_{robot}$ = amount of pizzas a robot can carry {\tiny($5$)}
+        \item $cap_{charging\_station}$ = amount of robots that can charge simultaneously {\tiny($2$)}
+        \item $cap_{battery}$ = robot battery capacity {\tiny($l_{city} * l_{city} * d_{node}$)}
+        \item $cap_{recharge}$ = battery capacity recharged per tick {\tiny($0.01 * cap_{battery}$)}
+        \item $paths\_to\_explore$ = \textbf{amount of paths to explore towards destinations} {\tiny($3$)}
+        \item $t_{road\_works}$ = \textbf{time duration of road works} {\tiny($l_{city} * l_{city} * d_{node} * 1000$)}
+
+        \framebreak
+
+        \item $t_{battery\_rescue}$ = time delay for replacement of empty batteries {\tiny($5 * (cap_{battery} / cap_{recharge}) * l_{tick}$)}
+        \item $t_{intention\_reservation}$ = \textbf{time duration of intention reservations} {\tiny($4 * l_{city} * d_{node} / v_{robot}) * 1000$)}
+        \item $t_{refresh\_intention}$ = the amount of time it takes before a robot resends intention ants {\tiny($0.5 * t_{intention\_reservation}$)}
+        \item $t_{refresh\_exploration}$ = the amount of time it takes before a robot resends intention ants {\tiny($0.4 * t_{intention\_reservation}$)}
+        \item $\mu_{pizza}, \sigma_{pizza}$ = \textbf{pizza amount parameters} {\tiny($4$, $0.75$)}
+        \item $t_{pizza}$ = preparation and pickup time of a pizza {\tiny($0$)}
     \end{itemize}
 \end{frame}
 

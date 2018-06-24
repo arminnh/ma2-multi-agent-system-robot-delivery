@@ -37,7 +37,7 @@ public class PizzaDeliverySimulator {
     private static int chargingStationCapacity = SimulatorSettings.CHARGING_STATION_ROBOT_CAPACITY;
     private static int numRobots = SimulatorSettings.NUM_ROBOTS;
     private static double probNewDeliveryTask = SimulatorSettings.PROB_NEW_DELIVERY_TASK;
-    private static double probNewRoadWorks = SimulatorSettings.PROB_NEW_ROAD_WORKS;
+    private static double probNewRoadWorks = 0.0025 * SimulatorSettings.CITY_SIZE;
     private static int simSpeedUp = SimulatorSettings.SIM_SPEEDUP;
     private static boolean verbose = SimulatorSettings.VERBOSE;
     private static boolean showGUI = SimulatorSettings.SHOW_GUI;

@@ -16,7 +16,7 @@ Pizzeria chain RoboPizza wants to use AGVs to deliver pizzas to their customers.
 * Can carry up to 5 pizzas at once. 
 * Can only communicate to entities that are within a certain area around them (i.e. the node in the city they are on).
 * Run on batteries which need to be recharged
-  * Charging happens at a charging station which only supports a limited amount of robots to charge at the same time.
+  * Charging happens at a charging station which only supports a limited amount of robots to charge simultaneously.
 * Potential crashes: 
   * Can run out of battery. In this case, the battery is reset after a time to simulate that someone went out to replace the battery manually.
 
