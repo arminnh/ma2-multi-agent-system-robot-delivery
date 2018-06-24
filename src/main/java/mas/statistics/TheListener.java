@@ -12,12 +12,7 @@ import com.github.rinde.rinsim.event.Event;
 import com.github.rinde.rinsim.event.EventDispatcher;
 import com.github.rinde.rinsim.event.Listener;
 import com.github.rinde.rinsim.geom.Point;
-import com.github.rinde.rinsim.pdptw.common.AddParcelEvent;
-import com.github.rinde.rinsim.pdptw.common.AddVehicleEvent;
 import com.github.rinde.rinsim.pdptw.common.StatsProvider;
-import com.github.rinde.rinsim.scenario.ScenarioController;
-import com.github.rinde.rinsim.scenario.ScenarioController.ScenarioEvent;
-import com.github.rinde.rinsim.scenario.TimeOutEvent;
 import mas.agents.RobotAgent;
 import mas.models.PizzeriaEvent;
 import mas.models.PizzeriaEventType;
@@ -44,7 +39,7 @@ public class TheListener implements Listener {
     // pizzas & parcels
     public int pizzas;
     public int totalPizzas;
-    public int totalParcels; // The total number of parcels in the scenario. SCENARIOOO??
+    public int totalParcels; // The total number of parcels
     public int acceptedParcels; // Same as totalPickups. The total number of parcels that were actually added in the model.
     public int droppedParcels;
     public long totalPizzaTravelTime;
@@ -63,12 +58,11 @@ public class TheListener implements Listener {
     public int roadWorks;
     public int totalRoadWorks;
     // simulation
+    public long simulationStartTime = System.currentTimeMillis();
     public long startTimeReal;
     public long startTimeSim;
     public long computationTime;
     public long simulationTime;
-    public boolean simFinish;
-    public long scenarioEndTime;
 
     TheListener(Clock clock, EventDispatcher eventDispatcher) {
         this.clock = clock;
@@ -106,8 +100,6 @@ public class TheListener implements Listener {
         startTimeSim = 0L;
         computationTime = 0L;
         simulationTime = 0L;
-        simFinish = false;
-        scenarioEndTime = 0L;
     }
 
     @Override
@@ -197,17 +189,6 @@ public class TheListener implements Listener {
             totalDeliveries++;
             totalPizzaTravelTime += clock.getCurrentTime() - p.startTime;
             pizzas -= p.amountOfPizzas;
-
-        } else if (e.getEventType() == ScenarioController.EventType.SCENARIO_EVENT) {
-            final ScenarioEvent se = (ScenarioEvent) e;
-            if (se.getTimedEvent() instanceof AddParcelEvent) {
-                totalParcels++;
-            } else if (se.getTimedEvent() instanceof AddVehicleEvent) {
-                totalVehicles++;
-            } else if (se.getTimedEvent() instanceof TimeOutEvent) {
-                simFinish = true;
-                scenarioEndTime = se.getTimedEvent().getTime();
-            }
 
         } else if (e.getEventType() == PDPModelEventType.NEW_PARCEL) {
             PDPModelEvent pme = (PDPModelEvent) e;

@@ -5,7 +5,7 @@ public class Experiments {
     public static void main(String[] args) {
         waitingTimeCustomersAndRoadTimeRobotsTest();
         waitingTimeIncreaseRobotAndOccupancyChargingStationTest();
-        checkWaitingTimeOnIncreaseRoadworksTest();
+        //checkWaitingTimeOnIncreaseRoadworksTest();
     }
 
     private static void waitingTimeCustomersAndRoadTimeRobotsTest() {
@@ -14,7 +14,6 @@ public class Experiments {
         ExperimentParameters exp1 = new ExperimentParameters();
         new Experiment(1, exp1).run();
 
-        // What is the relation between the amount of requests that RoboPizza receives and the waiting time for customers?
         ExperimentParameters exp2 = new ExperimentParameters();
         exp2.probNewDeliveryTask *= 1.5;
         new Experiment(2, exp2).run();
@@ -29,14 +28,12 @@ public class Experiments {
     }
 
     private static void waitingTimeIncreaseRobotAndOccupancyChargingStationTest() {
-        //Does increasing the amount of robots decrease the customer waiting time when there are many requests?
-        // How does the amount of robots impact the average workload (occupancy rate) of the charging station?
+        // Does increasing the amount of robots decrease the customer waiting time when there are many requests?
         ExperimentParameters exp1 = new ExperimentParameters();
         exp1.probNewDeliveryTask *= 2;
         exp1.numRobots = 6;
         new Experiment(5, exp1).run();
 
-        // What is the relation between the amount of requests that RoboPizza receives and the waiting time for customers?
         ExperimentParameters exp2 = new ExperimentParameters();
         exp2.probNewDeliveryTask *= 2;
         exp2.numRobots = 8;
@@ -58,7 +55,6 @@ public class Experiments {
         ExperimentParameters exp1 = new ExperimentParameters();
         new Experiment(9, exp1).run();
 
-        // What is the relation between the amount of requests that RoboPizza receives and the waiting time for customers?
         ExperimentParameters exp2 = new ExperimentParameters();
         exp2.probNewRoadWorks *= 1.5;
         new Experiment(10, exp2).run();

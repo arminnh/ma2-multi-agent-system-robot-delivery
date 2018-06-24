@@ -1,7 +1,7 @@
 MAS/src/main/resources/META-INF/MANIFEST.MF
 *.iml
 .idea/
-
+.ipynb_checkpoints
 # Java
 *.class
 *.jar

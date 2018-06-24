@@ -15,7 +15,6 @@ import org.jetbrains.annotations.NotNull;
 public class StatsTrackerBuilder extends AbstractModelBuilder<StatsTracker, Object> {
 
     StatsTrackerBuilder() {
-        //setDependencies(ScenarioController.class);
         setDependencies(Clock.class, RoadModel.class, PDPModel.class, PizzeriaModel.class);
 
         setProvidingTypes(StatsProvider.class);
@@ -23,10 +22,7 @@ public class StatsTrackerBuilder extends AbstractModelBuilder<StatsTracker, Obje
 
     @Override
     public StatsTracker build(@NotNull DependencyProvider dependencyProvider) {
-        // final ScenarioController ctrl = dependencyProvider.get(ScenarioController.class);
-
         return new StatsTracker(
-                null,
                 dependencyProvider.get(Clock.class),
                 dependencyProvider.get(PDPModel.class),
                 dependencyProvider.get(PizzeriaModel.class),

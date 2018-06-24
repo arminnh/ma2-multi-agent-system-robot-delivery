@@ -19,6 +19,7 @@ public class ExperimentParameters {
     public boolean verbose = SimulatorSettings.VERBOSE;
     public boolean showGUI = SimulatorSettings.SHOW_GUI;
     public int repeat = SimulatorSettings.REPEATS;
+    public int threads = SimulatorSettings.THREADS;
 
     public double robotSpeed = SimulatorSettings.ROBOT_SPEED;
     public int robotCapacity = SimulatorSettings.ROBOT_CAPACITY;

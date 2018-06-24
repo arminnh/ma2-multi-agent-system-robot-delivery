@@ -7,9 +7,7 @@ import com.github.rinde.rinsim.core.model.time.Clock;
 import com.github.rinde.rinsim.event.EventAPI;
 import com.github.rinde.rinsim.event.EventDispatcher;
 import com.github.rinde.rinsim.pdptw.common.StatsProvider;
-import com.github.rinde.rinsim.scenario.ScenarioController;
 import mas.models.PizzeriaModel;
-import mas.tasks.DeliveryTask;
 import org.jetbrains.annotations.NotNull;
 
 import static com.github.rinde.rinsim.core.model.pdp.PDPModel.PDPModelEventType.*;
@@ -20,10 +18,6 @@ import static mas.models.PizzeriaEventType.*;
 
 /**
  * This class tracks statistics in a simulation.
- * Provides: StatsProvider
- * Dependencies: ScenarioController, Clock, RoadModel, PDPModel
- *
- * @author Rinde van Lon
  */
 public final class StatsTracker extends AbstractModelVoid implements StatsProvider {
     private final EventDispatcher eventDispatcher;
@@ -32,15 +26,13 @@ public final class StatsTracker extends AbstractModelVoid implements StatsProvid
     private final RoadModel roadModel;
     private final PizzeriaModel pizzeriaModel;
 
-    StatsTracker(ScenarioController scenContr, Clock c, PDPModel pm, PizzeriaModel pizzeriaModel, RoadModel rm) {
+    StatsTracker(Clock c, PDPModel pm, PizzeriaModel pizzeriaModel, RoadModel rm) {
         this.clock = c;
         this.pizzeriaModel = pizzeriaModel;
         this.roadModel = rm;
 
         this.eventDispatcher = new EventDispatcher(StatsProvider.EventTypes.values());
-
         this.theListener = new TheListener(clock, eventDispatcher);
-        //scenContr.getEventAPI().addListener(theListener, SCENARIO_STARTED, SCENARIO_FINISHED, SCENARIO_EVENT);
 
         this.clock.getEventAPI().addListener(theListener, STARTED, STOPPED);
 
@@ -66,6 +58,10 @@ public final class StatsTracker extends AbstractModelVoid implements StatsProvid
         return eventDispatcher.getPublicEventAPI();
     }
 
+    public TheListener getTheListener() {
+        return theListener;
+    }
+
     /**
      * @return A StatisticsDTO with the current simulation stats.
      */
@@ -74,14 +70,6 @@ public final class StatsTracker extends AbstractModelVoid implements StatsProvid
         TheListener tl = theListener;
 
         final int vehicleBack = tl.lastArrivalTimeAtDepot.size();
-        long overTime = 0;
-        if (tl.simFinish) {
-            for (final Long time : tl.lastArrivalTimeAtDepot.values()) {
-                if (time - tl.scenarioEndTime > 0) {
-                    overTime += time - tl.scenarioEndTime;
-                }
-            }
-        }
 
         long compTime = tl.computationTime;
         if (compTime == 0) {
@@ -109,9 +97,9 @@ public final class StatsTracker extends AbstractModelVoid implements StatsProvid
                 tl.deliveryTardiness,
                 compTime,
                 clock.getCurrentTime(),
-                tl.simFinish,
+                false,
                 vehicleBack,
-                overTime,
+                0,
                 tl.totalVehicles,
                 movedVehicles,
                 clock.getTimeUnit(),
