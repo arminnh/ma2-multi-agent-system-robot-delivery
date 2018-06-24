@@ -5,7 +5,7 @@
         \item Agents
             \begin{itemize}
                 \item Robot Agent for each robot
-                \item Resource Agent for each node on world graph
+                \item Resource Agent for each node on city graph
             \end{itemize}
 
         \item Ant-based Delegate MAS
@@ -35,9 +35,76 @@
     \end{itemize}
 \end{frame}
 
+\begin{frame}{Multi-Agent System Design: Ants}
+Ants are send on a hop by hop basis through resource agents.
+A resource agent can only send an ant to its neighbors.
+The ant knows to which neighbor it wants to go and notifies the resource agent of this.
+\begin{enumerate}
+\item Desire ant: are sent to all the available delivery tasks in the city and will gather information about each task. (amount of pizzas required, amount of time waiting, ...).
+\item Exploration ant: Estimates travel duration for paths and also updates needed amount of pizzas if necessary
+\item Intention ant: Creates reservations for best path for selected tasks
+\end{enumerate}
+\end{frame}
+
 \begin{frame}{Multi-Agent System Design: Robot Strategy}
-    \begin{itemize}
-        \item strategy
-    \end{itemize}
+\begin{enumerate}
+	\item send desire ants towards tasks
+	\item chooseBestTask()
+	\item sendExplorationAnts() (send explor. ants to chosen desires)
+	\item Send intention ants to confirmed tasks
+	\item moveToDestinations()
+\end{enumerate}
+\end{frame}
+
+\begin{frame}{Multi-Agent System Design: chooseBestTask}
+	\begin{enumerate}
+		\item collect sent desire ants
+		\item while agent has capacity left
+		\begin{enumerate}
+		\item Choose a task $t$ with fitness proportionate selection where fitness is waiting time.
+		\end{enumerate}
+		\end{enumerate}
+\end{frame}
+
+\begin{frame}{Multi-Agent System Design: sendExplorationAnts}
+	\begin{enumerate}
+		\item for i in range(Alternative paths):
+		\begin{enumerate}
+			\item Calculate a path between chosen tasks with A* algorithm on static city graph.
+		\end{enumerate}
+		\item send exploration ants according to calculated paths.
+	\end{enumerate}
+\end{frame}
+
+\begin{frame}{Multi-Agent System Design: moveToDestinations}
+	\begin{enumerate}
+		\item follow path for confirmed intentions
+		\item check if need to recharge
+		\begin{enumerate}
+			\item if True: chargeLogic()
+			\item if False, continue
+		\end{enumerate}
+		\item refresh exploration and intention ants if refresh timer is fired
+		\item if at intention:
+		\begin{enumerate}
+			\item if all intentions finished send out exploration ant to find pizzeria and set intention to pizzeria.
+		\end{enumerate}
+	\end{enumerate}
+\end{frame}
+
+
+\begin{frame}{Multi-Agent System Design: chargeLogic}
+	\begin{enumerate}
+		\item save current intentions
+		\item set intention to charging station
+		\item move to charging station
+		\item charge
+		\item while the agent is charging update the path the agent needs to follow for its old intentions
+		\item if charging is finished:
+		\begin{enumerate}
+			\item set intentions to old intentions
+			%\item move on updated path
+		\end{enumerate}
+	\end{enumerate}
 \end{frame}
 
