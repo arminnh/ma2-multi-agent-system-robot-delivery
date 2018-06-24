@@ -46,7 +46,7 @@ public class Experiments {
 
         ExperimentParameters exp4 = new ExperimentParameters();
         exp4.probNewDeliveryTask *= 2;
-        exp4.numRobots = 20;
+        exp4.numRobots = 14;
         new Experiment(8, exp4).run();
     }
 
