@@ -59,15 +59,15 @@ public class PizzaDeliverySimulator {
      */
     public static void main(String[] args) {
         System.out.println("Robot Pizza Delivery MAS Usage: java -jar mas.jar OPTIONS");
-        OptionsParser parser = OptionsParser.newOptionsParser(ExecutionOptions.class);
-        parser.parseAndExitUponError(args);
-        ExecutionOptions options = parser.getOptions(ExecutionOptions.class);
-        assert options != null;
-        if (options.help) {
-            System.out.println(parser.describeOptions(Collections.emptyMap(), OptionsParser.HelpVerbosity.LONG));
-            return;
-        }
-        assignOptions(options);
+//        OptionsParser parser = OptionsParser.newOptionsParser(ExecutionOptions.class);
+//        parser.parseAndExitUponError(args);
+//        ExecutionOptions options = parser.getOptions(ExecutionOptions.class);
+//        assert options != null;
+//        if (options.help) {
+//            System.out.println(parser.describeOptions(Collections.emptyMap(), OptionsParser.HelpVerbosity.LONG));
+//            return;
+//        }
+//        assignOptions(options);
 
         run();
     }

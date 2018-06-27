@@ -11,16 +11,16 @@ public class SimulatorSettings {
     // Tick length = 1s, do not change this, probabilities for new task and new road works are done per tick.
     public static final long TICK_LENGTH = 1000L;
     public static final long SIMULATION_LENGTH = 10 * 60 * 60 * 1000;
-    public static final int SIM_SPEEDUP = 10000000;
-    public static final boolean VERBOSE = false;
-    public static final boolean SHOW_GUI = false;
+    public static final int SIM_SPEEDUP = 1;
+    public static final boolean VERBOSE = true;
+    public static final boolean SHOW_GUI = true;
     public static final int WINDOW_WIDTH = 1200;
     public static final int WINDOW_HEIGHT = 800;
     public static final int EXPERIMENT_REPEATS = 100;
     public static final int EXPERIMENT_THREADS = 6;
 
     // CITY AND ROBOTS
-    public static final int CITY_SIZE = 20;
+    public static final int CITY_SIZE = 12;
     public static final int NUM_ROBOTS = 4;
     public static final int ROBOT_LENGTH = 1;
     public static final int NODE_DISTANCE = 2 * ROBOT_LENGTH;
@@ -28,7 +28,7 @@ public class SimulatorSettings {
     public static final Unit<Length> DISTANCE_UNIT = SI.METER;
     public static final Unit<Velocity> SPEED_UNIT = SI.METRES_PER_SECOND;
     public static final int ROBOT_CAPACITY = 5;
-    public static final int CHARGING_STATION_ROBOT_CAPACITY = 2;
+    public static final int CHARGING_STATION_ROBOT_CAPACITY = 1;
     // Make battery capacity relative to city size so that every node can be visited once before the battery is drained
     public static final double BATTERY_CAPACITY = CITY_SIZE * CITY_SIZE * NODE_DISTANCE;
     // Make the batteries be recharged with 1% every tick.
@@ -52,8 +52,8 @@ public class SimulatorSettings {
 
 
     // PROBABILITIES
-    public static final double PROB_NEW_DELIVERY_TASK = 0.001 * CITY_SIZE;
-    public static final double PROB_NEW_ROAD_WORKS = 0; //0.0025 * CITY_SIZE;
+    public static final double PROB_NEW_DELIVERY_TASK = 0.0015 * CITY_SIZE;
+    public static final double PROB_NEW_ROAD_WORKS = 0.0025 * CITY_SIZE;
     public static final double PIZZA_AMOUNT_STD = 0.75;
     public static final double PIZZA_AMOUNT_MEAN = 4;
 }
